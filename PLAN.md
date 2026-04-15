@@ -16,15 +16,16 @@ The main gaps are plumbing, not design.
 
 ## Recommended Stack
 
-| Concern             | Choice                    | Why                                          |
-| ------------------- | ------------------------- | -------------------------------------------- |
-| Frontend            | Vite + React SPA          | Prototype is already this; no SSR needed     |
-| Backend             | None                      | Supabase talks directly from the browser     |
-| Database + Realtime | Supabase                  | Postgres, built-in real-time sync            |
-| Auth                | Supabase magic link       | No passwords; sessions persist on phone      |
-| PWA                 | vite-plugin-pwa           | Home screen install — avoids App Store       |
-| Hosting             | Raspberry Pi (Kubernetes) | Self-hosted, no cloud costs                  |
-| Network access      | Tailscale VPN             | Private access for both users, no public URL |
+| Concern        | Choice                    | Why                                               |
+| -------------- | ------------------------- | ------------------------------------------------- |
+| Frontend       | Vite + React SPA          | Prototype is already this; no SSR needed          |
+| API            | Go (stdlib + pgx)         | Tiny binary, low RAM — fits Pi resource limits    |
+| Database       | PostgreSQL (in-cluster)   | Reliable, full SQL, data stays on Pi              |
+| Realtime       | SSE (Server-Sent Events)  | Simple push from Go → browser, no WebSocket overhead |
+| Auth           | Username/password + JWT   | 2 users, private network — no magic links needed  |
+| PWA            | vite-plugin-pwa           | Home screen install — avoids App Store            |
+| Hosting        | Raspberry Pi (Kubernetes) | Self-hosted, no cloud costs                       |
+| Network access | Tailscale VPN             | Private access for both users, no public URL      |
 
 Total monthly cost: €0.
 
@@ -32,20 +33,76 @@ Total monthly cost: €0.
 
 ## Phased Roadmap
 
-### Phase 1 — Working MVP ✅
+### Phase 1 — Working MVP
 
+**Done:**
 - [x] Scaffold Vite project, split prototype into component files
 - [x] Add PWA config + icons (`public/icon-192.png`, `public/icon-512.png`)
 - [x] Build 4 data hooks (`useEvents`, `useRecipes`, `useSeries`, `useActivities`) backed by a mock in-memory server (`src/mock/db.js`)
 - [x] Replace `useState(hardcodedData)` with the hooks in all tabs
 - [x] Home tab stats driven by live data; greeting adapts to time of day
 - [x] `.gitignore`, `Dockerfile`, `nginx.conf`, K8s manifests (`k8s/`)
-- [ ] **Supabase: create project, define 4 tables** ← next when ready for real backend
-- [ ] **Auth: `AuthGate` + magic link login** ← depends on Supabase
-- [ ] **Supabase: Row-Level Security policies** ← depends on Supabase
-- [ ] **Deploy to Pi, verify sync across two phones** ← depends on Supabase
 
-The app runs and is fully navigable with mock data. Switching to the real backend only requires replacing the hook implementations in `src/hooks/` — no component changes needed.
+**Remaining milestones** (each leaves the app in a fully runnable state):
+
+#### M1 — Go API scaffold (events only, in-memory, no auth)
+- [x] Init `api/` Go module (`go.mod`, `main.go`)
+- [x] `GET /api/events` + `POST /api/events` backed by a Go slice (no DB yet)
+- [x] CORS headers so the frontend can reach it from Vite dev server
+- [x] Verify with `curl` — no frontend changes yet
+- [x] `Dockerfile.api` + update `.env.example` with `VITE_API_URL`
+
+_Checkpoint: `go run ./api` starts cleanly, curl round-trip works._
+
+#### M2 — Wire events hook to the Go API
+- [ ] Swap `useEvents.js` from `mockDb` to `fetch` against `VITE_API_URL`
+- [ ] Frontend runs against the real API for events; other 3 tabs still use mock
+- [ ] Add `VITE_API_URL=http://localhost:8080` to `.env.local` (gitignored)
+
+_Checkpoint: events tab persists across page refreshes (held in API memory); rest of app still works via mock._
+
+#### M3 — Extend API to all 4 tables + swap remaining hooks
+- [ ] Add `GET/POST /api/recipes`, `/series`, `/activities` (same in-memory pattern)
+- [ ] Swap `useRecipes.js`, `useSeries.js`, `useActivities.js`
+- [ ] Remove mock dependency from all hooks (mock stays in repo for reference)
+
+_Checkpoint: full app runs against the Go API — all tabs read/write, data survives tab closes but resets on API restart._
+
+#### M4 — SSE realtime sync
+- [ ] `sse/broker.go` — one broker per table, fans out `data: refresh\n\n`
+- [ ] Each `POST` handler pings its broker after insert
+- [ ] `GET /api/events/stream` (and same for other tables) — SSE endpoint
+- [ ] Update all 4 hooks to open an `EventSource` and call `refresh` on message
+
+_Checkpoint: open the app in two browser tabs — adding an item in one tab appears in the other within a second._
+
+#### M5 — JWT auth + `AuthGate`
+- [ ] `POST /api/login` — checks username/password from env `USERS` (JSON map of bcrypt hashes), returns signed JWT (15-day expiry)
+- [ ] JWT middleware guards all non-login routes
+- [ ] `src/AuthGate.jsx` — login form, stores token in `localStorage`, wraps `<App>`
+- [ ] All hooks send `Authorization: Bearer <token>`; SSE streams pass token as query param
+- [ ] Auto-logout on 401 response
+
+_Checkpoint: app requires login; unknown credentials are rejected; token survives refresh._
+
+#### M6 — Postgres (local dev via Docker Compose)
+- [ ] `docker-compose.yml` with a Postgres 16 service (for local dev only)
+- [ ] `api/db/connect.go` — pgx connection pool from `DB_DSN` env var
+- [ ] `api/db/migrate.go` — runs schema SQL on startup (idempotent `CREATE TABLE IF NOT EXISTS`)
+- [ ] Swap all in-memory slices for pgx queries
+- [ ] Update `.env.example` with `DB_DSN`
+
+_Checkpoint: `docker compose up` + `go run ./api` — data now survives API restarts; two local browser sessions stay in sync via SSE._
+
+#### M7 — Deploy to Pi
+- [ ] `k8s/postgres.yaml` — Postgres 16 Deployment + 5 Gi PVC + ClusterIP Service
+- [ ] `k8s/api.yaml` — Go API Deployment + ClusterIP Service; env from `secret.yaml`
+- [ ] `k8s/secret.yaml` — `DB_DSN`, `JWT_SECRET`, `USERS` (fill real bcrypt hashes, never commit)
+- [ ] Update `k8s/frontend.yaml` with `VITE_API_URL` baked in at build time
+- [ ] Build both images on Pi (`imagePullPolicy: Never`), `kubectl apply -f k8s/`
+- [ ] Verify on both phones over Tailscale: login, add item, see it appear on the other device
+
+_Checkpoint: both phones can log in, add items, and see each other's changes in real time. PWA install works._
 
 ### Phase 2 — Quality of Life
 
@@ -58,23 +115,40 @@ The app runs and is fully navigable with mock data. Switching to the real backen
 
 - Push notifications ("Lena hat ein neues Rezept hinzugefügt")
 - Recipe detail view with ingredients/steps
-- Photo uploads for recipes (Supabase Storage)
+- Photo uploads for recipes (stored on Pi via the Go API)
 
 ---
 
-## Current Project Structure
+## Project Structure (target)
 
 ```
 nosdeux/
+├── api/                        # Go API
+│   ├── main.go                 # HTTP server, route registration
+│   ├── db/
+│   │   ├── connect.go          # pgx connection pool
+│   │   └── migrate.go          # runs schema migrations on startup
+│   ├── handlers/
+│   │   ├── auth.go             # POST /api/login → JWT
+│   │   ├── events.go           # GET/POST /api/events, GET /api/events/stream
+│   │   ├── recipes.go
+│   │   ├── series.go
+│   │   └── activities.go
+│   ├── middleware/
+│   │   └── auth.go             # JWT validation middleware
+│   ├── sse/
+│   │   └── broker.go           # SSE broadcast hub (one per table)
+│   ├── go.mod
+│   └── go.sum
 ├── public/
-│   ├── icon.svg            # source icon (dark bg, nd monogram)
-│   ├── icon-192.png        # PWA icon
-│   └── icon-512.png        # PWA icon
+│   ├── icon.svg
+│   ├── icon-192.png
+│   └── icon-512.png
 ├── src/
 │   ├── mock/
-│   │   └── db.js           # in-memory mock server (async, pub/sub)
+│   │   └── db.js               # kept for local dev without the API running
 │   ├── hooks/
-│   │   ├── useEvents.js
+│   │   ├── useEvents.js        # fetch + EventSource against Go API
 │   │   ├── useRecipes.js
 │   │   ├── useSeries.js
 │   │   └── useActivities.js
@@ -85,30 +159,37 @@ nosdeux/
 │   │   ├── RecipesTab.jsx
 │   │   └── ActivitiesTab.jsx
 │   ├── App.jsx
+│   ├── AuthGate.jsx            # login form → JWT → localStorage
 │   ├── styles.js
-│   ├── data.js             # seed data + April 2026 calendar layout
+│   ├── data.js
 │   └── main.jsx
 ├── k8s/
-│   ├── deployment.yaml
-│   ├── service.yaml        # NodePort 30080
-│   └── secret.yaml         # placeholder — do not commit real values
-├── .env                    # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (gitignored)
+│   ├── postgres.yaml           # Postgres Deployment + PVC + ClusterIP Service
+│   ├── api.yaml                # Go API Deployment + ClusterIP Service
+│   ├── frontend.yaml           # nginx Deployment + NodePort 30080
+│   └── secret.yaml             # DB password, JWT secret, user credentials
+├── .env.example                # VITE_API_URL
 ├── .gitignore
-├── Dockerfile              # multi-stage: node build → nginx serve
-├── nginx.conf              # SPA fallback + asset caching
-├── vite.config.js          # includes vite-plugin-pwa
+├── Dockerfile                  # multi-stage: node build → nginx (frontend)
+├── Dockerfile.api              # multi-stage: go build → distroless (API)
+├── nginx.conf
+├── vite.config.js
 ├── index.html
 └── package.json
 ```
 
 ---
 
-## Connecting the Real Backend (next steps)
+## Building the Real Backend
 
-### 1 — Supabase tables
+### 1 — Postgres schema
+
+Run once on first startup (or apply via `migrate.go`):
 
 ```sql
-create table events (
+create extension if not exists "pgcrypto";
+
+create table if not exists events (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   date text,
@@ -119,7 +200,7 @@ create table events (
   created_at timestamptz default now()
 );
 
-create table recipes (
+create table if not exists recipes (
   id uuid primary key default gen_random_uuid(),
   emoji text,
   title text not null,
@@ -129,7 +210,7 @@ create table recipes (
   created_at timestamptz default now()
 );
 
-create table series (
+create table if not exists series (
   id uuid primary key default gen_random_uuid(),
   emoji text,
   title text not null,
@@ -140,7 +221,7 @@ create table series (
   created_at timestamptz default now()
 );
 
-create table activities (
+create table if not exists activities (
   id uuid primary key default gen_random_uuid(),
   emoji text,
   title text not null,
@@ -150,106 +231,108 @@ create table activities (
 );
 ```
 
-Row-Level Security policy (apply to all four tables, substitute real emails):
+### 2 — Go API overview
 
-```sql
-create policy "Only Max and Lena"
-on events for all
-using (
-  auth.email() in ('max@example.com', 'lena@example.com')
-);
+**Dependencies** (go.mod):
+```
+github.com/jackc/pgx/v5
+github.com/golang-jwt/jwt/v5
 ```
 
-### 2 — Swap mock hooks for Supabase
+No router framework needed — stdlib `net/http` with a simple prefix mux is enough for ~10 routes.
 
-Install the client: `npm install @supabase/supabase-js`
-
-Create `src/supabase.js`:
-
-```js
-import { createClient } from '@supabase/supabase-js'
-
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)
+**Routes:**
+```
+POST /api/login                  → returns signed JWT (15-day expiry)
+GET  /api/events                 → list all, newest first
+POST /api/events                 → insert row, broadcast SSE event
+GET  /api/events/stream          → SSE — client subscribes for live updates
+(same pattern for /recipes, /series, /activities)
 ```
 
-Replace each hook's `mockDb` calls with Supabase. Example for events — the same pattern applies to all four:
+**Auth flow:** `POST /api/login` receives `{username, password}`, checks against credentials in env/config, returns `{token}`. All other routes require `Authorization: Bearer <token>`. The JWT payload carries `sub` (username) so the API knows who is writing.
+
+**SSE broker** (`sse/broker.go`): one broker per table. Each `GET .../stream` request registers a channel. When a `POST` mutates a row, it pings the broker which fans out a `data: refresh\n\n` event to all connected clients. The frontend hook responds by re-fetching the full list — simple and stateless.
+
+### 3 — Frontend hooks (fetch + EventSource)
+
+Each hook follows the same pattern:
 
 ```js
 // src/hooks/useEvents.js
 import { useState, useEffect } from 'react'
-import { supabase } from '../supabase'
+
+const API = import.meta.env.VITE_API_URL
 
 export function useEvents() {
   const [events, setEvents] = useState([])
 
   const refresh = async () => {
-    const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false })
-    setEvents(data ?? [])
+    const res = await fetch(`${API}/api/events`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.ok) setEvents(await res.json())
   }
 
   useEffect(() => {
     refresh()
-    const channel = supabase.channel('events')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh)
-      .subscribe()
-    return () => supabase.removeChannel(channel)
+    const es = new EventSource(`${API}/api/events/stream?token=${localStorage.getItem('token')}`)
+    es.onmessage = refresh
+    return () => es.close()
   }, [])
 
-  const addEvent = (event) => supabase.from('events').insert(event)
+  const addEvent = (event) =>
+    fetch(`${API}/api/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(event),
+    })
 
   return { events, addEvent }
 }
 ```
 
-### 3 — Auth gate
+### 4 — AuthGate (JWT login)
 
-```jsx
-// src/AuthGate.jsx
-import { useState, useEffect } from 'react'
-import { supabase } from './supabase'
+`src/AuthGate.jsx` shows a username + password form. On submit it calls `POST /api/login`, stores the returned JWT in `localStorage`, and renders `children`. On app load it checks for an existing token before showing the login screen.
 
-const ALLOWED_EMAILS = ['max@example.com', 'lena@example.com']
+### 5 — Kubernetes manifests
 
-export function AuthGate({ children }) {
-  const [session, setSession] = useState(undefined) // undefined = loading
+**`k8s/postgres.yaml`** — Postgres 16 Deployment + 5 Gi PVC + ClusterIP Service on port 5432. Uses `secret.yaml` for `POSTGRES_PASSWORD`.
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
-    supabase.auth.onAuthStateChange((_event, session) => setSession(session))
-  }, [])
+**`k8s/api.yaml`** — Go API Deployment (1 replica) + ClusterIP Service on port 8080. Mounts env vars from `secret.yaml`: `DB_DSN`, `JWT_SECRET`, `USERS` (JSON map of `{"max":"<bcrypt>","lena":"<bcrypt>"}`).
 
-  if (session === undefined) return <div className="app">...</div>
-  if (!session) return <LoginScreen />
-  if (!ALLOWED_EMAILS.includes(session.user.email)) {
-    supabase.auth.signOut()
-    return <div>Kein Zugriff.</div>
-  }
+**`k8s/frontend.yaml`** — existing nginx setup, renamed from `deployment.yaml`/`service.yaml`. Gets a new env var `VITE_API_URL` baked in at build time pointing to the API's ClusterIP (or the same NodePort if you want to keep a single external port).
 
-  return children
-}
+**`k8s/secret.yaml`** (never commit real values):
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nosdeux-secret
+stringData:
+  DB_DSN: "postgres://nosdeux:changeme@postgres:5432/nosdeux"
+  JWT_SECRET: "changeme"
+  USERS: '{"max":"<bcrypt-hash>","lena":"<bcrypt-hash>"}'
 ```
 
-`LoginScreen` shows a single email input and calls `supabase.auth.signInWithOtp({ email })`. Session persists in localStorage — stays logged in on the phone indefinitely.
-
-Wrap `<App />` with `<AuthGate>` in `src/main.jsx`.
-
-### 4 — Deploy to Pi
-
-`VITE_*` vars are baked into the bundle at build time by Vite, so pass them as Docker build args:
+### 6 — Build & deploy
 
 ```bash
-docker build \
-  --build-arg VITE_SUPABASE_URL=https://your-project.supabase.co \
-  --build-arg VITE_SUPABASE_ANON_KEY=your-anon-key \
-  -t nosdeux:latest .
+# Generate bcrypt hashes for passwords (Go one-liner)
+go run -e 'import "golang.org/x/crypto/bcrypt"; fmt.Println(string(must(bcrypt.GenerateFromPassword([]byte("yourpassword"), 12))))'
+
+# Build images on the Pi (imagePullPolicy: Never)
+docker build -t nosdeux-frontend:latest .
+docker build -f Dockerfile.api -t nosdeux-api:latest ./api
 
 kubectl apply -f k8s/
 ```
 
-Access via `http://<pi-tailscale-ip>:30080`. Open in Safari/Chrome and "Add to Home Screen" to install the PWA.
+Access via `http://<pi-tailscale-ip>:30080`. Open in Safari/Chrome → "Add to Home Screen" to install the PWA.
 
 ---
 

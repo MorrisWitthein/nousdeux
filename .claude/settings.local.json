@@ -6,7 +6,9 @@
       "Bash(kubectl rollout *)",
       "Bash(kubectl get *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://192.168.178.50:30080/)",
-      "Bash(kubectl delete *)"
+      "Bash(kubectl delete *)",
+      "Bash(go version *)",
+      "Bash(go build *)"
     ]
   }
 }
