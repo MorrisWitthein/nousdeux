@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nosdeux-api
+  namespace: default
+  labels:
+    app: nosdeux-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nosdeux-api
+  template:
+    metadata:
+      labels:
+        app: nosdeux-api
+    spec:
+      containers:
+        - name: nosdeux-api
+          image: registry.tail32699d.ts.net/nosdeux-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_ADDR
+              value: ":8080"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "16Mi"
+              cpu: "25m"
+            limits:
+              memory: "32Mi"
+              cpu: "100m"

@@ -55,9 +55,9 @@ Total monthly cost: €0.
 _Checkpoint: `go run ./api` starts cleanly, curl round-trip works._
 
 #### M2 — Wire events hook to the Go API
-- [ ] Swap `useEvents.js` from `mockDb` to `fetch` against `VITE_API_URL`
-- [ ] Frontend runs against the real API for events; other 3 tabs still use mock
-- [ ] Add `VITE_API_URL=http://localhost:8080` to `.env.local` (gitignored)
+- [x] Swap `useEvents.js` from `mockDb` to `fetch` against `VITE_API_URL`
+- [x] Frontend runs against the real API for events; other 3 tabs still use mock
+- [x] Add `VITE_API_URL=http://localhost:8080` to `.env.local` (gitignored)
 
 _Checkpoint: events tab persists across page refreshes (held in API memory); rest of app still works via mock._
 

@@ -1,13 +1,17 @@
 package main
 
 import (
-	"crypto/rand"
+	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Event mirrors the DB schema from PLAN.md.
@@ -27,13 +31,18 @@ var (
 	events []Event
 )
 
-func newUUID() string {
-	var b [16]byte
-	_, _ = rand.Read(b[:])
-	b[6] = (b[6] & 0x0f) | 0x40 // version 4
-	b[8] = (b[8] & 0x3f) | 0x80 // variant bits
-	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+// writeJSON sends a JSON response with the given status code.
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Error("encode response", "err", err)
+	}
+}
+
+// writeError sends a JSON error response.
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
 }
 
 // cors wraps a handler with permissive CORS headers for local dev.
@@ -50,6 +59,10 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 func handleEvents(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -61,43 +74,77 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
 			out[i], out[j] = out[j], out[i]
 		}
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(out); err != nil {
-			log.Printf("encode events: %v", err)
-		}
+		writeJSON(w, http.StatusOK, out)
 
 	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB limit
 		var e Event
 		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-			http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 			return
 		}
 		if e.Title == "" {
-			http.Error(w, "title is required", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		e.ID = newUUID()
+		if e.Who == "" {
+			writeError(w, http.StatusBadRequest, "who is required")
+			return
+		}
+		e.ID = uuid.New().String()
 		e.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 
 		mu.Lock()
 		events = append(events, e)
 		mu.Unlock()
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(e); err != nil {
-			log.Printf("encode event: %v", err)
-		}
+		slog.Info("event created", "id", e.ID, "title", e.Title)
+		writeJSON(w, http.StatusCreated, e)
 
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 func main() {
-	http.HandleFunc("/api/events", cors(handleEvents))
+	addr := os.Getenv("API_ADDR")
+	if addr == "" {
+		addr = ":8080"
+	}
 
-	addr := ":8080"
-	log.Printf("nosdeux API listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", handleHealth)
+	mux.HandleFunc("/api/events", cors(handleEvents))
+
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Start server in background.
+	go func() {
+		slog.Info("nosdeux API listening", "addr", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server error", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Graceful shutdown on SIGTERM / SIGINT.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	slog.Info("shutting down gracefully...")
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("shutdown error", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("server stopped")
 }
