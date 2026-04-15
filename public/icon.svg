@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#1C1A17"/>
+  <!-- Decorative circle accent -->
+  <circle cx="420" cy="100" r="90" fill="#C8553D" opacity="0.25"/>
+  <!-- "n" in Fraunces-style serif -->
+  <text
+    x="256"
+    y="310"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="220"
+    font-weight="400"
+    font-style="italic"
+    fill="#F5F0E8"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    letter-spacing="-8"
+  >nd</text>
+  <!-- Accent underline -->
+  <rect x="156" y="340" width="200" height="6" rx="3" fill="#C8553D"/>
+</svg>

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nosdeux
+  namespace: default
+  labels:
+    app: nosdeux
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nosdeux
+  template:
+    metadata:
+      labels:
+        app: nosdeux
+    spec:
+      containers:
+        - name: nosdeux
+          image: registry.tail32699d.ts.net/nosdeux:test
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "200m"
