@@ -11,10 +11,19 @@ import (
 type Broker struct {
 	mu      sync.Mutex
 	clients map[chan struct{}]struct{}
+	done    chan struct{}
 }
 
 func NewBroker() *Broker {
-	return &Broker{clients: make(map[chan struct{}]struct{})}
+	return &Broker{
+		clients: make(map[chan struct{}]struct{}),
+		done:    make(chan struct{}),
+	}
+}
+
+// Shutdown closes all SSE connections so the server can exit.
+func (b *Broker) Shutdown() {
+	close(b.done)
 }
 
 // Notify signals all connected clients to refresh.
@@ -24,7 +33,7 @@ func (b *Broker) Notify() {
 	for ch := range b.clients {
 		select {
 		case ch <- struct{}{}:
-		default: // don't block if client is slow
+		default:
 		}
 	}
 }
@@ -40,7 +49,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	ch := make(chan struct{}, 1)
 	b.mu.Lock()
@@ -60,6 +68,8 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-ctx.Done():
 			slog.Info("sse client disconnected", "path", r.URL.Path)
+			return
+		case <-b.done:
 			return
 		case <-ch:
 			fmt.Fprintf(w, "data: refresh\n\n")

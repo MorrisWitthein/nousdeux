@@ -23,7 +23,7 @@ type Event struct {
 	Time      string `json:"time,omitempty"`
 	Who       string `json:"who"`
 	Badge     string `json:"badge,omitempty"`
-	BadgeType string `json:"badge_type,omitempty"`
+	BadgeType string `json:"badgeType,omitempty"`
 	CreatedAt string `json:"created_at"`
 }
 
@@ -46,7 +46,7 @@ type Series struct {
 	Sub        string `json:"sub,omitempty"`
 	Progress   int    `json:"progress"`
 	Status     string `json:"status,omitempty"`
-	StatusType string `json:"status_type,omitempty"`
+	StatusType string `json:"statusType,omitempty"`
 	CreatedAt  string `json:"created_at"`
 }
 
@@ -326,6 +326,10 @@ func main() {
 	<-quit
 
 	slog.Info("shutting down gracefully...")
+	eventsBroker.Shutdown()
+	recipesBroker.Shutdown()
+	seriesBroker.Shutdown()
+	activitiesBroker.Shutdown()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
