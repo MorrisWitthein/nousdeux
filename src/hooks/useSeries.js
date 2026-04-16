@@ -12,6 +12,9 @@ export function useSeries() {
 
   useEffect(() => {
     refresh()
+    const es = new EventSource(`${API}/api/series/stream`)
+    es.onmessage = () => refresh()
+    return () => es.close()
   }, [])
 
   const addSeries = async (item) => {

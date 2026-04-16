@@ -12,6 +12,9 @@ export function useActivities() {
 
   useEffect(() => {
     refresh()
+    const es = new EventSource(`${API}/api/activities/stream`)
+    es.onmessage = () => refresh()
+    return () => es.close()
   }, [])
 
   const addActivity = async (activity) => {

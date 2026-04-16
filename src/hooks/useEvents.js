@@ -12,6 +12,9 @@ export function useEvents() {
 
   useEffect(() => {
     refresh()
+    const es = new EventSource(`${API}/api/events/stream`)
+    es.onmessage = () => refresh()
+    return () => es.close()
   }, [])
 
   const addEvent = async (event) => {

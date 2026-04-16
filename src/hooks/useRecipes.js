@@ -12,6 +12,9 @@ export function useRecipes() {
 
   useEffect(() => {
     refresh()
+    const es = new EventSource(`${API}/api/recipes/stream`)
+    es.onmessage = () => refresh()
+    return () => es.close()
   }, [])
 
   const addRecipe = async (recipe) => {

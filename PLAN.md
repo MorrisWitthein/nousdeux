@@ -69,10 +69,10 @@ _Checkpoint: events tab persists across page refreshes (held in API memory); res
 _Checkpoint: full app runs against the Go API — all tabs read/write, data survives tab closes but resets on API restart._
 
 #### M4 — SSE realtime sync
-- [ ] `sse/broker.go` — one broker per table, fans out `data: refresh\n\n`
-- [ ] Each `POST` handler pings its broker after insert
-- [ ] `GET /api/events/stream` (and same for other tables) — SSE endpoint
-- [ ] Update all 4 hooks to open an `EventSource` and call `refresh` on message
+- [x] `sse/broker.go` — one broker per table, fans out `data: refresh\n\n`
+- [x] Each `POST` handler pings its broker after insert
+- [x] `GET /api/events/stream` (and same for other tables) — SSE endpoint
+- [x] Update all 4 hooks to open an `EventSource` and call `refresh` on message
 
 _Checkpoint: open the app in two browser tabs — adding an item in one tab appears in the other within a second._
 

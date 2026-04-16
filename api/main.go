@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mwitthein/nosdeux-api/sse"
 )
 
 // Event mirrors the DB schema from PLAN.md.
@@ -65,6 +66,11 @@ var (
 	recipes    []Recipe
 	series     []Series
 	activities []Activity
+
+	eventsBroker     = sse.NewBroker()
+	recipesBroker    = sse.NewBroker()
+	seriesBroker     = sse.NewBroker()
+	activitiesBroker = sse.NewBroker()
 )
 
 // writeJSON sends a JSON response with the given status code.
@@ -135,6 +141,7 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		mu.Unlock()
 
 		slog.Info("event created", "id", e.ID, "title", e.Title)
+		eventsBroker.Notify()
 		writeJSON(w, http.StatusCreated, e)
 
 	default:
@@ -181,6 +188,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		mu.Unlock()
 
 		slog.Info("recipe created", "id", rec.ID, "title", rec.Title)
+		recipesBroker.Notify()
 		writeJSON(w, http.StatusCreated, rec)
 
 	default:
@@ -226,6 +234,7 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		mu.Unlock()
 
 		slog.Info("series created", "id", s.ID, "title", s.Title)
+		seriesBroker.Notify()
 		writeJSON(w, http.StatusCreated, s)
 
 	default:
@@ -269,6 +278,7 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		mu.Unlock()
 
 		slog.Info("activity created", "id", a.ID, "title", a.Title)
+		activitiesBroker.Notify()
 		writeJSON(w, http.StatusCreated, a)
 
 	default:
@@ -289,13 +299,16 @@ func main() {
 	mux.HandleFunc("/api/recipes", cors(handleRecipes))
 	mux.HandleFunc("/api/series", cors(handleSeries))
 	mux.HandleFunc("/api/activities", cors(handleActivities))
+	mux.HandleFunc("/api/events/stream", cors(eventsBroker.ServeHTTP))
+	mux.HandleFunc("/api/recipes/stream", cors(recipesBroker.ServeHTTP))
+	mux.HandleFunc("/api/series/stream", cors(seriesBroker.ServeHTTP))
+	mux.HandleFunc("/api/activities/stream", cors(activitiesBroker.ServeHTTP))
 
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout: 5 * time.Second,
+		IdleTimeout: 60 * time.Second,
 	}
 
 	// Start server in background.
