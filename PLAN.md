@@ -86,9 +86,9 @@ _Checkpoint: open the app in two browser tabs — adding an item in one tab appe
 _Checkpoint: app requires login; unknown credentials are rejected; token survives refresh._
 
 #### M6 — Postgres (local dev via Docker Compose)
-- [ ] `docker-compose.yml` with a Postgres 16 service (for local dev only)
+- [x] `docker-compose.yml` with Postgres 16, Go API, and frontend services
 - [ ] `api/db/connect.go` — pgx connection pool from `DB_DSN` env var
-- [ ] `api/db/migrate.go` — runs schema SQL on startup (idempotent `CREATE TABLE IF NOT EXISTS`)
+- [x] `api/db/migrate.go` — versioned SQL migrations (`api/db/migrations/NNN_*.sql`), auto-applied on startup
 - [ ] Swap all in-memory slices for pgx queries
 - [ ] Update `.env.example` with `DB_DSN`
 

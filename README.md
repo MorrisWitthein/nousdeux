@@ -8,17 +8,47 @@ A shared planning PWA for two users to manage events, recipes, TV series, and ac
 | -------- | ----------------------------- |
 | Frontend | React 18 + Vite 6 (JSX, PWA) |
 | API      | Go (stdlib net/http)          |
+| Database | PostgreSQL 16                 |
 | Realtime | Server-Sent Events (SSE)      |
 | Auth     | JWT (bcrypt passwords)        |
 | Hosting  | Raspberry Pi + Kubernetes     |
 | Network  | Tailscale VPN                 |
 
-## Local development
+## Quick start (Docker Compose)
+
+The fastest way to run the full stack locally:
+
+```bash
+# Generate a bcrypt hash for a test password
+htpasswd -nbBC 12 "" test | cut -d: -f2
+
+# Start everything (Postgres + API + frontend)
+USERS='{"max":"<paste-hash>","lena":"<paste-hash>"}' docker compose up --build
+```
+
+- Frontend: http://localhost:8081
+- API: http://localhost:8080
+- Postgres: localhost:5432
+
+Data persists in a Docker volume across restarts.
+
+## Local development (without Docker)
 
 ### Prerequisites
 
 - Node.js 18+
 - Go 1.22+
+- PostgreSQL 16 (or use `docker compose up postgres` for just the DB)
+
+### Database
+
+Start Postgres via Docker Compose:
+
+```bash
+docker compose up -d postgres
+```
+
+This creates the `nosdeux` database on `localhost:5432`.
 
 ### Frontend
 
@@ -36,29 +66,29 @@ Generate a bcrypt hash for a test password:
 htpasswd -nbBC 12 "" test | cut -d: -f2
 ```
 
-Or if you don't have `htpasswd`, use the Go toolchain:
+Start the API:
 
 ```bash
-echo 'package main; import ("fmt";"golang.org/x/crypto/bcrypt"); func main() { h, _ := bcrypt.GenerateFromPassword([]byte("test"), 12); fmt.Println(string(h)) }' > /tmp/bgen.go && go run -C api /tmp/bgen.go
-```
-
-Start the API (from `api/`):
-
-```bash
+DB_DSN=postgres://nosdeux:nosdeux@localhost:5432/nosdeux \
 JWT_SECRET=dev-secret \
 USERS='{"max":"<paste-hash>","lena":"<paste-hash>"}' \
-go run .
+go run ./api
 ```
 
-The API listens on `http://localhost:8080`. Both users can log in with password `test`.
+The API listens on `http://localhost:8080`. Schema migrations run automatically on startup. Both users can log in with password `test`.
 
 ### API environment variables
 
 | Variable     | Required | Description                                         |
 | ------------ | -------- | --------------------------------------------------- |
+| `DB_DSN`     | Yes      | Postgres connection string                          |
 | `API_ADDR`   | No       | Listen address (default `:8080`)                    |
 | `JWT_SECRET` | Yes      | Secret key for signing JWTs                         |
 | `USERS`      | Yes      | JSON map of `username` to bcrypt hash               |
+
+### Schema migrations
+
+SQL migrations live in `api/db/migrations/` as numbered files. They are embedded into the binary and run automatically on startup. See [CLAUDE.md](CLAUDE.md) for the full workflow.
 
 ### API endpoints
 
@@ -84,7 +114,7 @@ The API listens on `http://localhost:8080`. Both users can log in with password 
 Build images on the Pi (`imagePullPolicy: Never`):
 
 ```bash
-docker build -t nosdeux-frontend:latest .
+docker build -t nosdeux-frontend:latest --build-arg VITE_API_URL=http://<pi-tailscale-ip>:30080 .
 docker build -f Dockerfile.api -t nosdeux-api:latest ./api
 kubectl apply -f k8s/
 ```
@@ -106,7 +136,12 @@ nosdeux/
 │   ├── handlers.go      # CRUD handlers for all 4 tables
 │   ├── middleware.go     # CORS, JSON response helpers
 │   ├── models.go        # Event, Recipe, Series, Activity structs
-│   ├── store.go         # in-memory data + SSE brokers
+│   ├── store.go         # DB pool + SSE brokers
+│   ├── db/
+│   │   ├── connect.go   # pgx connection pool
+│   │   ├── migrate.go   # auto-apply numbered SQL migrations
+│   │   └── migrations/
+│   │       └── 001_initial.sql
 │   └── sse/
 │       └── broker.go    # SSE fan-out broker
 ├── src/
@@ -118,7 +153,8 @@ nosdeux/
 │   ├── data.js          # seed data + calendar grid
 │   └── main.jsx         # entry point
 ├── k8s/                 # Kubernetes manifests
-├── Dockerfile           # frontend (node build > nginx)
-├── Dockerfile.api       # API (go build > distroless)
+├── docker-compose.yml   # full local stack (Postgres + API + frontend)
+├── Dockerfile           # frontend (node build → nginx)
+├── Dockerfile.api       # API (go build → scratch)
 └── PLAN.md              # development roadmap
 ```

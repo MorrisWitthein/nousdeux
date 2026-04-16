@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/mwitthein/nosdeux-api/db"
 )
 
 func main() {
@@ -32,6 +34,26 @@ func main() {
 		slog.Error("USERS env var is required")
 		os.Exit(1)
 	}
+
+	// Connect to Postgres.
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		slog.Error("DB_DSN env var is required")
+		os.Exit(1)
+	}
+	var err error
+	pool, err = db.Connect(context.Background(), dsn)
+	if err != nil {
+		slog.Error("database connect failed", "err", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	if err := db.Migrate(context.Background(), pool); err != nil {
+		slog.Error("database migration failed", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("database ready")
 
 	// Routes.
 	mux := http.NewServeMux()
