@@ -77,11 +77,11 @@ _Checkpoint: full app runs against the Go API — all tabs read/write, data surv
 _Checkpoint: open the app in two browser tabs — adding an item in one tab appears in the other within a second._
 
 #### M5 — JWT auth + `AuthGate`
-- [ ] `POST /api/login` — checks username/password from env `USERS` (JSON map of bcrypt hashes), returns signed JWT (15-day expiry)
-- [ ] JWT middleware guards all non-login routes
-- [ ] `src/AuthGate.jsx` — login form, stores token in `localStorage`, wraps `<App>`
-- [ ] All hooks send `Authorization: Bearer <token>`; SSE streams pass token as query param
-- [ ] Auto-logout on 401 response
+- [x] `POST /api/login` — checks username/password from env `USERS` (JSON map of bcrypt hashes), returns signed JWT (15-day expiry)
+- [x] JWT middleware guards all non-login routes
+- [x] `src/AuthGate.jsx` — login form, stores token in `localStorage`, wraps `<App>`
+- [x] All hooks send `Authorization: Bearer <token>`; SSE streams pass token as query param
+- [x] Auto-logout on 401 response
 
 _Checkpoint: app requires login; unknown credentials are rejected; token survives refresh._
 

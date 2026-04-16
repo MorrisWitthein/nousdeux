@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/mwitthein/nosdeux-api/sse"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Event mirrors the DB schema from PLAN.md.
@@ -71,6 +74,9 @@ var (
 	recipesBroker    = sse.NewBroker()
 	seriesBroker     = sse.NewBroker()
 	activitiesBroker = sse.NewBroker()
+
+	jwtSecret []byte
+	users     map[string]string // username → bcrypt hash
 )
 
 // writeJSON sends a JSON response with the given status code.
@@ -97,6 +103,72 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		next(w, r)
+	}
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", "POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+
+	hash, ok := users[creds.Username]
+	if !ok || bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password)) != nil {
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": creds.Username,
+		"exp": time.Now().Add(15 * 24 * time.Hour).Unix(),
+	})
+	signed, err := token.SignedString(jwtSecret)
+	if err != nil {
+		slog.Error("sign JWT", "err", err)
+		writeError(w, http.StatusInternalServerError, "token error")
+		return
+	}
+
+	slog.Info("login", "user", creds.Username)
+	writeJSON(w, http.StatusOK, map[string]string{"token": signed})
+}
+
+// requireAuth extracts and validates a JWT from the Authorization header
+// or from a "token" query parameter (used by EventSource/SSE).
+func requireAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := ""
+		if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+			tokenStr = auth[7:]
+		} else if t := r.URL.Query().Get("token"); t != "" {
+			tokenStr = t
+		}
+
+		if tokenStr == "" {
+			writeError(w, http.StatusUnauthorized, "missing token")
+			return
+		}
+
+		_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+			return jwtSecret, nil
+		}, jwt.WithValidMethods([]string{"HS256"}))
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+
 		next(w, r)
 	}
 }
@@ -293,16 +365,33 @@ func main() {
 		addr = ":8080"
 	}
 
+	// Load auth config from env.
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+	if len(jwtSecret) == 0 {
+		slog.Error("JWT_SECRET env var is required")
+		os.Exit(1)
+	}
+	if raw := os.Getenv("USERS"); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &users); err != nil {
+			slog.Error("USERS env var must be valid JSON", "err", err)
+			os.Exit(1)
+		}
+	} else {
+		slog.Error("USERS env var is required")
+		os.Exit(1)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handleHealth)
-	mux.HandleFunc("/api/events", cors(handleEvents))
-	mux.HandleFunc("/api/recipes", cors(handleRecipes))
-	mux.HandleFunc("/api/series", cors(handleSeries))
-	mux.HandleFunc("/api/activities", cors(handleActivities))
-	mux.HandleFunc("/api/events/stream", cors(eventsBroker.ServeHTTP))
-	mux.HandleFunc("/api/recipes/stream", cors(recipesBroker.ServeHTTP))
-	mux.HandleFunc("/api/series/stream", cors(seriesBroker.ServeHTTP))
-	mux.HandleFunc("/api/activities/stream", cors(activitiesBroker.ServeHTTP))
+	mux.HandleFunc("/api/login", cors(handleLogin))
+	mux.HandleFunc("/api/events", cors(requireAuth(handleEvents)))
+	mux.HandleFunc("/api/recipes", cors(requireAuth(handleRecipes)))
+	mux.HandleFunc("/api/series", cors(requireAuth(handleSeries)))
+	mux.HandleFunc("/api/activities", cors(requireAuth(handleActivities)))
+	mux.HandleFunc("/api/events/stream", cors(requireAuth(eventsBroker.ServeHTTP)))
+	mux.HandleFunc("/api/recipes/stream", cors(requireAuth(recipesBroker.ServeHTTP)))
+	mux.HandleFunc("/api/series/stream", cors(requireAuth(seriesBroker.ServeHTTP)))
+	mux.HandleFunc("/api/activities/stream", cors(requireAuth(activitiesBroker.ServeHTTP)))
 
 	srv := &http.Server{
 		Addr:         addr,
