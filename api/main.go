@@ -26,9 +26,45 @@ type Event struct {
 	CreatedAt string `json:"created_at"`
 }
 
+// Recipe mirrors the DB schema from PLAN.md.
+type Recipe struct {
+	ID        string   `json:"id"`
+	Emoji     string   `json:"emoji,omitempty"`
+	Title     string   `json:"title"`
+	Tags      []string `json:"tags,omitempty"`
+	Who       string   `json:"who"`
+	Rating    string   `json:"rating,omitempty"`
+	CreatedAt string   `json:"created_at"`
+}
+
+// Series mirrors the DB schema from PLAN.md.
+type Series struct {
+	ID         string `json:"id"`
+	Emoji      string `json:"emoji,omitempty"`
+	Title      string `json:"title"`
+	Sub        string `json:"sub,omitempty"`
+	Progress   int    `json:"progress"`
+	Status     string `json:"status,omitempty"`
+	StatusType string `json:"status_type,omitempty"`
+	CreatedAt  string `json:"created_at"`
+}
+
+// Activity mirrors the DB schema from PLAN.md.
+type Activity struct {
+	ID        string `json:"id"`
+	Emoji     string `json:"emoji,omitempty"`
+	Title     string `json:"title"`
+	Meta      string `json:"meta,omitempty"`
+	Who       string `json:"who"`
+	CreatedAt string `json:"created_at"`
+}
+
 var (
-	mu     sync.RWMutex
-	events []Event
+	mu         sync.RWMutex
+	events     []Event
+	recipes    []Recipe
+	series     []Series
+	activities []Activity
 )
 
 // writeJSON sends a JSON response with the given status code.
@@ -107,6 +143,140 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleRecipes(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		mu.RLock()
+		out := make([]Recipe, len(recipes))
+		copy(out, recipes)
+		mu.RUnlock()
+		for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+			out[i], out[j] = out[j], out[i]
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var rec Recipe
+		if err := json.NewDecoder(r.Body).Decode(&rec); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if rec.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if rec.Who == "" {
+			writeError(w, http.StatusBadRequest, "who is required")
+			return
+		}
+		rec.ID = uuid.New().String()
+		rec.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+		if rec.Rating == "" {
+			rec.Rating = "–"
+		}
+
+		mu.Lock()
+		recipes = append(recipes, rec)
+		mu.Unlock()
+
+		slog.Info("recipe created", "id", rec.ID, "title", rec.Title)
+		writeJSON(w, http.StatusCreated, rec)
+
+	default:
+		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func handleSeries(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		mu.RLock()
+		out := make([]Series, len(series))
+		copy(out, series)
+		mu.RUnlock()
+		for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+			out[i], out[j] = out[j], out[i]
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var s Series
+		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if s.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		s.ID = uuid.New().String()
+		s.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+		if s.Status == "" {
+			s.Status = "Geplant"
+		}
+		if s.StatusType == "" {
+			s.StatusType = "yellow"
+		}
+
+		mu.Lock()
+		series = append(series, s)
+		mu.Unlock()
+
+		slog.Info("series created", "id", s.ID, "title", s.Title)
+		writeJSON(w, http.StatusCreated, s)
+
+	default:
+		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func handleActivities(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		mu.RLock()
+		out := make([]Activity, len(activities))
+		copy(out, activities)
+		mu.RUnlock()
+		for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+			out[i], out[j] = out[j], out[i]
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var a Activity
+		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if a.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if a.Who == "" {
+			writeError(w, http.StatusBadRequest, "who is required")
+			return
+		}
+		a.ID = uuid.New().String()
+		a.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+
+		mu.Lock()
+		activities = append(activities, a)
+		mu.Unlock()
+
+		slog.Info("activity created", "id", a.ID, "title", a.Title)
+		writeJSON(w, http.StatusCreated, a)
+
+	default:
+		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
 func main() {
 	addr := os.Getenv("API_ADDR")
 	if addr == "" {
@@ -116,6 +286,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handleHealth)
 	mux.HandleFunc("/api/events", cors(handleEvents))
+	mux.HandleFunc("/api/recipes", cors(handleRecipes))
+	mux.HandleFunc("/api/series", cors(handleSeries))
+	mux.HandleFunc("/api/activities", cors(handleActivities))
 
 	srv := &http.Server{
 		Addr:         addr,

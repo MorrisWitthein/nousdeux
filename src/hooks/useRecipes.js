@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react'
-import { mockDb } from '../mock/db.js'
+
+const API = import.meta.env.VITE_API_URL
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState([])
 
   const refresh = async () => {
-    const data = await mockDb.select('recipes')
-    setRecipes(data)
+    const res = await fetch(`${API}/api/recipes`)
+    if (res.ok) setRecipes(await res.json())
   }
 
   useEffect(() => {
     refresh()
-    return mockDb.subscribe('recipes', refresh)
   }, [])
 
-  const addRecipe = (recipe) => mockDb.insert('recipes', recipe)
+  const addRecipe = async (recipe) => {
+    const res = await fetch(`${API}/api/recipes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recipe),
+    })
+    if (res.ok) refresh()
+  }
 
   return { recipes, addRecipe }
 }

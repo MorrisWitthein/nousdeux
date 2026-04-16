@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react'
-import { mockDb } from '../mock/db.js'
+
+const API = import.meta.env.VITE_API_URL
 
 export function useActivities() {
   const [activities, setActivities] = useState([])
 
   const refresh = async () => {
-    const data = await mockDb.select('activities')
-    setActivities(data)
+    const res = await fetch(`${API}/api/activities`)
+    if (res.ok) setActivities(await res.json())
   }
 
   useEffect(() => {
     refresh()
-    return mockDb.subscribe('activities', refresh)
   }, [])
 
-  const addActivity = (activity) => mockDb.insert('activities', activity)
+  const addActivity = async (activity) => {
+    const res = await fetch(`${API}/api/activities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activity),
+    })
+    if (res.ok) refresh()
+  }
 
   return { activities, addActivity }
 }

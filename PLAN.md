@@ -62,9 +62,9 @@ _Checkpoint: `go run ./api` starts cleanly, curl round-trip works._
 _Checkpoint: events tab persists across page refreshes (held in API memory); rest of app still works via mock._
 
 #### M3 — Extend API to all 4 tables + swap remaining hooks
-- [ ] Add `GET/POST /api/recipes`, `/series`, `/activities` (same in-memory pattern)
-- [ ] Swap `useRecipes.js`, `useSeries.js`, `useActivities.js`
-- [ ] Remove mock dependency from all hooks (mock stays in repo for reference)
+- [x] Add `GET/POST /api/recipes`, `/series`, `/activities` (same in-memory pattern)
+- [x] Swap `useRecipes.js`, `useSeries.js`, `useActivities.js`
+- [x] Remove mock dependency from all hooks (mock stays in repo for reference)
 
 _Checkpoint: full app runs against the Go API — all tabs read/write, data survives tab closes but resets on API restart._
 

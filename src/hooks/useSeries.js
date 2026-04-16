@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react'
-import { mockDb } from '../mock/db.js'
+
+const API = import.meta.env.VITE_API_URL
 
 export function useSeries() {
   const [series, setSeries] = useState([])
 
   const refresh = async () => {
-    const data = await mockDb.select('series')
-    setSeries(data)
+    const res = await fetch(`${API}/api/series`)
+    if (res.ok) setSeries(await res.json())
   }
 
   useEffect(() => {
     refresh()
-    return mockDb.subscribe('series', refresh)
   }, [])
 
-  const addSeries = (item) => mockDb.insert('series', item)
+  const addSeries = async (item) => {
+    const res = await fetch(`${API}/api/series`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    })
+    if (res.ok) refresh()
+  }
 
   return { series, addSeries }
 }
