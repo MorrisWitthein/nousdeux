@@ -1,12 +1,12 @@
 import { useState } from 'react'
 
-export default function ActivitiesTab({ activities, addActivity }) {
+export default function ActivitiesTab({ activities, addActivity, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newAct, setNewAct] = useState({ title: '', meta: '' })
 
   const handleAdd = async () => {
     if (!newAct.title) return
-    await addActivity({ emoji: '✨', title: newAct.title, meta: newAct.meta, who: 'M' })
+    await addActivity({ emoji: '✨', title: newAct.title, meta: newAct.meta })
     setNewAct({ title: '', meta: '' })
     setShowForm(false)
   }
@@ -54,7 +54,7 @@ export default function ActivitiesTab({ activities, addActivity }) {
             <div className="list-sub">{a.meta}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div className="dot" style={{ background: a.who === 'L' ? '#C8553D' : '#4A7C6F', width: 10, height: 10 }} />
+            <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
           </div>
         </div>
       ))}

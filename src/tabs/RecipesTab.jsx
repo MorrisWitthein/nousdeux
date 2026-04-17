@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function RecipesTab({ recipes, addRecipe }) {
+export default function RecipesTab({ recipes, addRecipe, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newRecipe, setNewRecipe] = useState({ title: '', tags: '' })
 
@@ -10,7 +10,6 @@ export default function RecipesTab({ recipes, addRecipe }) {
       emoji: '🍽️',
       title: newRecipe.title,
       tags: newRecipe.tags.split(',').map(t => t.trim()).filter(Boolean),
-      who: 'M',
       rating: '–',
     })
     setNewRecipe({ title: '', tags: '' })
@@ -64,8 +63,8 @@ export default function RecipesTab({ recipes, addRecipe }) {
               {r.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div className="dot" style={{ background: r.who === 'L' ? '#C8553D' : '#4A7C6F' }} />
-              {r.who === 'L' ? 'Von Lena' : 'Von Max'}
+              <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+              Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styles from './styles.js'
+import { getCurrentUser } from './parseJwt.js'
 import { useEvents } from './hooks/useEvents.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useSeries } from './hooks/useSeries.js'
@@ -20,6 +21,7 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home')
+  const currentUser = getCurrentUser()
 
   const { events,     addEvent }    = useEvents()
   const { recipes,    addRecipe }   = useRecipes()
@@ -35,10 +37,9 @@ export default function App() {
         <div className="header">
           <div className="header-top">
             <div className="logo">nous<span>deux</span></div>
-            <div className="avatar-pair">
-              <div className="avatar avatar-a">L</div>
-              <div className="avatar avatar-b">M</div>
-            </div>
+            {currentUser && (
+              <div className="avatar avatar-b">{currentUser.charAt(0).toUpperCase()}</div>
+            )}
           </div>
           <div className="tabs">
             {tabs.map(t => (
@@ -58,16 +59,16 @@ export default function App() {
             <HomeTab events={events} recipes={recipes} series={series} activities={activities} />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} addEvent={addEvent} />
+            <CalendarTab events={events} addEvent={addEvent} currentUser={currentUser} />
           )}
           {activeTab === 'lists' && (
             <ListsTab series={series} addSeries={addSeries} />
           )}
           {activeTab === 'recipes' && (
-            <RecipesTab recipes={recipes} addRecipe={addRecipe} />
+            <RecipesTab recipes={recipes} addRecipe={addRecipe} currentUser={currentUser} />
           )}
           {activeTab === 'activities' && (
-            <ActivitiesTab activities={activities} addActivity={addActivity} />
+            <ActivitiesTab activities={activities} addActivity={addActivity} currentUser={currentUser} />
           )}
         </div>
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -10,6 +11,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type contextKey string
+
+const userKey contextKey = "user"
+
+// userFromContext returns the authenticated username from the request context.
+func userFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(userKey).(string); ok {
+		return v
+	}
+	return ""
+}
 
 var (
 	jwtSecret []byte
@@ -70,12 +83,18 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+		tok, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 			return jwtSecret, nil
 		}, jwt.WithValidMethods([]string{"HS256"}))
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
+		}
+
+		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
+			if sub, _ := claims["sub"].(string); sub != "" {
+				r = r.WithContext(context.WithValue(r.Context(), userKey, sub))
+			}
 		}
 
 		next(w, r)

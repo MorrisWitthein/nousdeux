@@ -42,10 +42,7 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		if e.Who == "" {
-			writeError(w, http.StatusBadRequest, "who is required")
-			return
-		}
+		e.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO events (title, date, time, who, badge, badge_type)
 			 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`,
@@ -95,10 +92,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		if rec.Who == "" {
-			writeError(w, http.StatusBadRequest, "who is required")
-			return
-		}
+		rec.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO recipes (emoji, title, tags, who, rating)
 			 VALUES ($1,$2,$3,$4,$5) RETURNING id, COALESCE(rating,'–'), created_at`,
@@ -200,10 +194,7 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		if a.Who == "" {
-			writeError(w, http.StatusBadRequest, "who is required")
-			return
-		}
+		a.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO activities (emoji, title, meta, who)
 			 VALUES ($1,$2,$3,$4) RETURNING id, created_at`,

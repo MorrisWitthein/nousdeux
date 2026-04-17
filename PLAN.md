@@ -87,14 +87,63 @@ _Checkpoint: app requires login; unknown credentials are rejected; token survive
 
 #### M6 — Postgres (local dev via Docker Compose)
 - [x] `docker-compose.yml` with Postgres 16, Go API, and frontend services
-- [ ] `api/db/connect.go` — pgx connection pool from `DB_DSN` env var
+- [x] `api/db/connect.go` — pgx connection pool from `DB_DSN` env var
 - [x] `api/db/migrate.go` — versioned SQL migrations (`api/db/migrations/NNN_*.sql`), auto-applied on startup
-- [ ] Swap all in-memory slices for pgx queries
-- [ ] Update `.env.example` with `DB_DSN`
+- [x] Swap all in-memory slices for pgx queries
+- [x] Update `.env.example` with `DB_DSN`
 
 _Checkpoint: `docker compose up` + `go run ./api` — data now survives API restarts; two local browser sessions stay in sync via SSE._
 
-#### M7 — Deploy to Pi
+### Phase 2 — Quality of Life
+
+#### M7 — Dynamic user attribution from JWT
+- [x] Decode JWT `sub` claim in frontend (e.g. `parseJwt()` helper)
+- [x] Pass logged-in username to all add forms; map `"max"→"M"`, `"lena"→"L"` for `who` field
+- [x] Remove hardcoded `who: 'M'` from CalendarTab, RecipesTab, ActivitiesTab, ListsTab
+
+_Checkpoint: Lena's additions show her badge, Max's show his — no code change needed per user._
+
+#### M8 — Delete items
+- [ ] Add `DELETE /api/{table}/{id}` endpoints in Go API (one per table)
+- [ ] Add `002_` migration if needed (soft-delete column) or use hard delete
+- [ ] Add delete button on each card (recipe, series, activity, event) with confirmation
+- [ ] Hooks gain a `deleteX(id)` function; SSE triggers refresh on other clients
+
+_Checkpoint: long-press or tap trash icon removes an item; change appears on both devices._
+
+#### M9 — Edit items
+- [ ] Add `PATCH /api/{table}/{id}` endpoints in Go API (one per table)
+- [ ] Tap a card to open a pre-filled edit form (reuse add form with populated fields)
+- [ ] Hooks gain an `updateX(id, fields)` function; SSE triggers refresh
+- [ ] Support editing: title, emoji, tags, rating, status, progress, date/time, meta
+
+_Checkpoint: tap a recipe → change its rating → save → updated everywhere._
+
+#### M10 — Dynamic calendar
+- [ ] Compute month grid from `Date` object (replace hardcoded April 2026 array in `data.js`)
+- [ ] Wire `‹` / `›` nav buttons to change month (`useState` for current year/month)
+- [ ] Highlight days that have events (dot indicator or accent background)
+- [ ] Click a calendar day to open the add-event form with that date pre-filled
+
+_Checkpoint: navigate months freely; days with events are visually marked; tap a day to add._
+
+#### M11 — Emoji picker + status/badge selectors
+- [ ] Add a simple emoji picker to recipe, series, and activity add/edit forms (grid of ~20 relevant emoji per category)
+- [ ] Add a status dropdown to series form (Geplant / Läuft / Fertig) with color mapping
+- [ ] Add a badge-type selector to event form (Geplant / Bestätigt / Idee or similar)
+- [ ] Add a star-rating selector to recipe form (tap 1–5 stars)
+
+_Checkpoint: new items have user-chosen emoji, status, and ratings instead of hardcoded defaults._
+
+#### M12 — Movies & Books tabs
+- [ ] Add `movies` and `books` tables (migration `003_movies_books.sql`) — similar schema to series/recipes
+- [ ] Add Go API endpoints: `GET/POST/DELETE/PATCH /api/movies`, `/api/books` + SSE streams
+- [ ] Add `useMovies.js` and `useBooks.js` hooks
+- [ ] Replace "Noch leer" placeholders in ListsTab with real card lists + add forms
+
+_Checkpoint: Movies and Books tabs are fully functional — add, view, delete, edit._
+
+#### M13 — Deploy to Pi
 - [ ] `k8s/postgres.yaml` — Postgres 16 Deployment + 5 Gi PVC + ClusterIP Service
 - [ ] `k8s/api.yaml` — Go API Deployment + ClusterIP Service; env from `secret.yaml`
 - [ ] `k8s/secret.yaml` — `DB_DSN`, `JWT_SECRET`, `USERS` (fill real bcrypt hashes, never commit)
@@ -103,13 +152,6 @@ _Checkpoint: `docker compose up` + `go run ./api` — data now survives API rest
 - [ ] Verify on both phones over Tailscale: login, add item, see it appear on the other device
 
 _Checkpoint: both phones can log in, add items, and see each other's changes in real time. PWA install works._
-
-### Phase 2 — Quality of Life
-
-- Delete + edit items (currently add-only)
-- Functional calendar (computed month grid, not hardcoded April 2026)
-- Books and Movies tabs (currently empty placeholders)
-- Auto-detect who's adding based on logged-in user (not hardcoded "M")
 
 ### Phase 3 — Nice to Have (later, if wanted)
 

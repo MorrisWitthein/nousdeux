@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { calDays, today } from '../data.js'
 
-export default function CalendarTab({ events, addEvent }) {
+export default function CalendarTab({ events, addEvent, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '' })
 
@@ -16,7 +16,7 @@ export default function CalendarTab({ events, addEvent }) {
 
   const handleAdd = async () => {
     if (!newEvent.title) return
-    await addEvent({ ...newEvent, who: 'M', badge: 'Geplant', badgeType: 'green' })
+    await addEvent({ ...newEvent, badge: 'Geplant', badgeType: 'green' })
     setNewEvent({ title: '', date: '', time: '' })
     setShowForm(false)
   }
@@ -99,8 +99,8 @@ export default function CalendarTab({ events, addEvent }) {
           </div>
           <div className="card-footer">
             <div className="who-added">
-              <div className="dot" style={{ background: e.who === 'L' ? '#C8553D' : '#4A7C6F' }} />
-              {e.who === 'L' ? 'Von Lena hinzugefügt' : 'Von Max hinzugefügt'}
+              <div className="dot" style={{ background: e.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+              Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
             </div>
           </div>
         </div>
