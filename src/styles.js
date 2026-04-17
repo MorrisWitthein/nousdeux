@@ -376,6 +376,8 @@ const styles = `
 
 .cal-day:hover { background: var(--warm); }
 .cal-day.today { background: var(--ink); color: white; font-weight: 600; }
+.cal-day.selected { background: var(--accent3); color: var(--ink); font-weight: 600; }
+.cal-day.today.selected { background: var(--accent3); color: var(--ink); }
 .cal-day.has-event::after {
   content: '';
   width: 4px; height: 4px;

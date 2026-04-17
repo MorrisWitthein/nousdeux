@@ -120,14 +120,24 @@ _Checkpoint: long-press or tap trash icon removes an item; change appears on bot
 _Checkpoint: tap a recipe → change its rating → save → updated everywhere._
 
 #### M10 — Dynamic calendar
-- [ ] Compute month grid from `Date` object (replace hardcoded April 2026 array in `data.js`)
-- [ ] Wire `‹` / `›` nav buttons to change month (`useState` for current year/month)
-- [ ] Highlight days that have events (dot indicator or accent background)
-- [ ] Click a calendar day to open the add-event form with that date pre-filled
+- [x] Compute month grid from `Date` object (replace hardcoded April 2026 array in `data.js`)
+- [x] Wire `‹` / `›` nav buttons to change month (`useState` for current year/month)
+- [x] Highlight days that have events (dot indicator or accent background)
+- [x] Click a calendar day to filter events to that day; click again to deselect; add-form pre-fills date when a day is selected
 
-_Checkpoint: navigate months freely; days with events are visually marked; tap a day to add._
+_Checkpoint: navigate months freely; days with events are visually marked; tap a day to filter._
 
-#### M11 — Emoji picker + status/badge selectors
+#### M11 — Improved form inputs + richer data entry
+- [ ] **Events:** replace free-text date with a native `<input type="date">` and time with `<input type="time">`; display formatted German date on cards
+- [ ] **Recipes:** add fields for ingredients (multi-line textarea or comma-separated list), preparation steps (textarea), prep time (`<input type="number">` in minutes), and servings (`<input type="number">`); replace free-text rating with star selector (1–5)
+- [ ] **Series:** add form fields expose emoji, status dropdown, and progress slider also during *add* (not just edit)
+- [ ] **Activities:** add a date/time field so activities can optionally have a scheduled date
+- [ ] Review all placeholder text for clarity and consistency across add/edit forms
+- [ ] Ensure add forms and edit forms expose the same fields (currently add forms are much more minimal than edit forms)
+
+_Checkpoint: all forms use appropriate input types; recipes capture real recipe data; add and edit forms are consistent._
+
+#### M12 — Emoji picker + status/badge selectors
 - [ ] Add a simple emoji picker to recipe, series, and activity add/edit forms (grid of ~20 relevant emoji per category)
 - [ ] Add a status dropdown to series form (Geplant / Läuft / Fertig) with color mapping
 - [ ] Add a badge-type selector to event form (Geplant / Bestätigt / Idee or similar)
@@ -135,7 +145,7 @@ _Checkpoint: navigate months freely; days with events are visually marked; tap a
 
 _Checkpoint: new items have user-chosen emoji, status, and ratings instead of hardcoded defaults._
 
-#### M12 — Movies & Books tabs
+#### M13 — Movies & Books tabs
 - [ ] Add `movies` and `books` tables (migration `003_movies_books.sql`) — similar schema to series/recipes
 - [ ] Add Go API endpoints: `GET/POST/DELETE/PATCH /api/movies`, `/api/books` + SSE streams
 - [ ] Add `useMovies.js` and `useBooks.js` hooks
@@ -143,7 +153,7 @@ _Checkpoint: new items have user-chosen emoji, status, and ratings instead of ha
 
 _Checkpoint: Movies and Books tabs are fully functional — add, view, delete, edit._
 
-#### M13 — Deploy to Pi
+#### M14 — Deploy to Pi
 - [ ] `k8s/postgres.yaml` — Postgres 16 Deployment + 5 Gi PVC + ClusterIP Service
 - [ ] `k8s/api.yaml` — Go API Deployment + ClusterIP Service; env from `secret.yaml`
 - [ ] `k8s/secret.yaml` — `DB_DSN`, `JWT_SECRET`, `USERS` (fill real bcrypt hashes, never commit)
