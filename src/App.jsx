@@ -23,10 +23,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home')
   const currentUser = getCurrentUser()
 
-  const { events,     addEvent,    deleteEvent }    = useEvents()
-  const { recipes,    addRecipe,   deleteRecipe }   = useRecipes()
-  const { series,     addSeries,   deleteSeries }   = useSeries()
-  const { activities, addActivity, deleteActivity } = useActivities()
+  const { events,     addEvent,    updateEvent,    deleteEvent }    = useEvents()
+  const { recipes,    addRecipe,   updateRecipe,   deleteRecipe }   = useRecipes()
+  const { series,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
+  const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
 
   return (
     <>
@@ -59,16 +59,16 @@ export default function App() {
             <HomeTab events={events} recipes={recipes} series={series} activities={activities} />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} addEvent={addEvent} deleteEvent={deleteEvent} currentUser={currentUser} />
+            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} />
           )}
           {activeTab === 'lists' && (
-            <ListsTab series={series} addSeries={addSeries} deleteSeries={deleteSeries} />
+            <ListsTab series={series} addSeries={addSeries} updateSeries={updateSeries} deleteSeries={deleteSeries} />
           )}
           {activeTab === 'recipes' && (
-            <RecipesTab recipes={recipes} addRecipe={addRecipe} deleteRecipe={deleteRecipe} currentUser={currentUser} />
+            <RecipesTab recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe} currentUser={currentUser} />
           )}
           {activeTab === 'activities' && (
-            <ActivitiesTab activities={activities} addActivity={addActivity} deleteActivity={deleteActivity} currentUser={currentUser} />
+            <ActivitiesTab activities={activities} addActivity={addActivity} updateActivity={updateActivity} deleteActivity={deleteActivity} currentUser={currentUser} />
           )}
         </div>
 

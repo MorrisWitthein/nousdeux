@@ -1,8 +1,10 @@
 import { useState } from 'react'
 
-export default function RecipesTab({ recipes, addRecipe, deleteRecipe, currentUser }) {
+export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newRecipe, setNewRecipe] = useState({ title: '', tags: '' })
+  const [editing, setEditing] = useState(null)
+  const [editFields, setEditFields] = useState({ title: '', tags: '', emoji: '', rating: '' })
 
   const handleAdd = async () => {
     if (!newRecipe.title) return
@@ -14,6 +16,28 @@ export default function RecipesTab({ recipes, addRecipe, deleteRecipe, currentUs
     })
     setNewRecipe({ title: '', tags: '' })
     setShowForm(false)
+  }
+
+  const startEdit = (r) => {
+    setEditing(r.id)
+    setEditFields({
+      title: r.title,
+      tags: (r.tags || []).join(', '),
+      emoji: r.emoji || '',
+      rating: r.rating || '–',
+    })
+    setShowForm(false)
+  }
+
+  const handleUpdate = async () => {
+    if (!editFields.title) return
+    await updateRecipe(editing, {
+      emoji: editFields.emoji,
+      title: editFields.title,
+      tags: editFields.tags.split(',').map(t => t.trim()).filter(Boolean),
+      rating: editFields.rating,
+    })
+    setEditing(null)
   }
 
   return (
@@ -41,7 +65,7 @@ export default function RecipesTab({ recipes, addRecipe, deleteRecipe, currentUs
         </div>
       )}
 
-      {!showForm && (
+      {!showForm && !editing && (
         <button
           className="btn btn-primary"
           style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
@@ -52,25 +76,58 @@ export default function RecipesTab({ recipes, addRecipe, deleteRecipe, currentUs
       )}
 
       {recipes.map(r => (
-        <div key={r.id} className="recipe-card">
-          <div className="recipe-img">
-            {r.emoji}
-            <div className="recipe-img-label">⭐ {r.rating}</div>
-          </div>
-          <div className="recipe-body">
-            <div className="card-title">{r.title}</div>
-            <div className="recipe-tags">
-              {r.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+        editing === r.id ? (
+          <div key={r.id} className="add-form">
+            <div className="add-form-title">Rezept bearbeiten</div>
+            <input
+              placeholder="Emoji"
+              value={editFields.emoji}
+              onChange={e => setEditFields(f => ({ ...f, emoji: e.target.value }))}
+            />
+            <input
+              placeholder="Name des Rezepts"
+              value={editFields.title}
+              onChange={e => setEditFields(f => ({ ...f, title: e.target.value }))}
+            />
+            <input
+              placeholder="Tags (z.B. 30 Min, Veggie, Einfach)"
+              value={editFields.tags}
+              onChange={e => setEditFields(f => ({ ...f, tags: e.target.value }))}
+            />
+            <input
+              placeholder="Bewertung (z.B. ⭐⭐⭐)"
+              value={editFields.rating}
+              onChange={e => setEditFields(f => ({ ...f, rating: e.target.value }))}
+            />
+            <div className="btn-row">
+              <button className="btn btn-secondary" onClick={() => setEditing(null)}>Abbrechen</button>
+              <button className="btn btn-primary" onClick={handleUpdate}>Speichern</button>
             </div>
-            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
-                Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
+          </div>
+        ) : (
+          <div key={r.id} className="recipe-card" onClick={() => startEdit(r)}>
+            <div className="recipe-img">
+              {r.emoji}
+              <div className="recipe-img-label">⭐ {r.rating}</div>
+            </div>
+            <div className="recipe-body">
+              <div className="card-title">{r.title}</div>
+              <div className="recipe-tags">
+                {r.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
               </div>
-              <button className="btn-delete" onClick={() => { if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}>✕</button>
+              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+                  Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(r) }}>✎</button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}>✕</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )
       ))}
     </div>
   )

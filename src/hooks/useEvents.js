@@ -40,6 +40,16 @@ export function useEvents() {
     else handleUnauth(res)
   }
 
+  const updateEvent = async (id, fields) => {
+    const res = await fetch(`${API}/api/events?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(fields),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
   const deleteEvent = async (id) => {
     const res = await fetch(`${API}/api/events?id=${id}`, {
       method: 'DELETE',
@@ -49,5 +59,5 @@ export function useEvents() {
     else handleUnauth(res)
   }
 
-  return { events, addEvent, deleteEvent }
+  return { events, addEvent, updateEvent, deleteEvent }
 }

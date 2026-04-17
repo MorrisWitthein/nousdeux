@@ -40,6 +40,16 @@ export function useSeries() {
     else handleUnauth(res)
   }
 
+  const updateSeries = async (id, fields) => {
+    const res = await fetch(`${API}/api/series?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(fields),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
   const deleteSeries = async (id) => {
     const res = await fetch(`${API}/api/series?id=${id}`, {
       method: 'DELETE',
@@ -49,5 +59,5 @@ export function useSeries() {
     else handleUnauth(res)
   }
 
-  return { series, addSeries, deleteSeries }
+  return { series, addSeries, updateSeries, deleteSeries }
 }

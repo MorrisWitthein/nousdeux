@@ -661,6 +661,26 @@ const styles = `
   background: #FEE9E5;
   color: var(--accent);
 }
+
+.btn-edit {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.btn-edit:hover {
+  background: #E3F0EE;
+  color: var(--accent2);
+}
 `
 
 export default styles

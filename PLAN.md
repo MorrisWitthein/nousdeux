@@ -112,10 +112,10 @@ _Checkpoint: Lena's additions show her badge, Max's show his — no code change 
 _Checkpoint: long-press or tap trash icon removes an item; change appears on both devices._
 
 #### M9 — Edit items
-- [ ] Add `PATCH /api/{table}/{id}` endpoints in Go API (one per table)
-- [ ] Tap a card to open a pre-filled edit form (reuse add form with populated fields)
-- [ ] Hooks gain an `updateX(id, fields)` function; SSE triggers refresh
-- [ ] Support editing: title, emoji, tags, rating, status, progress, date/time, meta
+- [x] Add `PATCH /api/{table}/{id}` endpoints in Go API (one per table)
+- [x] Tap a card to open a pre-filled edit form (reuse add form with populated fields)
+- [x] Hooks gain an `updateX(id, fields)` function; SSE triggers refresh
+- [x] Support editing: title, emoji, tags, rating, status, progress, date/time, meta
 
 _Checkpoint: tap a recipe → change its rating → save → updated everywhere._
 

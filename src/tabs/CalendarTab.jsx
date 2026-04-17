@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { calDays, today } from '../data.js'
 
-export default function CalendarTab({ events, addEvent, deleteEvent, currentUser }) {
+export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '' })
+  const [editing, setEditing] = useState(null)
+  const [editFields, setEditFields] = useState({ title: '', date: '', time: '', badge: '', badgeType: '' })
 
   const eventDays = new Set(
     events
@@ -19,6 +21,18 @@ export default function CalendarTab({ events, addEvent, deleteEvent, currentUser
     await addEvent({ ...newEvent, badge: 'Geplant', badgeType: 'green' })
     setNewEvent({ title: '', date: '', time: '' })
     setShowForm(false)
+  }
+
+  const startEdit = (e) => {
+    setEditing(e.id)
+    setEditFields({ title: e.title, date: e.date || '', time: e.time || '', badge: e.badge || '', badgeType: e.badgeType || '' })
+    setShowForm(false)
+  }
+
+  const handleUpdate = async () => {
+    if (!editFields.title) return
+    await updateEvent(editing, editFields)
+    setEditing(null)
   }
 
   return (
@@ -78,7 +92,7 @@ export default function CalendarTab({ events, addEvent, deleteEvent, currentUser
         </div>
       )}
 
-      {!showForm && (
+      {!showForm && !editing && (
         <button
           className="btn btn-primary"
           style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
@@ -89,22 +103,50 @@ export default function CalendarTab({ events, addEvent, deleteEvent, currentUser
       )}
 
       {events.map(e => (
-        <div key={e.id} className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">{e.title}</div>
-              <div className="card-meta">{e.date} · {e.time}</div>
+        editing === e.id ? (
+          <div key={e.id} className="add-form">
+            <div className="add-form-title">Termin bearbeiten</div>
+            <input
+              placeholder="Was plant ihr?"
+              value={editFields.title}
+              onChange={ev => setEditFields(f => ({ ...f, title: ev.target.value }))}
+            />
+            <input
+              placeholder="Datum (z.B. Sa, 26. Apr)"
+              value={editFields.date}
+              onChange={ev => setEditFields(f => ({ ...f, date: ev.target.value }))}
+            />
+            <input
+              placeholder="Uhrzeit"
+              value={editFields.time}
+              onChange={ev => setEditFields(f => ({ ...f, time: ev.target.value }))}
+            />
+            <div className="btn-row">
+              <button className="btn btn-secondary" onClick={() => setEditing(null)}>Abbrechen</button>
+              <button className="btn btn-primary" onClick={handleUpdate}>Speichern</button>
             </div>
-            <span className={`badge badge-${e.badgeType}`}>{e.badge}</span>
           </div>
-          <div className="card-footer">
-            <div className="who-added">
-              <div className="dot" style={{ background: e.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
-              Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
+        ) : (
+          <div key={e.id} className="card" onClick={() => startEdit(e)}>
+            <div className="card-header">
+              <div>
+                <div className="card-title">{e.title}</div>
+                <div className="card-meta">{e.date} · {e.time}</div>
+              </div>
+              <span className={`badge badge-${e.badgeType}`}>{e.badge}</span>
             </div>
-            <button className="btn-delete" onClick={() => { if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}>✕</button>
+            <div className="card-footer">
+              <div className="who-added">
+                <div className="dot" style={{ background: e.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+                Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
+              </div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button className="btn-edit" onClick={(ev) => { ev.stopPropagation(); startEdit(e) }}>✎</button>
+                <button className="btn-delete" onClick={(ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}>✕</button>
+              </div>
+            </div>
           </div>
-        </div>
+        )
       ))}
     </div>
   )

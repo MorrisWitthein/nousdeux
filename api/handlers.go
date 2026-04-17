@@ -56,6 +56,40 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		eventsBroker.Notify()
 		writeJSON(w, http.StatusCreated, e)
 
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var e Event
+		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if e.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE events SET title=$1, date=$2, time=$3, badge=$4, badge_type=$5
+			 WHERE id=$6`,
+			e.Title, nullIfEmpty(e.Date), nullIfEmpty(e.Time),
+			nullIfEmpty(e.Badge), nullIfEmpty(e.BadgeType), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("event updated", "id", id)
+		eventsBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
@@ -76,7 +110,7 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 
 	default:
-		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -125,6 +159,39 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		recipesBroker.Notify()
 		writeJSON(w, http.StatusCreated, rec)
 
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var rec Recipe
+		if err := json.NewDecoder(r.Body).Decode(&rec); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if rec.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE recipes SET emoji=$1, title=$2, tags=$3, rating=$4
+			 WHERE id=$5`,
+			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, nullIfEmpty(rec.Rating), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("recipe updated", "id", id)
+		recipesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
@@ -145,7 +212,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 
 	default:
-		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -196,6 +263,40 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		seriesBroker.Notify()
 		writeJSON(w, http.StatusCreated, s)
 
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var s Series
+		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if s.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE series SET emoji=$1, title=$2, sub=$3, progress=$4, status=$5, status_type=$6
+			 WHERE id=$7`,
+			nullIfEmpty(s.Emoji), s.Title, nullIfEmpty(s.Sub),
+			s.Progress, nullIfEmpty(s.Status), nullIfEmpty(s.StatusType), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("series updated", "id", id)
+		seriesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
@@ -216,7 +317,7 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 
 	default:
-		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -265,6 +366,39 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		activitiesBroker.Notify()
 		writeJSON(w, http.StatusCreated, a)
 
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var a Activity
+		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if a.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE activities SET emoji=$1, title=$2, meta=$3
+			 WHERE id=$4`,
+			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("activity updated", "id", id)
+		activitiesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
@@ -285,7 +419,7 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 
 	default:
-		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
