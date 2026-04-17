@@ -40,5 +40,14 @@ export function useSeries() {
     else handleUnauth(res)
   }
 
-  return { series, addSeries }
+  const deleteSeries = async (id) => {
+    const res = await fetch(`${API}/api/series?id=${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
+  return { series, addSeries, deleteSeries }
 }

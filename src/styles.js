@@ -641,6 +641,26 @@ const styles = `
 .btn-primary { background: var(--ink); color: white; }
 .btn-secondary { background: var(--warm); color: var(--muted); }
 .btn:hover { opacity: 0.85; }
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.btn-delete:hover {
+  background: #FEE9E5;
+  color: var(--accent);
+}
 `
 
 export default styles

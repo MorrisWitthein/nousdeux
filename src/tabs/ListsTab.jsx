@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function ListsTab({ series, addSeries }) {
+export default function ListsTab({ series, addSeries, deleteSeries }) {
   const [activeList, setActiveList] = useState('series')
   const [showForm, setShowForm] = useState(false)
   const [newItem, setNewItem] = useState({ title: '', sub: '' })
@@ -86,6 +86,7 @@ export default function ListsTab({ series, addSeries }) {
                 )}
               </div>
               <span className={`badge badge-${s.statusType}`}>{s.status}</span>
+              <button className="btn-delete" onClick={() => { if (window.confirm('Serie löschen?')) deleteSeries(s.id) }}>✕</button>
             </div>
           ))}
         </>

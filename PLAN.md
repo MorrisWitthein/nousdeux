@@ -104,10 +104,10 @@ _Checkpoint: `docker compose up` + `go run ./api` — data now survives API rest
 _Checkpoint: Lena's additions show her badge, Max's show his — no code change needed per user._
 
 #### M8 — Delete items
-- [ ] Add `DELETE /api/{table}/{id}` endpoints in Go API (one per table)
-- [ ] Add `002_` migration if needed (soft-delete column) or use hard delete
-- [ ] Add delete button on each card (recipe, series, activity, event) with confirmation
-- [ ] Hooks gain a `deleteX(id)` function; SSE triggers refresh on other clients
+- [x] Add `DELETE /api/{table}/{id}` endpoints in Go API (one per table)
+- [x] Add `002_` migration if needed (soft-delete column) or use hard delete
+- [x] Add delete button on each card (recipe, series, activity, event) with confirmation
+- [x] Hooks gain a `deleteX(id)` function; SSE triggers refresh on other clients
 
 _Checkpoint: long-press or tap trash icon removes an item; change appears on both devices._
 

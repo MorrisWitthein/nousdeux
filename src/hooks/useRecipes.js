@@ -40,5 +40,14 @@ export function useRecipes() {
     else handleUnauth(res)
   }
 
-  return { recipes, addRecipe }
+  const deleteRecipe = async (id) => {
+    const res = await fetch(`${API}/api/recipes?id=${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
+  return { recipes, addRecipe, deleteRecipe }
 }

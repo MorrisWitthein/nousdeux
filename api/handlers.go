@@ -56,8 +56,27 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		eventsBroker.Notify()
 		writeJSON(w, http.StatusCreated, e)
 
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM events WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("event deleted", "id", id)
+		eventsBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
 	default:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -106,8 +125,27 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		recipesBroker.Notify()
 		writeJSON(w, http.StatusCreated, rec)
 
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM recipes WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("recipe deleted", "id", id)
+		recipesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
 	default:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -158,8 +196,27 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		seriesBroker.Notify()
 		writeJSON(w, http.StatusCreated, s)
 
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM series WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("series deleted", "id", id)
+		seriesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
 	default:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
@@ -208,8 +265,27 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		activitiesBroker.Notify()
 		writeJSON(w, http.StatusCreated, a)
 
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM activities WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("activity deleted", "id", id)
+		activitiesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
 	default:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
+		w.Header().Set("Allow", "GET, POST, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

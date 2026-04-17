@@ -40,5 +40,14 @@ export function useActivities() {
     else handleUnauth(res)
   }
 
-  return { activities, addActivity }
+  const deleteActivity = async (id) => {
+    const res = await fetch(`${API}/api/activities?id=${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
+  return { activities, addActivity, deleteActivity }
 }

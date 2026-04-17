@@ -40,5 +40,14 @@ export function useEvents() {
     else handleUnauth(res)
   }
 
-  return { events, addEvent }
+  const deleteEvent = async (id) => {
+    const res = await fetch(`${API}/api/events?id=${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
+
+  return { events, addEvent, deleteEvent }
 }

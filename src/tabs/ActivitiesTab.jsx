@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function ActivitiesTab({ activities, addActivity, currentUser }) {
+export default function ActivitiesTab({ activities, addActivity, deleteActivity, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newAct, setNewAct] = useState({ title: '', meta: '' })
 
@@ -53,8 +53,9 @@ export default function ActivitiesTab({ activities, addActivity, currentUser }) 
             <div className="list-title">{a.title}</div>
             <div className="list-sub">{a.meta}</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
+            <button className="btn-delete" onClick={() => { if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}>✕</button>
           </div>
         </div>
       ))}

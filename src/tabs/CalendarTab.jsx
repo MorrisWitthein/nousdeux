@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { calDays, today } from '../data.js'
 
-export default function CalendarTab({ events, addEvent, currentUser }) {
+export default function CalendarTab({ events, addEvent, deleteEvent, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '' })
 
@@ -102,6 +102,7 @@ export default function CalendarTab({ events, addEvent, currentUser }) {
               <div className="dot" style={{ background: e.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
               Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
             </div>
+            <button className="btn-delete" onClick={() => { if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}>✕</button>
           </div>
         </div>
       ))}

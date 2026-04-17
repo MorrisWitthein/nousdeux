@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function RecipesTab({ recipes, addRecipe, currentUser }) {
+export default function RecipesTab({ recipes, addRecipe, deleteRecipe, currentUser }) {
   const [showForm, setShowForm] = useState(false)
   const [newRecipe, setNewRecipe] = useState({ title: '', tags: '' })
 
@@ -62,9 +62,12 @@ export default function RecipesTab({ recipes, addRecipe, currentUser }) {
             <div className="recipe-tags">
               {r.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
             </div>
-            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
-              Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
+            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+                Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
+              </div>
+              <button className="btn-delete" onClick={() => { if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}>✕</button>
             </div>
           </div>
         </div>
