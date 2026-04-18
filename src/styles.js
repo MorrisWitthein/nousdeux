@@ -630,6 +630,7 @@ const styles = `
 
 .form-row > * {
   flex: 1;
+  min-width: 0;
   margin-bottom: 0;
 }
 
