@@ -598,7 +598,7 @@ const styles = `
   animation: fadeUp 0.25s ease;
 }
 
-.add-form input, .add-form select {
+.add-form input, .add-form select, .add-form textarea {
   width: 100%;
   padding: 12px 14px;
   border: 1.5px solid var(--border);
@@ -612,9 +612,53 @@ const styles = `
   transition: border-color 0.15s;
 }
 
-.add-form input:focus, .add-form select:focus {
+.add-form textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.add-form input:focus, .add-form select:focus, .add-form textarea:focus {
   border-color: var(--ink);
 }
+
+.form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.form-row > * {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.star-rating {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.star-rating .star {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  user-select: none;
+}
+
+.star-rating .star:hover { transform: scale(1.2); }
+.star-rating .star.active { color: var(--accent3); }
+.star-rating .star.inactive { color: var(--border); }
 
 .add-form-title {
   font-family: 'Fraunces', serif;

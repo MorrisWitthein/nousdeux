@@ -1,23 +1,31 @@
 import { useState } from 'react'
 
+const STATUS_OPTIONS = [
+  { label: 'Geplant', type: 'yellow' },
+  { label: 'Läuft', type: 'green' },
+  { label: 'Fertig', type: 'red' },
+]
+
+const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', progress: 0, status: 'Geplant', statusType: 'yellow' }
+
 export default function ListsTab({ series, addSeries, updateSeries, deleteSeries }) {
   const [activeList, setActiveList] = useState('series')
   const [showForm, setShowForm] = useState(false)
-  const [newItem, setNewItem] = useState({ title: '', sub: '' })
+  const [newItem, setNewItem] = useState({ ...EMPTY_SERIES })
   const [editing, setEditing] = useState(null)
-  const [editFields, setEditFields] = useState({ title: '', sub: '', emoji: '', progress: 0, status: '', statusType: '' })
+  const [editFields, setEditFields] = useState({ ...EMPTY_SERIES })
 
   const handleAdd = async () => {
     if (!newItem.title) return
     await addSeries({
-      emoji: '🎬',
+      emoji: newItem.emoji,
       title: newItem.title,
       sub: newItem.sub,
-      progress: 0,
-      status: 'Geplant',
-      statusType: 'yellow',
+      progress: parseInt(newItem.progress, 10) || 0,
+      status: newItem.status,
+      statusType: newItem.statusType,
     })
-    setNewItem({ title: '', sub: '' })
+    setNewItem({ ...EMPTY_SERIES })
     setShowForm(false)
   }
 
@@ -26,7 +34,7 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
     setEditFields({
       title: s.title,
       sub: s.sub || '',
-      emoji: s.emoji || '',
+      emoji: s.emoji || '🎬',
       progress: s.progress || 0,
       status: s.status || 'Geplant',
       statusType: s.statusType || 'yellow',
@@ -43,11 +51,60 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
     setEditing(null)
   }
 
-  const statusOptions = [
-    { label: 'Geplant', type: 'yellow' },
-    { label: 'Läuft', type: 'green' },
-    { label: 'Fertig', type: 'red' },
-  ]
+  const handleStatusChange = (setFields) => (e) => {
+    const opt = STATUS_OPTIONS.find(o => o.label === e.target.value)
+    setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
+  }
+
+  const renderForm = (fields, setFields, onSave, onCancel, title) => (
+    <div className="add-form">
+      <div className="add-form-title">{title}</div>
+      <div className="form-row">
+        <div style={{ flex: '0 0 70px' }}>
+          <label className="form-label">Emoji</label>
+          <input
+            value={fields.emoji}
+            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="form-label">Titel</label>
+          <input
+            placeholder="Titel"
+            value={fields.title}
+            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+          />
+        </div>
+      </div>
+      <input
+        placeholder="Staffel / Plattform"
+        value={fields.sub}
+        onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
+      />
+      <div className="form-row">
+        <div>
+          <label className="form-label">Fortschritt %</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={fields.progress}
+            onChange={e => setFields(f => ({ ...f, progress: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="form-label">Status</label>
+          <select value={fields.status} onChange={handleStatusChange(setFields)}>
+            {STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={onSave}>Speichern</button>
+      </div>
+    </div>
+  )
 
   return (
     <div>
@@ -67,31 +124,19 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
 
       {activeList === 'series' && (
         <>
-          {showForm && (
-            <div className="add-form">
-              <div className="add-form-title">Serie hinzufügen</div>
-              <input
-                placeholder="Titel"
-                value={newItem.title}
-                onChange={e => setNewItem(n => ({ ...n, title: e.target.value }))}
-              />
-              <input
-                placeholder="Staffel · Plattform"
-                value={newItem.sub}
-                onChange={e => setNewItem(n => ({ ...n, sub: e.target.value }))}
-              />
-              <div className="btn-row">
-                <button className="btn btn-secondary" onClick={() => setShowForm(false)}>Abbrechen</button>
-                <button className="btn btn-primary" onClick={handleAdd}>Hinzufügen</button>
-              </div>
-            </div>
+          {showForm && renderForm(
+            newItem,
+            setNewItem,
+            handleAdd,
+            () => setShowForm(false),
+            'Serie hinzufügen'
           )}
 
           {!showForm && !editing && (
             <button
               className="btn btn-primary"
               style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
-              onClick={() => setShowForm(true)}
+              onClick={() => { setNewItem({ ...EMPTY_SERIES }); setShowForm(true) }}
             >
               + Serie hinzufügen
             </button>
@@ -99,48 +144,14 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
 
           {series.map(s => (
             editing === s.id ? (
-              <div key={s.id} className="add-form">
-                <div className="add-form-title">Serie bearbeiten</div>
-                <input
-                  placeholder="Emoji"
-                  value={editFields.emoji}
-                  onChange={e => setEditFields(f => ({ ...f, emoji: e.target.value }))}
-                />
-                <input
-                  placeholder="Titel"
-                  value={editFields.title}
-                  onChange={e => setEditFields(f => ({ ...f, title: e.target.value }))}
-                />
-                <input
-                  placeholder="Staffel · Plattform"
-                  value={editFields.sub}
-                  onChange={e => setEditFields(f => ({ ...f, sub: e.target.value }))}
-                />
-                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="Fortschritt %"
-                    value={editFields.progress}
-                    onChange={e => setEditFields(f => ({ ...f, progress: e.target.value }))}
-                    style={{ flex: 1 }}
-                  />
-                  <select
-                    value={editFields.status}
-                    onChange={e => {
-                      const opt = statusOptions.find(o => o.label === e.target.value)
-                      setEditFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
-                    }}
-                    style={{ flex: 1 }}
-                  >
-                    {statusOptions.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div className="btn-row">
-                  <button className="btn btn-secondary" onClick={() => setEditing(null)}>Abbrechen</button>
-                  <button className="btn btn-primary" onClick={handleUpdate}>Speichern</button>
-                </div>
+              <div key={s.id}>
+                {renderForm(
+                  editFields,
+                  setEditFields,
+                  handleUpdate,
+                  () => setEditing(null),
+                  'Serie bearbeiten'
+                )}
               </div>
             ) : (
               <div key={s.id} className="list-item" onClick={() => startEdit(s)}>

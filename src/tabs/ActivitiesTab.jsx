@@ -1,21 +1,40 @@
 import { useState } from 'react'
 
+const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+
+function formatISOToGerman(isoDate) {
+  if (!isoDate) return ''
+  const [y, m, d] = isoDate.split('-').map(Number)
+  if (!y || !m || !d) return isoDate
+  const date = new Date(y, m - 1, d)
+  return `${WEEKDAYS[date.getDay()]}, ${d}. ${SHORT_MONTHS[m - 1]} ${y}`
+}
+
+const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', date: '', time: '' }
+
 export default function ActivitiesTab({ activities, addActivity, updateActivity, deleteActivity, currentUser }) {
   const [showForm, setShowForm] = useState(false)
-  const [newAct, setNewAct] = useState({ title: '', meta: '' })
+  const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
   const [editing, setEditing] = useState(null)
-  const [editFields, setEditFields] = useState({ title: '', meta: '', emoji: '' })
+  const [editFields, setEditFields] = useState({ ...EMPTY_ACTIVITY })
 
   const handleAdd = async () => {
     if (!newAct.title) return
-    await addActivity({ emoji: '✨', title: newAct.title, meta: newAct.meta })
-    setNewAct({ title: '', meta: '' })
+    await addActivity(newAct)
+    setNewAct({ ...EMPTY_ACTIVITY })
     setShowForm(false)
   }
 
   const startEdit = (a) => {
     setEditing(a.id)
-    setEditFields({ title: a.title, meta: a.meta || '', emoji: a.emoji || '' })
+    setEditFields({
+      emoji: a.emoji || '✨',
+      title: a.title,
+      meta: a.meta || '',
+      date: a.date || '',
+      time: a.time || '',
+    })
     setShowForm(false)
   }
 
@@ -25,36 +44,74 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
     setEditing(null)
   }
 
+  const renderForm = (fields, setFields, onSave, onCancel, title) => (
+    <div className="add-form">
+      <div className="add-form-title">{title}</div>
+      <div className="form-row">
+        <div style={{ flex: '0 0 70px' }}>
+          <label className="form-label">Emoji</label>
+          <input
+            value={fields.emoji}
+            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="form-label">Titel</label>
+          <input
+            placeholder="Was wollt ihr machen?"
+            value={fields.title}
+            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+          />
+        </div>
+      </div>
+      <input
+        placeholder="Notizen (Wo, Was, ...)"
+        value={fields.meta}
+        onChange={e => setFields(f => ({ ...f, meta: e.target.value }))}
+      />
+      <div className="form-row">
+        <div>
+          <label className="form-label">Datum (optional)</label>
+          <input
+            type="date"
+            value={fields.date}
+            onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="form-label">Uhrzeit (optional)</label>
+          <input
+            type="time"
+            value={fields.time}
+            onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+          />
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={onSave}>Speichern</button>
+      </div>
+    </div>
+  )
+
   return (
     <div>
       <p className="section-title">Eure <em>Aktivitäten</em></p>
       <p className="section-sub">Was wollt ihr noch erleben?</p>
 
-      {showForm && (
-        <div className="add-form">
-          <div className="add-form-title">Aktivität hinzufügen</div>
-          <input
-            placeholder="Was wollt ihr machen?"
-            value={newAct.title}
-            onChange={e => setNewAct(n => ({ ...n, title: e.target.value }))}
-          />
-          <input
-            placeholder="Wann / Wo?"
-            value={newAct.meta}
-            onChange={e => setNewAct(n => ({ ...n, meta: e.target.value }))}
-          />
-          <div className="btn-row">
-            <button className="btn btn-secondary" onClick={() => setShowForm(false)}>Abbrechen</button>
-            <button className="btn btn-primary" onClick={handleAdd}>Hinzufügen</button>
-          </div>
-        </div>
+      {showForm && renderForm(
+        newAct,
+        setNewAct,
+        handleAdd,
+        () => setShowForm(false),
+        'Aktivität hinzufügen'
       )}
 
       {!showForm && !editing && (
         <button
           className="btn btn-primary"
           style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
-          onClick={() => setShowForm(true)}
+          onClick={() => { setNewAct({ ...EMPTY_ACTIVITY }); setShowForm(true) }}
         >
           + Aktivität vorschlagen
         </button>
@@ -62,34 +119,26 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
 
       {activities.map(a => (
         editing === a.id ? (
-          <div key={a.id} className="add-form">
-            <div className="add-form-title">Aktivität bearbeiten</div>
-            <input
-              placeholder="Emoji"
-              value={editFields.emoji}
-              onChange={e => setEditFields(f => ({ ...f, emoji: e.target.value }))}
-            />
-            <input
-              placeholder="Was wollt ihr machen?"
-              value={editFields.title}
-              onChange={e => setEditFields(f => ({ ...f, title: e.target.value }))}
-            />
-            <input
-              placeholder="Wann / Wo?"
-              value={editFields.meta}
-              onChange={e => setEditFields(f => ({ ...f, meta: e.target.value }))}
-            />
-            <div className="btn-row">
-              <button className="btn btn-secondary" onClick={() => setEditing(null)}>Abbrechen</button>
-              <button className="btn btn-primary" onClick={handleUpdate}>Speichern</button>
-            </div>
+          <div key={a.id}>
+            {renderForm(
+              editFields,
+              setEditFields,
+              handleUpdate,
+              () => setEditing(null),
+              'Aktivität bearbeiten'
+            )}
           </div>
         ) : (
           <div key={a.id} className="activity-card" onClick={() => startEdit(a)}>
             <div className="activity-icon">{a.emoji}</div>
             <div style={{ flex: 1 }}>
               <div className="list-title">{a.title}</div>
-              <div className="list-sub">{a.meta}</div>
+              <div className="list-sub">
+                {a.meta}
+                {a.date && (
+                  <span>{a.meta ? ' · ' : ''}{formatISOToGerman(a.date)}{a.time ? ` ${a.time}` : ''}</span>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />

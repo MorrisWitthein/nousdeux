@@ -128,14 +128,24 @@ _Checkpoint: tap a recipe → change its rating → save → updated everywhere.
 _Checkpoint: navigate months freely; days with events are visually marked; tap a day to filter._
 
 #### M11 — Improved form inputs + richer data entry
-- [ ] **Events:** replace free-text date with a native `<input type="date">` and time with `<input type="time">`; display formatted German date on cards
-- [ ] **Recipes:** add fields for ingredients (multi-line textarea or comma-separated list), preparation steps (textarea), prep time (`<input type="number">` in minutes), and servings (`<input type="number">`); replace free-text rating with star selector (1–5)
-- [ ] **Series:** add form fields expose emoji, status dropdown, and progress slider also during *add* (not just edit)
-- [ ] **Activities:** add a date/time field so activities can optionally have a scheduled date
-- [ ] Review all placeholder text for clarity and consistency across add/edit forms
-- [ ] Ensure add forms and edit forms expose the same fields (currently add forms are much more minimal than edit forms)
+- [x] **Events:** replace free-text date with a native `<input type="date">` and time with `<input type="time">`; display formatted German date on cards
+- [x] **Recipes:** add fields for ingredients (multi-line textarea or comma-separated list), preparation steps (textarea), prep time (`<input type="number">` in minutes), and servings (`<input type="number">`); replace free-text rating with star selector (1–5)
+- [x] **Series:** add form fields expose emoji, status dropdown, and progress slider also during *add* (not just edit)
+- [x] **Activities:** add a date/time field so activities can optionally have a scheduled date
+- [x] Review all placeholder text for clarity and consistency across add/edit forms
+- [x] Ensure add forms and edit forms expose the same fields (currently add forms are much more minimal than edit forms)
 
 _Checkpoint: all forms use appropriate input types; recipes capture real recipe data; add and edit forms are consistent._
+
+### M11.5
+
+- [ ] Make "Als nächstes" Home widget clickable and take you to the event
+- [ ] Make the Greeting Message on the Homescreen Dynamic based on the time of day and Username (maybe also sth special for holidays, weekends etc.)
+- [ ] Add a Profile
+- [ ] Add a logout button
+- [ ] Make the current date on the homescreen clickable and take you to the calender
+- [ ] Make the widgets with statistics on the homescreen clickable and take you to the corresponding menu
+- [ ] Merge Aktiviäten into Listen as a dedicated list
 
 #### M12 — Emoji picker + status/badge selectors
 - [ ] Add a simple emoji picker to recipe, series, and activity add/edit forms (grid of ~20 relevant emoji per category)
@@ -167,7 +177,8 @@ _Checkpoint: both phones can log in, add items, and see each other's changes in 
 
 - Push notifications ("Lena hat ein neues Rezept hinzugefügt")
 - Recipe detail view with ingredients/steps
-- Photo uploads for recipes (stored on Pi via the Go API)
+- Photo uploads for recipes (stored on Pi via the Go API) and Profile Pictures
+- Possibility to add new types of Lists via the UI
 
 ---
 

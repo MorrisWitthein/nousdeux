@@ -121,7 +121,9 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(tags,'{}'),
-			        who, COALESCE(rating,'–'), created_at
+			        who, COALESCE(rating,0),
+			        COALESCE(ingredients,''), COALESCE(steps,''),
+			        prep_time, servings, created_at
 			 FROM recipes ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -147,10 +149,11 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		}
 		rec.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO recipes (emoji, title, tags, who, rating)
-			 VALUES ($1,$2,$3,$4,$5) RETURNING id, COALESCE(rating,'–'), created_at`,
-			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, rec.Who, nullIfEmpty(rec.Rating),
-		).Scan(&rec.ID, &rec.Rating, &rec.CreatedAt)
+			`INSERT INTO recipes (emoji, title, tags, who, rating, ingredients, steps, prep_time, servings)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, created_at`,
+			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, rec.Who, rec.Rating,
+			nullIfEmpty(rec.Ingredients), nullIfEmpty(rec.Steps), rec.PrepTime, rec.Servings,
+		).Scan(&rec.ID, &rec.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
 			return
@@ -176,9 +179,11 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE recipes SET emoji=$1, title=$2, tags=$3, rating=$4
-			 WHERE id=$5`,
-			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, nullIfEmpty(rec.Rating), id,
+			`UPDATE recipes SET emoji=$1, title=$2, tags=$3, rating=$4,
+			 ingredients=$5, steps=$6, prep_time=$7, servings=$8
+			 WHERE id=$9`,
+			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, rec.Rating,
+			nullIfEmpty(rec.Ingredients), nullIfEmpty(rec.Steps), rec.PrepTime, rec.Servings, id,
 		)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
@@ -328,7 +333,7 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(meta,''),
-			        who, created_at
+			        who, COALESCE(date,''), COALESCE(time,''), created_at
 			 FROM activities ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -354,9 +359,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		}
 		a.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO activities (emoji, title, meta, who)
-			 VALUES ($1,$2,$3,$4) RETURNING id, created_at`,
+			`INSERT INTO activities (emoji, title, meta, who, date, time)
+			 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`,
 			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta), a.Who,
+			nullIfEmpty(a.Date), nullIfEmpty(a.Time),
 		).Scan(&a.ID, &a.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
@@ -383,9 +389,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE activities SET emoji=$1, title=$2, meta=$3
-			 WHERE id=$4`,
-			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta), id,
+			`UPDATE activities SET emoji=$1, title=$2, meta=$3, date=$4, time=$5
+			 WHERE id=$6`,
+			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta),
+			nullIfEmpty(a.Date), nullIfEmpty(a.Time), id,
 		)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
