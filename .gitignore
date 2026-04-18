@@ -4,6 +4,7 @@ dist/
 .env.local
 .DS_Store
 api/nousdeux-api
+api/nosdeux-api
 
 # Created by https://www.toptal.com/developers/gitignore/api/react,go,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=react,go,visualstudiocode
