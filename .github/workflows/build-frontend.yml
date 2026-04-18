@@ -1,0 +1,31 @@
+name: Build & Push Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "nginx.conf"
+      - "vite.config.js"
+      - "package*.json"
+      - "Dockerfile"
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push
+        run: |
+          IMAGE=registry.tail32699d.ts.net/nosdeux
+          TAG=v${{ github.run_number }}
+          docker build \
+            --build-arg VITE_API_URL=${{ vars.VITE_API_URL }} \
+            -t $IMAGE:$TAG \
+            -t $IMAGE:latest \
+            -f Dockerfile .
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest

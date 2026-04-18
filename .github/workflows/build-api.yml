@@ -1,0 +1,25 @@
+name: Build & Push API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - "Dockerfile.api"
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push
+        run: |
+          IMAGE=registry.tail32699d.ts.net/nosdeux-api
+          TAG=v${{ github.run_number }}
+          docker build \
+            -t $IMAGE:$TAG \
+            -t $IMAGE:latest \
+            -f Dockerfile.api ./api
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest
