@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**nosdeux** (nous deux) — a shared planning PWA for two users (Max & Lena) to manage events, recipes, TV series, and activities. German-language UI. Phase 1 MVP uses an in-memory mock database; Phase 2+ will migrate to Supabase.
+**nousdeux** (nous deux) — a shared planning PWA for two users (Max & Lena) to manage events, recipes, TV series, and activities. German-language UI. Phase 1 MVP uses an in-memory mock database; Phase 2+ will migrate to Supabase.
 
 ## Commands
 
@@ -21,7 +21,7 @@ No lint or test scripts are configured yet.
 docker build \
   --build-arg VITE_SUPABASE_URL=https://... \
   --build-arg VITE_SUPABASE_ANON_KEY=... \
-  -t nosdeux:latest .
+  -t nousdeux:latest .
 ```
 
 **Kubernetes deploy:**

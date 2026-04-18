@@ -1,4 +1,4 @@
-# nosdeux
+# nousdeux
 
 A shared planning PWA for two users to manage events, recipes, TV series, and activities. German-language UI, self-hosted on a Raspberry Pi via Kubernetes, accessed privately over Tailscale.
 
@@ -48,7 +48,7 @@ Start Postgres via Docker Compose:
 docker compose up -d postgres
 ```
 
-This creates the `nosdeux` database on `localhost:5432`.
+This creates the `nousdeux` database on `localhost:5432`.
 
 ### Frontend
 
@@ -69,7 +69,7 @@ htpasswd -nbBC 12 "" test | cut -d: -f2
 Start the API:
 
 ```bash
-DB_DSN=postgres://nosdeux:nosdeux@localhost:5432/nosdeux \
+DB_DSN=postgres://nousdeux:nousdeux@localhost:5432/nousdeux \
 JWT_SECRET=dev-secret \
 USERS='{"max":"<paste-hash>","lena":"<paste-hash>"}' \
 go run ./api
@@ -114,8 +114,8 @@ SQL migrations live in `api/db/migrations/` as numbered files. They are embedded
 Build images on the Pi (`imagePullPolicy: Never`):
 
 ```bash
-docker build -t nosdeux-frontend:latest --build-arg VITE_API_URL=http://<pi-tailscale-ip>:30080 .
-docker build -f Dockerfile.api -t nosdeux-api:latest ./api
+docker build -t nousdeux-frontend:latest --build-arg VITE_API_URL=http://<pi-tailscale-ip>:30080 .
+docker build -f Dockerfile.api -t nousdeux-api:latest ./api
 kubectl apply -f k8s/
 ```
 
@@ -129,7 +129,7 @@ Access via `http://<pi-tailscale-ip>:30080`.
 ## Project structure
 
 ```
-nosdeux/
+nousdeux/
 ├── api/
 │   ├── main.go          # server setup, routes, shutdown
 │   ├── auth.go          # login handler, JWT middleware

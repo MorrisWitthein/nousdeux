@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nosdeux-api
+  name: nousdeux-api
   namespace: default
 spec:
   selector:
-    app: nosdeux-api
+    app: nousdeux-api
   type: NodePort
   ports:
     - port: 8080

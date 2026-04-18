@@ -31,7 +31,7 @@ export default function App() {
   const navigateTo = (tab) => setActiveTab(tab)
 
   const handleLogout = () => {
-    if (window.__nosdeux_logout) window.__nosdeux_logout()
+    if (window.__nousdeux_logout) window.__nousdeux_logout()
     setShowProfile(false)
   }
 
@@ -150,7 +150,7 @@ export default function App() {
                 {displayName}
               </p>
               <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginBottom: 28 }}>
-                {currentUser}@nosdeux
+                {currentUser}@nousdeux
               </p>
               <button
                 className="btn btn-secondary"

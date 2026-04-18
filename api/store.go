@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mwitthein/nosdeux-api/sse"
+	"github.com/mwitthein/nousdeux-api/sse"
 )
 
 var (

@@ -1,4 +1,4 @@
-# nosdeux — Development Plan
+# nousdeux — Development Plan
 
 ## Prototype Review
 
@@ -185,7 +185,7 @@ _Checkpoint: both phones can log in, add items, and see each other's changes in 
 ## Project Structure (target)
 
 ```
-nosdeux/
+nousdeux/
 ├── api/                        # Go API
 │   ├── main.go                 # HTTP server, route registration
 │   ├── db/
@@ -375,9 +375,9 @@ export function useEvents() {
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nosdeux-secret
+  name: nousdeux-secret
 stringData:
-  DB_DSN: "postgres://nosdeux:changeme@postgres:5432/nosdeux"
+  DB_DSN: "postgres://nousdeux:changeme@postgres:5432/nousdeux"
   JWT_SECRET: "changeme"
   USERS: '{"max":"<bcrypt-hash>","lena":"<bcrypt-hash>"}'
 ```
@@ -389,8 +389,8 @@ stringData:
 go run -e 'import "golang.org/x/crypto/bcrypt"; fmt.Println(string(must(bcrypt.GenerateFromPassword([]byte("yourpassword"), 12))))'
 
 # Build images on the Pi (imagePullPolicy: Never)
-docker build -t nosdeux-frontend:latest .
-docker build -f Dockerfile.api -t nosdeux-api:latest ./api
+docker build -t nousdeux-frontend:latest .
+docker build -f Dockerfile.api -t nousdeux-api:latest ./api
 
 kubectl apply -f k8s/
 ```

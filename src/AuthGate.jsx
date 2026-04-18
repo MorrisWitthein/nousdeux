@@ -12,11 +12,11 @@ export default function AuthGate({ children }) {
 
   // Expose logout globally so hooks can trigger it on 401.
   useEffect(() => {
-    window.__nosdeux_logout = () => {
+    window.__nousdeux_logout = () => {
       localStorage.removeItem('token')
       setToken(null)
     }
-    return () => { delete window.__nosdeux_logout }
+    return () => { delete window.__nousdeux_logout }
   }, [])
 
   if (token) return children

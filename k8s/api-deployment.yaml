@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nosdeux-api
+  name: nousdeux-api
   namespace: default
   labels:
-    app: nosdeux-api
+    app: nousdeux-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nosdeux-api
+      app: nousdeux-api
   template:
     metadata:
       labels:
-        app: nosdeux-api
+        app: nousdeux-api
     spec:
       containers:
-        - name: nosdeux-api
-          image: registry.tail32699d.ts.net/nosdeux-api:latest
+        - name: nousdeux-api
+          image: registry.tail32699d.ts.net/nousdeux-api:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

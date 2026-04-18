@@ -10,7 +10,7 @@ function authHeaders() {
 }
 
 function handleUnauth(res) {
-  if (res.status === 401 && window.__nosdeux_logout) window.__nosdeux_logout()
+  if (res.status === 401 && window.__nousdeux_logout) window.__nousdeux_logout()
 }
 
 export function useActivities() {

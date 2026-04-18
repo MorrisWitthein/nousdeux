@@ -1,4 +1,4 @@
-module github.com/mwitthein/nosdeux-api
+module github.com/mwitthein/nousdeux-api
 
 go 1.25.0
 

@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'nosdeux',
-        short_name: 'nosdeux',
+        name: 'nousdeux',
+        short_name: 'nousdeux',
         description: 'Planung für euch zwei',
         theme_color: '#1C1A17',
         background_color: '#F5F0E8',

@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mwitthein/nosdeux-api/db"
+	"github.com/mwitthein/nousdeux-api/db"
 )
 
 func main() {
@@ -77,7 +77,7 @@ func main() {
 
 	// Start server in background.
 	go func() {
-		slog.Info("nosdeux API listening", "addr", addr)
+		slog.Info("nousdeux API listening", "addr", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "err", err)
 			os.Exit(1)
