@@ -624,12 +624,12 @@ const styles = `
 
 .form-row {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 10px;
 }
 
 .form-row > * {
-  flex: 1;
   min-width: 0;
   margin-bottom: 0;
 }
