@@ -1,6 +1,7 @@
 name: Build & Push API
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
