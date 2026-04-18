@@ -3,7 +3,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # VITE_* vars are baked into the bundle at build time, not runtime
-ARG VITE_API_URL
+ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 
 COPY package*.json ./
