@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -55,11 +55,21 @@ function parseEventDate(dateStr) {
 
 const EMPTY_EVENT = { title: '', date: '', time: '', badge: 'Geplant', badgeType: 'green' }
 
-export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser }) {
+export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [selectedDay, setSelectedDay] = useState(null)
+
+  useEffect(() => {
+    if (!targetDate) return
+    const parsed = parseEventDate(targetDate)
+    if (!parsed) return
+    setYear(parsed.year ?? now.getFullYear())
+    setMonth(parsed.month)
+    setSelectedDay(parsed.day)
+    onTargetConsumed?.()
+  }, [targetDate])
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)

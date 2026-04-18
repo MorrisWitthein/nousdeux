@@ -139,13 +139,13 @@ _Checkpoint: all forms use appropriate input types; recipes capture real recipe 
 
 ### M11.5
 
-- [ ] Make "Als nächstes" Home widget clickable and take you to the event
-- [ ] Make the Greeting Message on the Homescreen Dynamic based on the time of day and Username (maybe also sth special for holidays, weekends etc.)
-- [ ] Add a Profile
-- [ ] Add a logout button
-- [ ] Make the current date on the homescreen clickable and take you to the calender
-- [ ] Make the widgets with statistics on the homescreen clickable and take you to the corresponding menu
-- [ ] Merge Aktiviäten into Listen as a dedicated list
+- [x] Make "Als nächstes" Home widget clickable and take you to the event
+- [x] Make the Greeting Message on the Homescreen Dynamic based on the time of day and Username (maybe also sth special for holidays, weekends etc.)
+- [x] Add a Profile
+- [x] Add a logout button
+- [x] Make the current date on the homescreen clickable and take you to the calender
+- [x] Make the widgets with statistics on the homescreen clickable and take you to the corresponding menu
+- [x] Merge Aktiviäten into Listen as a dedicated list
 
 #### M12 — Emoji picker + status/badge selectors
 - [ ] Add a simple emoji picker to recipe, series, and activity add/edit forms (grid of ~20 relevant emoji per category)

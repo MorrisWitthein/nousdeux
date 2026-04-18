@@ -7,31 +7,56 @@ const STATUS_OPTIONS = [
 ]
 
 const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', progress: 0, status: 'Geplant', statusType: 'yellow' }
+const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', date: '', time: '' }
 
-export default function ListsTab({ series, addSeries, updateSeries, deleteSeries }) {
+const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+
+function formatISOToGerman(isoDate) {
+  if (!isoDate) return ''
+  const [y, m, d] = isoDate.split('-').map(Number)
+  if (!y || !m || !d) return isoDate
+  const date = new Date(y, m - 1, d)
+  return `${WEEKDAYS[date.getDay()]}, ${d}. ${SHORT_MONTHS[m - 1]} ${y}`
+}
+
+export default function ListsTab({
+  series, addSeries, updateSeries, deleteSeries,
+  activities, addActivity, updateActivity, deleteActivity,
+  currentUser,
+}) {
   const [activeList, setActiveList] = useState('series')
-  const [showForm, setShowForm] = useState(false)
-  const [newItem, setNewItem] = useState({ ...EMPTY_SERIES })
-  const [editing, setEditing] = useState(null)
-  const [editFields, setEditFields] = useState({ ...EMPTY_SERIES })
 
-  const handleAdd = async () => {
-    if (!newItem.title) return
+  // Series state
+  const [showSeriesForm, setShowSeriesForm] = useState(false)
+  const [newSeries, setNewSeries] = useState({ ...EMPTY_SERIES })
+  const [editingSeries, setEditingSeries] = useState(null)
+  const [editSeriesFields, setEditSeriesFields] = useState({ ...EMPTY_SERIES })
+
+  // Activity state
+  const [showActivityForm, setShowActivityForm] = useState(false)
+  const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
+  const [editingActivity, setEditingActivity] = useState(null)
+  const [editActivityFields, setEditActivityFields] = useState({ ...EMPTY_ACTIVITY })
+
+  // Series handlers
+  const handleAddSeries = async () => {
+    if (!newSeries.title) return
     await addSeries({
-      emoji: newItem.emoji,
-      title: newItem.title,
-      sub: newItem.sub,
-      progress: parseInt(newItem.progress, 10) || 0,
-      status: newItem.status,
-      statusType: newItem.statusType,
+      emoji: newSeries.emoji,
+      title: newSeries.title,
+      sub: newSeries.sub,
+      progress: parseInt(newSeries.progress, 10) || 0,
+      status: newSeries.status,
+      statusType: newSeries.statusType,
     })
-    setNewItem({ ...EMPTY_SERIES })
-    setShowForm(false)
+    setNewSeries({ ...EMPTY_SERIES })
+    setShowSeriesForm(false)
   }
 
-  const startEdit = (s) => {
-    setEditing(s.id)
-    setEditFields({
+  const startEditSeries = (s) => {
+    setEditingSeries(s.id)
+    setEditSeriesFields({
       title: s.title,
       sub: s.sub || '',
       emoji: s.emoji || '🎬',
@@ -39,16 +64,16 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
       status: s.status || 'Geplant',
       statusType: s.statusType || 'yellow',
     })
-    setShowForm(false)
+    setShowSeriesForm(false)
   }
 
-  const handleUpdate = async () => {
-    if (!editFields.title) return
-    await updateSeries(editing, {
-      ...editFields,
-      progress: parseInt(editFields.progress, 10) || 0,
+  const handleUpdateSeries = async () => {
+    if (!editSeriesFields.title) return
+    await updateSeries(editingSeries, {
+      ...editSeriesFields,
+      progress: parseInt(editSeriesFields.progress, 10) || 0,
     })
-    setEditing(null)
+    setEditingSeries(null)
   }
 
   const handleStatusChange = (setFields) => (e) => {
@@ -56,7 +81,33 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
     setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
   }
 
-  const renderForm = (fields, setFields, onSave, onCancel, title) => (
+  // Activity handlers
+  const handleAddActivity = async () => {
+    if (!newAct.title) return
+    await addActivity(newAct)
+    setNewAct({ ...EMPTY_ACTIVITY })
+    setShowActivityForm(false)
+  }
+
+  const startEditActivity = (a) => {
+    setEditingActivity(a.id)
+    setEditActivityFields({
+      emoji: a.emoji || '✨',
+      title: a.title,
+      meta: a.meta || '',
+      date: a.date || '',
+      time: a.time || '',
+    })
+    setShowActivityForm(false)
+  }
+
+  const handleUpdateActivity = async () => {
+    if (!editActivityFields.title) return
+    await updateActivity(editingActivity, editActivityFields)
+    setEditingActivity(null)
+  }
+
+  const renderSeriesForm = (fields, setFields, onSave, onCancel, title) => (
     <div className="add-form">
       <div className="add-form-title">{title}</div>
       <div className="form-row">
@@ -106,12 +157,67 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
     </div>
   )
 
+  const renderActivityForm = (fields, setFields, onSave, onCancel, title) => (
+    <div className="add-form">
+      <div className="add-form-title">{title}</div>
+      <div className="form-row">
+        <div style={{ flex: '0 0 70px' }}>
+          <label className="form-label">Emoji</label>
+          <input
+            value={fields.emoji}
+            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="form-label">Titel</label>
+          <input
+            placeholder="Was wollt ihr machen?"
+            value={fields.title}
+            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+          />
+        </div>
+      </div>
+      <input
+        placeholder="Notizen (Wo, Was, ...)"
+        value={fields.meta}
+        onChange={e => setFields(f => ({ ...f, meta: e.target.value }))}
+      />
+      <div className="form-row">
+        <div>
+          <label className="form-label">Datum (optional)</label>
+          <input
+            type="date"
+            value={fields.date}
+            onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="form-label">Uhrzeit (optional)</label>
+          <input
+            type="time"
+            value={fields.time}
+            onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+          />
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={onSave}>Speichern</button>
+      </div>
+    </div>
+  )
+
   return (
     <div>
       <p className="section-title">Eure <em>Listen</em></p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[['series', '🍿 Serien'], ['movies', '🎬 Filme'], ['books', '📚 Bücher']].map(([key, label]) => (
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        {[
+          ['series', '🍿 Serien'],
+          ['activities', '✨ Aktivitäten'],
+          ['movies', '🎬 Filme'],
+          ['books', '📚 Bücher'],
+        ].map(([key, label]) => (
           <button
             key={key}
             className={`tab${activeList === key ? ' active' : ''}`}
@@ -124,37 +230,33 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
 
       {activeList === 'series' && (
         <>
-          {showForm && renderForm(
-            newItem,
-            setNewItem,
-            handleAdd,
-            () => setShowForm(false),
+          {showSeriesForm && renderSeriesForm(
+            newSeries, setNewSeries,
+            handleAddSeries, () => setShowSeriesForm(false),
             'Serie hinzufügen'
           )}
 
-          {!showForm && !editing && (
+          {!showSeriesForm && !editingSeries && (
             <button
               className="btn btn-primary"
               style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
-              onClick={() => { setNewItem({ ...EMPTY_SERIES }); setShowForm(true) }}
+              onClick={() => { setNewSeries({ ...EMPTY_SERIES }); setShowSeriesForm(true) }}
             >
               + Serie hinzufügen
             </button>
           )}
 
           {series.map(s => (
-            editing === s.id ? (
+            editingSeries === s.id ? (
               <div key={s.id}>
-                {renderForm(
-                  editFields,
-                  setEditFields,
-                  handleUpdate,
-                  () => setEditing(null),
+                {renderSeriesForm(
+                  editSeriesFields, setEditSeriesFields,
+                  handleUpdateSeries, () => setEditingSeries(null),
                   'Serie bearbeiten'
                 )}
               </div>
             ) : (
-              <div key={s.id} className="list-item" onClick={() => startEdit(s)}>
+              <div key={s.id} className="list-item" onClick={() => startEditSeries(s)}>
                 <div className="list-emoji">{s.emoji}</div>
                 <div className="list-info">
                   <div className="list-title">{s.title}</div>
@@ -173,7 +275,7 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
                 </div>
                 <span className={`badge badge-${s.statusType}`}>{s.status}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(s) }}>✎</button>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}>✎</button>
                   <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Serie löschen?')) deleteSeries(s.id) }}>✕</button>
                 </div>
               </div>
@@ -182,7 +284,57 @@ export default function ListsTab({ series, addSeries, updateSeries, deleteSeries
         </>
       )}
 
-      {activeList !== 'series' && (
+      {activeList === 'activities' && (
+        <>
+          {showActivityForm && renderActivityForm(
+            newAct, setNewAct,
+            handleAddActivity, () => setShowActivityForm(false),
+            'Aktivität hinzufügen'
+          )}
+
+          {!showActivityForm && !editingActivity && (
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              onClick={() => { setNewAct({ ...EMPTY_ACTIVITY }); setShowActivityForm(true) }}
+            >
+              + Aktivität vorschlagen
+            </button>
+          )}
+
+          {activities.map(a => (
+            editingActivity === a.id ? (
+              <div key={a.id}>
+                {renderActivityForm(
+                  editActivityFields, setEditActivityFields,
+                  handleUpdateActivity, () => setEditingActivity(null),
+                  'Aktivität bearbeiten'
+                )}
+              </div>
+            ) : (
+              <div key={a.id} className="activity-card" onClick={() => startEditActivity(a)}>
+                <div className="activity-icon">{a.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="list-title">{a.title}</div>
+                  <div className="list-sub">
+                    {a.meta}
+                    {a.date && (
+                      <span>{a.meta ? ' · ' : ''}{formatISOToGerman(a.date)}{a.time ? ` ${a.time}` : ''}</span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}>✎</button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}>✕</button>
+                </div>
+              </div>
+            )
+          ))}
+        </>
+      )}
+
+      {(activeList === 'movies' || activeList === 'books') && (
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✨</div>
           <div style={{ fontFamily: 'Fraunces, serif', fontSize: 18, marginBottom: 6, color: 'var(--ink)' }}>
