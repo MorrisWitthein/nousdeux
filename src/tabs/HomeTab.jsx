@@ -139,7 +139,10 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
 
   const special = getSpecialDay(now)
 
-  const nextEvent = events[0] ?? null
+  const today = now.toISOString().slice(0, 10)
+  const nextEvent = events
+    .filter(e => e.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))[0] ?? null
   const runningSeries = series.filter(s => s.status === 'Läuft').length
 
   return (

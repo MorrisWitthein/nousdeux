@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { connectStream } from './connectStream.js'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -25,9 +26,7 @@ export function useSeries() {
   useEffect(() => {
     refresh()
     const token = localStorage.getItem('token')
-    const es = new EventSource(`${API}/api/series/stream?token=${token}`)
-    es.onmessage = () => refresh()
-    return () => es.close()
+    return connectStream(`${API}/api/series/stream?token=${token}`, refresh)
   }, [])
 
   const addSeries = async (item) => {

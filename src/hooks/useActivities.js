@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { connectStream } from './connectStream.js'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -25,9 +26,7 @@ export function useActivities() {
   useEffect(() => {
     refresh()
     const token = localStorage.getItem('token')
-    const es = new EventSource(`${API}/api/activities/stream?token=${token}`)
-    es.onmessage = () => refresh()
-    return () => es.close()
+    return connectStream(`${API}/api/activities/stream?token=${token}`, refresh)
   }, [])
 
   const addActivity = async (activity) => {
