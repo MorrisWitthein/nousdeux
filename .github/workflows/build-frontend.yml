@@ -21,7 +21,7 @@ jobs:
 
       - name: Build and push
         run: |
-          IMAGE=registry.tail32699d.ts.net/nosdeux
+          IMAGE=registry.tail32699d.ts.net/nousdeux
           TAG=v${{ github.run_number }}
           docker build \
             --build-arg VITE_API_URL=${{ vars.VITE_API_URL }} \
