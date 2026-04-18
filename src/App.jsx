@@ -159,6 +159,9 @@ export default function App() {
               >
                 Ausloggen
               </button>
+              <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginTop: 16, opacity: 0.5 }}>
+                v{__APP_VERSION__}
+              </p>
             </div>
           </div>
         )}

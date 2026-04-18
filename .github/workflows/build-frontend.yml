@@ -22,7 +22,7 @@ jobs:
       - name: Build and push
         run: |
           IMAGE=registry.tail32699d.ts.net/nousdeux
-          TAG=v${{ github.run_number }}
+          TAG=v$(node -p "require('./package.json').version")
           docker build \
             --build-arg VITE_API_URL=${{ vars.VITE_API_URL }} \
             -t $IMAGE:$TAG \

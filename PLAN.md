@@ -179,6 +179,15 @@ _Checkpoint: both phones can log in, add items, and see each other's changes in 
 - Recipe detail view with ingredients/steps
 - Photo uploads for recipes (stored on Pi via the Go API) and Profile Pictures
 - Possibility to add new types of Lists via the UI
+- Possibility to make suggestions in calendar + option to accept or decline
+- Adjust the window to have the input widgets in focus when creating or updating something
+- Make the profile editable & add a field for birthday
+
+
+### Bugs
+
+- Next event on Homescreen doesn't show the next event time-wise, but simply the latest added event
+- Zoom should be fixed if possible
 
 ---
 
