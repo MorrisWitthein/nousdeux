@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { flushSync } from 'react-dom'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -202,7 +201,6 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
-            onFocus={() => { if (!fields.endDate && fields.date) flushSync(() => setFields(f => ({ ...f, endDate: f.date }))) }}
             onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
           />
         </div>
@@ -264,6 +262,9 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           const hasSingle = info?.hasSingle ?? false
           const hasMulti = stripes.length > 0
           const isSelected = day === selectedDay
+          const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
+          const indBase = totalIndicators > 1 ? 2 : 4
+          const indStep = totalIndicators > 1 ? 6 : 7
           return (
             <div
               key={i}
@@ -281,11 +282,11 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
                 <span
                   key={seg.eventId}
                   className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
-                  style={{ bottom: `${4 + idx * 7}px` }}
+                  style={{ bottom: `${indBase + idx * indStep}px` }}
                 />
               ))}
               {hasMulti && hasSingle && (
-                <span className="cal-dot-extra" style={{ bottom: `${4 + stripes.length * 7 + 3}px` }} />
+                <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
               )}
             </div>
           )
