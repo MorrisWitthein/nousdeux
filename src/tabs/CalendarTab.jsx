@@ -78,7 +78,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const formRef = useRef(null)
   useEffect(() => {
     if (showForm || editing) {
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
   }, [showForm, editing])
 
@@ -269,7 +269,16 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             )}
           </div>
         ) : (
-          <div key={e.id} className="card" onClick={() => startEdit(e)}>
+          <div key={e.id} className="card" onClick={() => {
+              const parsed = parseEventDate(e.date)
+              if (parsed) {
+                if (parsed.year) setYear(parsed.year)
+                setMonth(parsed.month)
+                setSelectedDay(parsed.day)
+              }
+              setEditing(null)
+              setShowForm(false)
+            }}>
             <div className="card-header">
               <div>
                 <div className="card-title">{e.title}</div>

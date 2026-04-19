@@ -30,7 +30,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   const formRef = useRef(null)
   useEffect(() => {
     if (showForm || editing) {
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
   }, [showForm, editing])
 

@@ -42,7 +42,7 @@ export default function ListsTab({
   const formRef = useRef(null)
   useEffect(() => {
     if (showSeriesForm || editingSeries || showActivityForm || editingActivity) {
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
   }, [showSeriesForm, editingSeries, showActivityForm, editingActivity])
 
