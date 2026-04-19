@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -201,7 +202,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
-            onFocus={() => { if (!fields.endDate && fields.date) setFields(f => ({ ...f, endDate: f.date })) }}
+            onFocus={() => { if (!fields.endDate && fields.date) flushSync(() => setFields(f => ({ ...f, endDate: f.date }))) }}
             onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
           />
         </div>
