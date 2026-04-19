@@ -619,6 +619,14 @@ const styles = `
   line-height: 1.5;
 }
 
+.add-form input[type="date"],
+.add-form input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 46px;
+  line-height: 46px;
+}
+
 .add-form input:focus, .add-form select:focus, .add-form textarea:focus {
   border-color: var(--ink);
 }
