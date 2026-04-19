@@ -63,17 +63,6 @@ export default function App() {
               </div>
             )}
           </div>
-          <div className="tabs">
-            {tabs.map(t => (
-              <button
-                key={t.id}
-                className={`tab${activeTab === t.id ? ' active' : ''}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="content">

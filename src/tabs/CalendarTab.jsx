@@ -53,7 +53,44 @@ function parseEventDate(dateStr) {
   return { day, month: idx }
 }
 
-const EMPTY_EVENT = { title: '', date: '', time: '', badge: 'Geplant', badgeType: 'green' }
+// Build a map of day -> 'single' | 'start' | 'mid' | 'end' for the current month view.
+// Multi-day events take visual priority over single-day dots.
+function buildEventDayMap(events, year, month) {
+  const map = new Map()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const monthStart = toISO(year, month, 1)
+  const monthEnd = toISO(year, month, daysInMonth)
+
+  events.forEach(e => {
+    const startISO = e.date
+    const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
+
+    if (!startISO) return
+    if (endISO < monthStart || startISO > monthEnd) return
+
+    if (startISO === endISO) {
+      // Single-day — only set if no multi-day marker already there
+      const parsed = parseEventDate(startISO)
+      if (parsed && parsed.month === month) {
+        if (!map.has(parsed.day)) map.set(parsed.day, 'single')
+      }
+      return
+    }
+
+    // Multi-day: mark every day in the range within this month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayISO = toISO(year, month, d)
+      if (dayISO < startISO || dayISO > endISO) continue
+      const isStart = dayISO === startISO
+      const isEnd = dayISO === endISO
+      map.set(d, isStart ? 'start' : isEnd ? 'end' : 'mid')
+    }
+  })
+
+  return map
+}
+
+const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 
 export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed }) {
   const now = new Date()
@@ -84,12 +121,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const grid = buildMonthGrid(year, month)
   const todayDay = now.getFullYear() === year && now.getMonth() === month ? now.getDate() : null
-
-  const eventDays = new Set()
-  events.forEach(e => {
-    const parsed = parseEventDate(e.date)
-    if (parsed && parsed.month === month) eventDays.add(parsed.day)
-  })
+  const eventDayMap = buildEventDayMap(events, year, month)
 
   const prevMonth = () => {
     setSelectedDay(null)
@@ -122,6 +154,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     setEditFields({
       title: e.title,
       date: e.date || '',
+      endDate: e.endDate || '',
       time: e.time || '',
       badge: e.badge || 'Geplant',
       badgeType: e.badgeType || 'green',
@@ -152,7 +185,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       />
       <div className="form-row">
         <div>
-          <label className="form-label">Datum</label>
+          <label className="form-label">Von</label>
           <input
             type="date"
             value={fields.date}
@@ -160,13 +193,22 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           />
         </div>
         <div>
-          <label className="form-label">Uhrzeit</label>
+          <label className="form-label">Bis (opt.)</label>
           <input
-            type="time"
-            value={fields.time}
-            onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+            type="date"
+            value={fields.endDate}
+            min={fields.date || undefined}
+            onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
           />
         </div>
+      </div>
+      <div>
+        <label className="form-label">Uhrzeit</label>
+        <input
+          type="time"
+          value={fields.time}
+          onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+        />
       </div>
       <select
         value={fields.badge}
@@ -184,6 +226,17 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     </div>
   )
 
+  // Filter events visible for the selected day — includes multi-day events spanning it
+  const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
+  const visibleEvents = (selectedDayISO
+    ? events.filter(e => {
+        const startISO = e.date
+        const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
+        return startISO && selectedDayISO >= startISO && selectedDayISO <= endISO
+      })
+    : events.filter(e => (e.date ?? '') >= now.toISOString().slice(0, 10))
+  ).slice().sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? ''))
+
   return (
     <div>
       <p className="section-title">Eure <em>Termine</em></p>
@@ -200,21 +253,27 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         {DAY_ABBR.map(d => (
           <div key={d} className="cal-day-name">{d}</div>
         ))}
-        {grid.map((day, i) => (
-          <div
-            key={i}
-            className={[
-              'cal-day',
-              !day ? 'empty' : '',
-              day === todayDay ? 'today' : '',
-              day === selectedDay ? 'selected' : '',
-              eventDays.has(day) ? 'has-event' : '',
-            ].join(' ').trim()}
-            onClick={() => handleDayClick(day)}
-          >
-            {day}
-          </div>
-        ))}
+        {grid.map((day, i) => {
+          const seg = eventDayMap.get(day)
+          return (
+            <div
+              key={i}
+              className={[
+                'cal-day',
+                !day ? 'empty' : '',
+                day === todayDay ? 'today' : '',
+                day === selectedDay ? 'selected' : '',
+                seg === 'single' ? 'has-event' : '',
+                seg === 'start' ? 'multiday-start' : '',
+                seg === 'mid' ? 'multiday-mid' : '',
+                seg === 'end' ? 'multiday-end' : '',
+              ].filter(Boolean).join(' ')}
+              onClick={() => handleDayClick(day)}
+            >
+              {day}
+            </div>
+          )
+        })}
       </div>
 
       {showForm && <div ref={formRef}>{renderForm(
@@ -251,14 +310,13 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         </button>
       )}
 
-      {(selectedDay
-        ? events.filter(e => {
-            const parsed = parseEventDate(e.date)
-            return parsed && parsed.month === month && parsed.day === selectedDay
-          })
-        : events.filter(e => (e.date ?? '') >= now.toISOString().slice(0, 10))
-      ).slice().sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? '')).map(e => (
-        editing === e.id ? (
+      {visibleEvents.map(e => {
+        const isMultiDay = e.endDate && e.endDate > e.date
+        const dateDisplay = isMultiDay
+          ? `${formatISOToGerman(e.date)} – ${formatISOToGerman(e.endDate)}`
+          : (formatISOToGerman(e.date) || e.date)
+
+        return editing === e.id ? (
           <div key={e.id} ref={formRef}>
             {renderForm(
               editFields,
@@ -282,7 +340,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             <div className="card-header">
               <div>
                 <div className="card-title">{e.title}</div>
-                <div className="card-meta">{formatISOToGerman(e.date) || e.date}{e.time ? ` · ${e.time}` : ''}</div>
+                <div className="card-meta">{dateDisplay}{e.time ? ` · ${e.time}` : ''}</div>
               </div>
               <span className={`badge badge-${e.badgeType}`}>{e.badge}</span>
             </div>
@@ -298,7 +356,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             </div>
           </div>
         )
-      ))}
+      })}
     </div>
   )
 }

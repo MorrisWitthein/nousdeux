@@ -9,6 +9,7 @@ type Event struct {
 	ID        string    `json:"id"`
 	Title     string    `json:"title"`
 	Date      string    `json:"date,omitempty"`
+	EndDate   string    `json:"endDate,omitempty"`
 	Time      string    `json:"time,omitempty"`
 	Who       string    `json:"who"`
 	Badge     string    `json:"badge,omitempty"`

@@ -17,7 +17,7 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
-			`SELECT id, title, COALESCE(date,''), COALESCE(time,''),
+			`SELECT id, title, COALESCE(date,''), COALESCE(end_date,''), COALESCE(time,''),
 			        who, COALESCE(badge,''), COALESCE(badge_type,''), created_at
 			 FROM events ORDER BY created_at DESC`)
 		if err != nil {
@@ -44,9 +44,9 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		}
 		e.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO events (title, date, time, who, badge, badge_type)
-			 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`,
-			e.Title, nullIfEmpty(e.Date), nullIfEmpty(e.Time), e.Who, nullIfEmpty(e.Badge), nullIfEmpty(e.BadgeType),
+			`INSERT INTO events (title, date, end_date, time, who, badge, badge_type)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, created_at`,
+			e.Title, nullIfEmpty(e.Date), nullIfEmpty(e.EndDate), nullIfEmpty(e.Time), e.Who, nullIfEmpty(e.Badge), nullIfEmpty(e.BadgeType),
 		).Scan(&e.ID, &e.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
@@ -73,9 +73,9 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE events SET title=$1, date=$2, time=$3, badge=$4, badge_type=$5
-			 WHERE id=$6`,
-			e.Title, nullIfEmpty(e.Date), nullIfEmpty(e.Time),
+			`UPDATE events SET title=$1, date=$2, end_date=$3, time=$4, badge=$5, badge_type=$6
+			 WHERE id=$7`,
+			e.Title, nullIfEmpty(e.Date), nullIfEmpty(e.EndDate), nullIfEmpty(e.Time),
 			nullIfEmpty(e.Badge), nullIfEmpty(e.BadgeType), id,
 		)
 		if err != nil {
