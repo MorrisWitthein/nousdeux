@@ -389,24 +389,30 @@ const styles = `
 .cal-day.today.has-event::after { background: var(--accent3); }
 .cal-day.empty { opacity: 0; pointer-events: none; }
 
-/* Multi-day event stripe — a colored band connecting consecutive days */
-.cal-day.multiday-start::before,
-.cal-day.multiday-mid::before,
-.cal-day.multiday-end::before {
-  content: '';
+/* Multi-day event stripes — rendered as child spans to support stacking */
+.cal-stripe {
   position: absolute;
-  bottom: 5px;
   height: 5px;
   background: var(--accent3);
   opacity: 0.7;
   z-index: 0;
+  pointer-events: none;
 }
-.cal-day.multiday-start::before { left: 50%; right: -4px; border-radius: 3px 0 0 3px; }
-.cal-day.multiday-mid::before   { left: -4px; right: -4px; border-radius: 0; }
-.cal-day.multiday-end::before   { left: -4px; right: 50%; border-radius: 0 3px 3px 0; }
-.cal-day.selected.multiday-start::before,
-.cal-day.selected.multiday-mid::before,
-.cal-day.selected.multiday-end::before { opacity: 0.4; }
+.cal-stripe.cal-stripe-start { left: 50%; right: -2px; border-radius: 3px 0 0 3px; }
+.cal-stripe.cal-stripe-mid   { left: -2px; right: -2px; border-radius: 0; }
+.cal-stripe.cal-stripe-end   { left: -2px; right: 50%; border-radius: 0 3px 3px 0; }
+.cal-stripe.dimmed { opacity: 0.4; }
+
+/* Dot for a single-day event coexisting with a multi-day stripe */
+.cal-dot-extra {
+  position: absolute;
+  bottom: 3px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  z-index: 1;
+  pointer-events: none;
+}
 
 /* RECIPES */
 .recipe-card {

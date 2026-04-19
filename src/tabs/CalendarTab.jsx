@@ -53,37 +53,40 @@ function parseEventDate(dateStr) {
   return { day, month: idx }
 }
 
-// Build a map of day -> 'single' | 'start' | 'mid' | 'end' for the current month view.
-// Multi-day events take visual priority over single-day dots.
+// Build a map of day -> { stripes: [{role, eventId}], hasSingle: bool }
+// stripes: one entry per multi-day event covering that day (in array order → consistent stacking)
+// hasSingle: true if any single-day event also falls on that day
 function buildEventDayMap(events, year, month) {
   const map = new Map()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const monthStart = toISO(year, month, 1)
   const monthEnd = toISO(year, month, daysInMonth)
 
-  events.forEach(e => {
-    const startISO = e.date
-    const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
+  const multiDay = events.filter(e => e.endDate && e.endDate > e.date)
+  const singleDay = events.filter(e => !e.endDate || e.endDate <= e.date)
 
-    if (!startISO) return
-    if (endISO < monthStart || startISO > monthEnd) return
-
-    if (startISO === endISO) {
-      // Single-day — only set if no multi-day marker already there
-      const parsed = parseEventDate(startISO)
-      if (parsed && parsed.month === month) {
-        if (!map.has(parsed.day)) map.set(parsed.day, 'single')
-      }
-      return
-    }
-
-    // Multi-day: mark every day in the range within this month
+  multiDay.forEach(e => {
+    if (!e.date) return
+    if (e.endDate < monthStart || e.date > monthEnd) return
     for (let d = 1; d <= daysInMonth; d++) {
       const dayISO = toISO(year, month, d)
-      if (dayISO < startISO || dayISO > endISO) continue
-      const isStart = dayISO === startISO
-      const isEnd = dayISO === endISO
-      map.set(d, isStart ? 'start' : isEnd ? 'end' : 'mid')
+      if (dayISO < e.date || dayISO > e.endDate) continue
+      const isStart = dayISO === e.date
+      const isEnd = dayISO === e.endDate
+      const role = isStart ? 'start' : isEnd ? 'end' : 'mid'
+      if (!map.has(d)) map.set(d, { stripes: [], hasSingle: false })
+      map.get(d).stripes.push({ role, eventId: e.id })
+    }
+  })
+
+  singleDay.forEach(e => {
+    const parsed = parseEventDate(e.date)
+    if (!parsed || parsed.month !== month) return
+    const d = parsed.day
+    if (map.has(d)) {
+      map.get(d).hasSingle = true
+    } else {
+      map.set(d, { stripes: [], hasSingle: true })
     }
   })
 
@@ -198,6 +201,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
+            onFocus={() => { if (!fields.endDate && fields.date) setFields(f => ({ ...f, endDate: f.date })) }}
             onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
           />
         </div>
@@ -254,7 +258,13 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           <div key={d} className="cal-day-name">{d}</div>
         ))}
         {grid.map((day, i) => {
-          const seg = eventDayMap.get(day)
+          const info = day ? eventDayMap.get(day) : undefined
+          const stripes = info?.stripes ?? []
+          const hasSingle = info?.hasSingle ?? false
+          const hasMulti = stripes.length > 0
+          const isSelected = day === selectedDay
+          // If a single-day dot coexists with stripes, shift stripes up to leave room at bottom
+          const stripeBottom = hasMulti && hasSingle ? 11 : 4
           return (
             <div
               key={i}
@@ -262,15 +272,20 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
                 'cal-day',
                 !day ? 'empty' : '',
                 day === todayDay ? 'today' : '',
-                day === selectedDay ? 'selected' : '',
-                seg === 'single' ? 'has-event' : '',
-                seg === 'start' ? 'multiday-start' : '',
-                seg === 'mid' ? 'multiday-mid' : '',
-                seg === 'end' ? 'multiday-end' : '',
+                isSelected ? 'selected' : '',
+                !hasMulti && hasSingle ? 'has-event' : '',
               ].filter(Boolean).join(' ')}
               onClick={() => handleDayClick(day)}
             >
               {day}
+              {stripes.map((seg, idx) => (
+                <span
+                  key={seg.eventId}
+                  className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
+                  style={{ bottom: `${stripeBottom + idx * 7}px` }}
+                />
+              ))}
+              {hasMulti && hasSingle && <span className="cal-dot-extra" />}
             </div>
           )
         })}
