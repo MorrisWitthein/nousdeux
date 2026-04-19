@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -74,6 +74,13 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
+
+  const formRef = useRef(null)
+  useEffect(() => {
+    if (showForm || editing) {
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    }
+  }, [showForm, editing])
 
   const grid = buildMonthGrid(year, month)
   const todayDay = now.getFullYear() === year && now.getMonth() === month ? now.getDate() : null
@@ -210,13 +217,13 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         ))}
       </div>
 
-      {showForm && renderForm(
+      {showForm && <div ref={formRef}>{renderForm(
         newEvent,
         setNewEvent,
         handleAdd,
         () => setShowForm(false),
         'Neuer Termin'
-      )}
+      )}</div>}
 
       {selectedDay && (
         <button
@@ -249,10 +256,10 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             const parsed = parseEventDate(e.date)
             return parsed && parsed.month === month && parsed.day === selectedDay
           })
-        : events
-      ).map(e => (
+        : events.filter(e => (e.date ?? '') >= now.toISOString().slice(0, 10))
+      ).slice().sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? '')).map(e => (
         editing === e.id ? (
-          <div key={e.id}>
+          <div key={e.id} ref={formRef}>
             {renderForm(
               editFields,
               setEditFields,

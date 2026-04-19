@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -38,6 +38,13 @@ export default function ListsTab({
   const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
   const [editingActivity, setEditingActivity] = useState(null)
   const [editActivityFields, setEditActivityFields] = useState({ ...EMPTY_ACTIVITY })
+
+  const formRef = useRef(null)
+  useEffect(() => {
+    if (showSeriesForm || editingSeries || showActivityForm || editingActivity) {
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    }
+  }, [showSeriesForm, editingSeries, showActivityForm, editingActivity])
 
   // Series handlers
   const handleAddSeries = async () => {
@@ -230,11 +237,11 @@ export default function ListsTab({
 
       {activeList === 'series' && (
         <>
-          {showSeriesForm && renderSeriesForm(
+          {showSeriesForm && <div ref={formRef}>{renderSeriesForm(
             newSeries, setNewSeries,
             handleAddSeries, () => setShowSeriesForm(false),
             'Serie hinzufügen'
-          )}
+          )}</div>}
 
           {!showSeriesForm && !editingSeries && (
             <button
@@ -248,7 +255,7 @@ export default function ListsTab({
 
           {series.map(s => (
             editingSeries === s.id ? (
-              <div key={s.id}>
+              <div key={s.id} ref={formRef}>
                 {renderSeriesForm(
                   editSeriesFields, setEditSeriesFields,
                   handleUpdateSeries, () => setEditingSeries(null),
@@ -286,11 +293,11 @@ export default function ListsTab({
 
       {activeList === 'activities' && (
         <>
-          {showActivityForm && renderActivityForm(
+          {showActivityForm && <div ref={formRef}>{renderActivityForm(
             newAct, setNewAct,
             handleAddActivity, () => setShowActivityForm(false),
             'Aktivität hinzufügen'
-          )}
+          )}</div>}
 
           {!showActivityForm && !editingActivity && (
             <button
@@ -304,7 +311,7 @@ export default function ListsTab({
 
           {activities.map(a => (
             editingActivity === a.id ? (
-              <div key={a.id}>
+              <div key={a.id} ref={formRef}>
                 {renderActivityForm(
                   editActivityFields, setEditActivityFields,
                   handleUpdateActivity, () => setEditingActivity(null),

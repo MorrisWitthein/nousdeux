@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
@@ -18,6 +18,13 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
   const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_ACTIVITY })
+
+  const formRef = useRef(null)
+  useEffect(() => {
+    if (showForm || editing) {
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    }
+  }, [showForm, editing])
 
   const handleAdd = async () => {
     if (!newAct.title) return
@@ -99,13 +106,13 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
       <p className="section-title">Eure <em>Aktivitäten</em></p>
       <p className="section-sub">Was wollt ihr noch erleben?</p>
 
-      {showForm && renderForm(
+      {showForm && <div ref={formRef}>{renderForm(
         newAct,
         setNewAct,
         handleAdd,
         () => setShowForm(false),
         'Aktivität hinzufügen'
-      )}
+      )}</div>}
 
       {!showForm && !editing && (
         <button
@@ -119,7 +126,7 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
 
       {activities.map(a => (
         editing === a.id ? (
-          <div key={a.id}>
+          <div key={a.id} ref={formRef}>
             {renderForm(
               editFields,
               setEditFields,

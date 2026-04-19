@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function StarRating({ value, onChange }) {
   return (
@@ -26,6 +26,13 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   const [newRecipe, setNewRecipe] = useState({ ...EMPTY_RECIPE })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_RECIPE })
+
+  const formRef = useRef(null)
+  useEffect(() => {
+    if (showForm || editing) {
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    }
+  }, [showForm, editing])
 
   const handleAdd = async () => {
     if (!newRecipe.title) return
@@ -149,13 +156,13 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
       <p className="section-title">Eure <em>Rezepte</em></p>
       <p className="section-sub">{recipes.length} Gerichte gesammelt</p>
 
-      {showForm && renderForm(
+      {showForm && <div ref={formRef}>{renderForm(
         newRecipe,
         setNewRecipe,
         handleAdd,
         () => setShowForm(false),
         'Rezept hinzufügen'
-      )}
+      )}</div>}
 
       {!showForm && !editing && (
         <button
@@ -169,7 +176,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
 
       {recipes.map(r => (
         editing === r.id ? (
-          <div key={r.id}>
+          <div key={r.id} ref={formRef}>
             {renderForm(
               editFields,
               setEditFields,

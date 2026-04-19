@@ -140,6 +140,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   const special = getSpecialDay(now)
 
   const today = now.toISOString().slice(0, 10)
+  const thisMonth = today.slice(0, 7) // "YYYY-MM"
   const nextEvent = events
     .filter(e => e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))[0] ?? null
@@ -183,7 +184,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       <div className="quick-stats">
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('calendar')}>
           <div className="stat-icon">📅</div>
-          <div className="stat-number">{events.length}</div>
+          <div className="stat-number">{events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
           <div className="stat-label">Events diesen Monat</div>
         </div>
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('lists')}>

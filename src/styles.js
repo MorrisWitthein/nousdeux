@@ -600,6 +600,7 @@ const styles = `
 
 .add-form input, .add-form select, .add-form textarea {
   width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border: 1.5px solid var(--border);
   border-radius: 12px;
