@@ -263,8 +263,6 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           const hasSingle = info?.hasSingle ?? false
           const hasMulti = stripes.length > 0
           const isSelected = day === selectedDay
-          // If a single-day dot coexists with stripes, shift stripes up to leave room at bottom
-          const stripeBottom = hasMulti && hasSingle ? 11 : 4
           return (
             <div
               key={i}
@@ -282,10 +280,12 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
                 <span
                   key={seg.eventId}
                   className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
-                  style={{ bottom: `${stripeBottom + idx * 7}px` }}
+                  style={{ bottom: `${4 + idx * 7}px` }}
                 />
               ))}
-              {hasMulti && hasSingle && <span className="cal-dot-extra" />}
+              {hasMulti && hasSingle && (
+                <span className="cal-dot-extra" style={{ bottom: `${4 + stripes.length * 7 + 3}px` }} />
+              )}
             </div>
           )
         })}

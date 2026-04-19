@@ -406,7 +406,6 @@ const styles = `
 /* Dot for a single-day event coexisting with a multi-day stripe */
 .cal-dot-extra {
   position: absolute;
-  bottom: 3px;
   width: 4px; height: 4px;
   border-radius: 50%;
   background: var(--accent);
