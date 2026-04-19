@@ -13,6 +13,8 @@ import (
 	"github.com/mwitthein/nousdeux-api/db"
 )
 
+var version = "dev"
+
 func main() {
 	addr := os.Getenv("API_ADDR")
 	if addr == "" {
@@ -77,7 +79,7 @@ func main() {
 
 	// Start server in background.
 	go func() {
-		slog.Info("nousdeux API listening", "addr", addr)
+		slog.Info("nousdeux API listening", "addr", addr, "version", version)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "err", err)
 			os.Exit(1)

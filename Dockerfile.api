@@ -4,7 +4,8 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o api .
+RUN VERSION=$(cat VERSION) && \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=$VERSION" -o api .
 
 FROM scratch
 COPY --from=builder /app/api /api

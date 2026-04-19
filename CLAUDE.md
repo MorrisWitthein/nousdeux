@@ -96,6 +96,15 @@ SQL migrations live in `api/db/migrations/` as numbered files (`001_initial.sql`
 - Migrations must be additive in production (no `DROP COLUMN` without a plan)
 - Test locally first: `docker compose up -d` then `go run ./api`
 
+## Versioning
+
+Both the frontend and API use semver version files as the image tag source. **Bump the relevant version before or as part of any commit that touches those paths.**
+
+- **Frontend** — `package.json` → `version` field. Bump when changing anything under `src/`, `public/`, `index.html`, or `vite.config.js`.
+- **API** — `api/VERSION`. Bump when changing anything under `api/`.
+
+Use patch bumps (`x.y.Z`) for fixes and small changes, minor bumps (`x.Y.0`) for new features. The CI workflow tags the Docker image with this version, so leaving it unchanged means the new image silently overwrites the previous tag.
+
 ## Deployment Target
 
 Raspberry Pi running Kubernetes, accessed privately via Tailscale VPN. NodePort 30080. Image is built locally (`imagePullPolicy: Never`). Resource limits are minimal (32–64 MB RAM, 50–200m CPU) — keep bundle size in check.

@@ -17,7 +17,7 @@ jobs:
       - name: Build and push
         run: |
           IMAGE=registry.tail32699d.ts.net/nousdeux-api
-          TAG=v${{ github.run_number }}
+          TAG=v$(cat api/VERSION)
           docker build \
             -t $IMAGE:$TAG \
             -t $IMAGE:latest \
