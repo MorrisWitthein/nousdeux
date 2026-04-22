@@ -42,6 +42,10 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
+		if err := validateEvent(e); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		e.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO events (title, date, end_date, time, who, badge, badge_type)
@@ -70,6 +74,10 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		}
 		if e.Title == "" {
 			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateEvent(e); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		tag, err := pool.Exec(ctx,

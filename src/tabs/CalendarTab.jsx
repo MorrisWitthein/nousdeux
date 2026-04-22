@@ -178,56 +178,65 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     { label: 'Abgesagt', type: 'red' },
   ]
 
-  const renderForm = (fields, setFields, onSave, onCancel, title) => (
-    <div className="add-form">
-      <div className="add-form-title">{title}</div>
-      <input
-        placeholder="Titel"
-        value={fields.title}
-        onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
-      />
-      <div className="form-row">
-        <div>
-          <label className="form-label">Von</label>
-          <input
-            type="date"
-            value={fields.date}
-            onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="form-label">Bis (opt.)</label>
-          <input
-            type="date"
-            value={fields.endDate}
-            min={fields.date || undefined}
-            onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
-          />
-        </div>
-      </div>
-      <div>
-        <label className="form-label">Uhrzeit</label>
+  const renderForm = (fields, setFields, onSave, onCancel, title) => {
+    const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
+    return (
+      <div className="add-form">
+        <div className="add-form-title">{title}</div>
         <input
-          type="time"
-          value={fields.time}
-          onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+          placeholder="Titel"
+          value={fields.title}
+          onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
         />
+        <div className="form-row">
+          <div>
+            <label className="form-label">Von</label>
+            <input
+              type="date"
+              value={fields.date}
+              onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="form-label">Bis (opt.)</label>
+            <input
+              type="date"
+              value={fields.endDate}
+              min={fields.date || undefined}
+              style={endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : undefined}
+              onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
+            />
+            {endDateInvalid && (
+              <div style={{ color: 'var(--accent)', fontSize: 11, marginTop: 3 }}>
+                Muss nach dem Startdatum liegen
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <label className="form-label">Uhrzeit</label>
+          <input
+            type="time"
+            value={fields.time}
+            onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+          />
+        </div>
+        <select
+          value={fields.badge}
+          onChange={e => {
+            const opt = badgeOptions.find(o => o.label === e.target.value)
+            setFields(f => ({ ...f, badge: e.target.value, badgeType: opt?.type || 'green' }))
+          }}
+        >
+          {badgeOptions.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
+        </select>
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+          <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid}>Speichern</button>
+        </div>
       </div>
-      <select
-        value={fields.badge}
-        onChange={e => {
-          const opt = badgeOptions.find(o => o.label === e.target.value)
-          setFields(f => ({ ...f, badge: e.target.value, badgeType: opt?.type || 'green' }))
-        }}
-      >
-        {badgeOptions.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
-      </select>
-      <div className="btn-row">
-        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn btn-primary" onClick={onSave}>Speichern</button>
-      </div>
-    </div>
-  )
+    )
+  }
 
   // Filter events visible for the selected day — includes multi-day events spanning it
   const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
@@ -248,6 +257,11 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         <div className="month-name">{MONTH_NAMES[month]} {year}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="nav-btn" onClick={prevMonth}>‹</button>
+          <button
+            className="nav-btn"
+            style={{ fontSize: 11, padding: '4px 8px', letterSpacing: 0.3 }}
+            onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth()); setSelectedDay(now.getDate()) }}
+          >Heute</button>
           <button className="nav-btn" onClick={nextMonth}>›</button>
         </div>
       </div>
