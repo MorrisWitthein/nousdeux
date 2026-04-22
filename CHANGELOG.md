@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.5] - 2026-04-22
+
+### Changed
+- Calendar month swipe now animates: grid slides out in the swipe direction and the new month slides in from the opposite side
+- Heute button restyled as a wider pill to fit the label
+
 ## [0.2.4] - 2026-04-22
 
 ### Added
