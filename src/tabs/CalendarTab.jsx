@@ -118,6 +118,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const formRef = useRef(null)
   const gridRef = useRef(null)
   const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
   const animatingRef = useRef(false)
   const [enterFrom, setEnterFrom] = useState(null)
 
@@ -131,6 +132,22 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     el.addEventListener('animationend', done, { once: true })
     return () => el.removeEventListener('animationend', done)
   }, [enterFrom])
+
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+    const onTouchMove = (e) => {
+      if (touchStartX.current === null || animatingRef.current) return
+      const dx = e.touches[0].clientX - touchStartX.current
+      const dy = e.touches[0].clientY - touchStartY.current
+      if (Math.abs(dx) > Math.abs(dy)) {
+        e.preventDefault()
+        el.style.transform = `translateX(${dx}px)`
+      }
+    }
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onTouchMove)
+  }, [])
 
   useEffect(() => {
     if (showForm || editing) {
@@ -302,11 +319,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         onTouchStart={e => {
           if (animatingRef.current) return
           touchStartX.current = e.touches[0].clientX
-        }}
-        onTouchMove={e => {
-          if (touchStartX.current === null || animatingRef.current) return
-          const delta = e.touches[0].clientX - touchStartX.current
-          gridRef.current.style.transform = `translateX(${delta}px)`
+          touchStartY.current = e.touches[0].clientY
         }}
         onTouchEnd={e => {
           if (touchStartX.current === null) return
