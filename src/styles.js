@@ -761,6 +761,14 @@ const styles = `
   background: #E3F0EE;
   color: var(--accent2);
 }
+@keyframes slideInFromLeft {
+  from { transform: translateX(-105%); }
+  to   { transform: translateX(0); }
+}
+@keyframes slideInFromRight {
+  from { transform: translateX(105%); }
+  to   { transform: translateX(0); }
+}
 `
 
 export default styles

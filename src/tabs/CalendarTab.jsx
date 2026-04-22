@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -116,7 +116,22 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
 
   const formRef = useRef(null)
+  const gridRef = useRef(null)
   const touchStartX = useRef(null)
+  const animatingRef = useRef(false)
+  const [enterFrom, setEnterFrom] = useState(null)
+
+  useEffect(() => {
+    if (!enterFrom || !gridRef.current) return
+    const el = gridRef.current
+    el.style.animation = enterFrom === 'left'
+      ? 'slideInFromLeft 0.28s ease-out'
+      : 'slideInFromRight 0.28s ease-out'
+    const done = () => { el.style.animation = ''; setEnterFrom(null) }
+    el.addEventListener('animationend', done, { once: true })
+    return () => el.removeEventListener('animationend', done)
+  }, [enterFrom])
+
   useEffect(() => {
     if (showForm || editing) {
       requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
@@ -127,17 +142,30 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const todayDay = now.getFullYear() === year && now.getMonth() === month ? now.getDate() : null
   const eventDayMap = buildEventDayMap(events, year, month)
 
-  const prevMonth = () => {
-    setSelectedDay(null)
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
-  }
+  const doSwipe = useCallback((dir) => {
+    if (animatingRef.current) return
+    animatingRef.current = true
+    const el = gridRef.current
+    el.style.transition = 'transform 0.22s ease-in'
+    el.style.transform = `translateX(${dir < 0 ? window.innerWidth : -window.innerWidth}px)`
+    setTimeout(() => {
+      el.style.transition = 'none'
+      el.style.transform = ''
+      setSelectedDay(null)
+      setEnterFrom(dir < 0 ? 'left' : 'right')
+      if (dir < 0) {
+        if (month === 0) { setMonth(11); setYear(y => y - 1) }
+        else setMonth(m => m - 1)
+      } else {
+        if (month === 11) { setMonth(0); setYear(y => y + 1) }
+        else setMonth(m => m + 1)
+      }
+      setTimeout(() => { animatingRef.current = false }, 300)
+    }, 220)
+  }, [month])
 
-  const nextMonth = () => {
-    setSelectedDay(null)
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
-  }
+  const prevMonth = () => doSwipe(-1)
+  const nextMonth = () => doSwipe(1)
 
   const handleDayClick = (day) => {
     if (!day) return
@@ -260,22 +288,37 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           <button className="nav-btn" onClick={prevMonth}>‹</button>
           <button
             className="nav-btn"
-            style={{ fontSize: 11, padding: '4px 8px', letterSpacing: 0.3 }}
+            style={{ fontSize: 11, padding: '4px 14px', letterSpacing: 0.3, borderRadius: 999, width: 'auto', height: 'auto' }}
             onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth()); setSelectedDay(now.getDate()) }}
           >Heute</button>
           <button className="nav-btn" onClick={nextMonth}>›</button>
         </div>
       </div>
 
+      <div style={{ overflow: 'hidden' }}>
       <div
+        ref={gridRef}
         className="calendar-grid"
-        onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+        onTouchStart={e => {
+          if (animatingRef.current) return
+          touchStartX.current = e.touches[0].clientX
+        }}
+        onTouchMove={e => {
+          if (touchStartX.current === null || animatingRef.current) return
+          const delta = e.touches[0].clientX - touchStartX.current
+          gridRef.current.style.transform = `translateX(${delta}px)`
+        }}
         onTouchEnd={e => {
           if (touchStartX.current === null) return
           const delta = e.changedTouches[0].clientX - touchStartX.current
           touchStartX.current = null
-          if (delta > 50) prevMonth()
-          else if (delta < -50) nextMonth()
+          if (Math.abs(delta) < 50) {
+            gridRef.current.style.transition = 'transform 0.2s ease-out'
+            gridRef.current.style.transform = 'translateX(0)'
+            setTimeout(() => { if (gridRef.current) gridRef.current.style.transition = 'none' }, 220)
+            return
+          }
+          doSwipe(delta > 0 ? -1 : 1)
         }}
       >
         {DAY_ABBR.map(d => (
@@ -316,6 +359,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             </div>
           )
         })}
+      </div>
       </div>
 
       {showForm && <div ref={formRef}>{renderForm(
