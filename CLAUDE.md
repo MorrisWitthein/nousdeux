@@ -112,7 +112,7 @@ Use patch bumps (`x.y.Z`) for fixes and small changes, minor bumps (`x.Y.0`) for
 **Workflow for every frontend release:**
 1. Bump `package.json` → `version`
 2. Add a new `## [x.y.z] - YYYY-MM-DD` section at the top of `CHANGELOG.md`
-3. Push to a feature branch and create a PR to main — CI extracts the latest section and creates a GitHub Release automatically after merge
+3. Push to a feature branch and create a PR to main (note that you need to use gh instead of glab in this repository) — CI extracts the latest section and creates a GitHub Release automatically after merge
 
 The version shown in the profile modal links directly to the matching GitHub Release (`/releases/tag/vX.Y.Z`), so the release must exist for the link to resolve.
 

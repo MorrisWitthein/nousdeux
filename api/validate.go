@@ -12,6 +12,52 @@ var (
 
 const maxTitleLen = 255
 
+func validateRecipe(r Recipe) error {
+	if len(r.Title) > maxTitleLen {
+		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
+	}
+	if r.Rating < 0 || r.Rating > 5 {
+		return fmt.Errorf("rating must be between 0 and 5")
+	}
+	if r.PrepTime != nil && *r.PrepTime < 0 {
+		return fmt.Errorf("prepTime must be >= 0")
+	}
+	if r.Servings != nil && *r.Servings < 1 {
+		return fmt.Errorf("servings must be >= 1")
+	}
+	return nil
+}
+
+func validateSeries(s Series) error {
+	if len(s.Title) > maxTitleLen {
+		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
+	}
+	if s.Progress < 0 || s.Progress > 100 {
+		return fmt.Errorf("progress must be between 0 and 100")
+	}
+	if s.StatusType != "" {
+		switch s.StatusType {
+		case "green", "yellow", "red":
+		default:
+			return fmt.Errorf("statusType must be one of: green, yellow, red")
+		}
+	}
+	return nil
+}
+
+func validateActivity(a Activity) error {
+	if len(a.Title) > maxTitleLen {
+		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
+	}
+	if a.Date != "" && !reDate.MatchString(a.Date) {
+		return fmt.Errorf("date must be YYYY-MM-DD")
+	}
+	if a.Time != "" && !reTime.MatchString(a.Time) {
+		return fmt.Errorf("time must be HH:MM")
+	}
+	return nil
+}
+
 func validateEvent(e Event) error {
 	if len(e.Title) > maxTitleLen {
 		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
