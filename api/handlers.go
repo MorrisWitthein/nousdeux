@@ -155,6 +155,10 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
+		if err := validateRecipe(rec); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		rec.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO recipes (emoji, title, tags, who, rating, ingredients, steps, prep_time, servings)
@@ -184,6 +188,10 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 		}
 		if rec.Title == "" {
 			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateRecipe(rec); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		tag, err := pool.Exec(ctx,
@@ -261,6 +269,10 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
+		if err := validateSeries(s); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		err := pool.QueryRow(ctx,
 			`INSERT INTO series (emoji, title, sub, progress, status, status_type)
 			 VALUES ($1,$2,$3,$4,$5,$6)
@@ -290,6 +302,10 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		}
 		if s.Title == "" {
 			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateSeries(s); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		tag, err := pool.Exec(ctx,
@@ -365,6 +381,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
+		if err := validateActivity(a); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		a.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
 			`INSERT INTO activities (emoji, title, meta, who, date, time)
@@ -394,6 +414,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		}
 		if a.Title == "" {
 			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateActivity(a); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		tag, err := pool.Exec(ctx,
