@@ -111,12 +111,11 @@ SQL migrations live in `api/db/migrations/` as numbered files. They are embedded
 
 ## Production deployment
 
-Build images on the Pi (`imagePullPolicy: Never`):
+Build images on the Pi:
 
 ```bash
 docker build -t nousdeux-frontend:latest --build-arg VITE_API_URL=http://<pi-tailscale-ip>:30080 .
 docker build -f Dockerfile.api -t nousdeux-api:latest ./api
-kubectl apply -f k8s/
 ```
 
 Access via `http://<pi-tailscale-ip>:30080`.
@@ -134,27 +133,34 @@ nousdeux/
 │   ├── main.go          # server setup, routes, shutdown
 │   ├── auth.go          # login handler, JWT middleware
 │   ├── handlers.go      # CRUD handlers for all 4 tables
-│   ├── middleware.go     # CORS, JSON response helpers
+│   ├── handlers_test.go
+│   ├── middleware.go    # CORS, JSON response helpers
 │   ├── models.go        # Event, Recipe, Series, Activity structs
 │   ├── store.go         # DB pool + SSE brokers
+│   ├── validate.go      # input validation helpers
+│   ├── validate_test.go
 │   ├── db/
 │   │   ├── connect.go   # pgx connection pool
 │   │   ├── migrate.go   # auto-apply numbered SQL migrations
-│   │   └── migrations/
-│   │       └── 001_initial.sql
+│   │   └── migrations/  # 001_initial … 004_event_end_date
 │   └── sse/
 │       └── broker.go    # SSE fan-out broker
 ├── src/
 │   ├── hooks/           # useEvents, useRecipes, useSeries, useActivities
+│   ├── mock/
+│   │   └── db.js        # in-memory pub/sub mock database
 │   ├── tabs/            # HomeTab, CalendarTab, ListsTab, RecipesTab, ActivitiesTab
+│   │   └── connectStream.js  # shared SSE connection helper
 │   ├── App.jsx          # tab routing, data wiring
 │   ├── AuthGate.jsx     # login screen, JWT storage
+│   ├── parseJwt.js      # decode JWT claims client-side
 │   ├── styles.js        # full design system as CSS template string
 │   ├── data.js          # seed data + calendar grid
 │   └── main.jsx         # entry point
-├── k8s/                 # Kubernetes manifests
 ├── docker-compose.yml   # full local stack (Postgres + API + frontend)
+├── nginx.conf           # nginx config for frontend container
 ├── Dockerfile           # frontend (node build → nginx)
 ├── Dockerfile.api       # API (go build → scratch)
+├── CHANGELOG.md         # frontend release history
 └── PLAN.md              # development roadmap
 ```
