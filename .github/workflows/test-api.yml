@@ -1,0 +1,22 @@
+name: Test API
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "api/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Run tests
+        working-directory: api
+        run: go test ./...
