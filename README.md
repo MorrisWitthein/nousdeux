@@ -2,6 +2,8 @@
 
 A shared planning PWA for two users to manage events, recipes, TV series, and activities. German-language UI, self-hosted on a Raspberry Pi via Kubernetes, accessed privately over Tailscale.
 
+![alt text](res/homescreen.png)
+
 ## Stack
 
 | Layer    | Tech                          |
