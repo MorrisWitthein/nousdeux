@@ -105,6 +105,17 @@ Both the frontend and API use semver version files as the image tag source. **Bu
 
 Use patch bumps (`x.y.Z`) for fixes and small changes, minor bumps (`x.Y.0`) for new features. The CI workflow tags the Docker image with this version, so leaving it unchanged means the new image silently overwrites the previous tag.
 
+## Release Notes (Frontend only)
+
+`CHANGELOG.md` at the repo root tracks frontend changes in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+
+**Workflow for every frontend release:**
+1. Bump `package.json` → `version`
+2. Add a new `## [x.y.z] - YYYY-MM-DD` section at the top of `CHANGELOG.md`
+3. Push to main — CI extracts the latest section and creates a GitHub Release automatically
+
+The version shown in the profile modal links directly to the matching GitHub Release (`/releases/tag/vX.Y.Z`), so the release must exist for the link to resolve.
+
 ## Deployment Target
 
 Raspberry Pi running Kubernetes, accessed privately via Tailscale VPN. NodePort 30080. Image is built locally (`imagePullPolicy: Never`). Resource limits are minimal (32–64 MB RAM, 50–200m CPU) — keep bundle size in check.

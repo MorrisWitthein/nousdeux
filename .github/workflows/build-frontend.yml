@@ -13,6 +13,9 @@ on:
       - "package*.json"
       - "Dockerfile"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: self-hosted
@@ -30,3 +33,18 @@ jobs:
             -f Dockerfile .
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=v$(node -p "require('./package.json').version")
+          # Skip if tag already exists
+          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+            echo "Tag $TAG already exists, skipping release."
+            exit 0
+          fi
+          NOTES=$(awk '/^## \[/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --notes "$NOTES"

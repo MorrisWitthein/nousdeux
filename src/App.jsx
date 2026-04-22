@@ -149,7 +149,14 @@ export default function App() {
                 Ausloggen
               </button>
               <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginTop: 16, opacity: 0.5 }}>
-                v{__APP_VERSION__}
+                <a
+                  href={`https://github.com/MorrisWitthein/nousdeux/releases/tag/v${__APP_VERSION__}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline' }}
+                >
+                  v{__APP_VERSION__}
+                </a>
               </p>
             </div>
           </div>
