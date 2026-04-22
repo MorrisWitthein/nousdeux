@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.6] - 2026-04-22
+
+### Fixed
+- Horizontal swipe on calendar no longer triggers vertical page scroll
+
 ## [0.2.5] - 2026-04-22
 
 ### Changed
