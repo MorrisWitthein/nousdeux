@@ -116,6 +116,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
 
   const formRef = useRef(null)
+  const touchStartX = useRef(null)
   useEffect(() => {
     if (showForm || editing) {
       requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
@@ -266,7 +267,17 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         </div>
       </div>
 
-      <div className="calendar-grid">
+      <div
+        className="calendar-grid"
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+        onTouchEnd={e => {
+          if (touchStartX.current === null) return
+          const delta = e.changedTouches[0].clientX - touchStartX.current
+          touchStartX.current = null
+          if (delta > 50) prevMonth()
+          else if (delta < -50) nextMonth()
+        }}
+      >
         {DAY_ABBR.map(d => (
           <div key={d} className="cal-day-name">{d}</div>
         ))}

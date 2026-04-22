@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.4] - 2026-04-22
+
+### Added
+- Swipe left/right on the calendar grid to switch months
+- Heute button to jump back to the current month and day
+- Version number in profile links to GitHub release notes
+
 ## [0.2.3] - 2026-04-22
 
 ### Fixed
