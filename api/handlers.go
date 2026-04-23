@@ -463,6 +463,118 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleMovies(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	switch r.Method {
+	case http.MethodGet:
+		rows, err := pool.Query(ctx,
+			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
+			        COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
+			 FROM movies ORDER BY created_at DESC`)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
+			return
+		}
+		out, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Movie])
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "scan: "+err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var m Movie
+		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if m.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateMovie(m); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		err := pool.QueryRow(ctx,
+			`INSERT INTO movies (emoji, title, sub, status, status_type)
+			 VALUES ($1,$2,$3,$4,$5)
+			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub),
+			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType),
+		).Scan(&m.ID, &m.Status, &m.StatusType, &m.CreatedAt)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
+			return
+		}
+		slog.Info("movie created", "id", m.ID, "title", m.Title)
+		moviesBroker.Notify()
+		writeJSON(w, http.StatusCreated, m)
+
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var m Movie
+		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if m.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateMovie(m); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE movies SET emoji=$1, title=$2, sub=$3, status=$4, status_type=$5
+			 WHERE id=$6`,
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub),
+			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("movie updated", "id", id)
+		moviesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM movies WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("movie deleted", "id", id)
+		moviesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
+	default:
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
 // nullIfEmpty returns nil for empty strings so Postgres uses the column DEFAULT.
 func nullIfEmpty(s string) any {
 	if s == "" {

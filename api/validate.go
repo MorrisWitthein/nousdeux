@@ -45,6 +45,20 @@ func validateSeries(s Series) error {
 	return nil
 }
 
+func validateMovie(m Movie) error {
+	if len(m.Title) > maxTitleLen {
+		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
+	}
+	if m.StatusType != "" {
+		switch m.StatusType {
+		case "green", "yellow", "red":
+		default:
+			return fmt.Errorf("statusType must be one of: green, yellow, red")
+		}
+	}
+	return nil
+}
+
 func validateActivity(a Activity) error {
 	if len(a.Title) > maxTitleLen {
 		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
