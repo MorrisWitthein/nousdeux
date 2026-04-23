@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import TagInput from '../components/TagInput.jsx'
 
 function StarRating({ value, onChange }) {
   return (
@@ -17,7 +18,7 @@ function StarRating({ value, onChange }) {
 }
 
 const EMPTY_RECIPE = {
-  emoji: '🍽️', title: '', tags: '', rating: 0,
+  emoji: '🍽️', title: '', tags: [], rating: 0,
   ingredients: '', steps: '', prepTime: '', servings: '',
 }
 
@@ -26,6 +27,12 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   const [newRecipe, setNewRecipe] = useState({ ...EMPTY_RECIPE })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_RECIPE })
+  const [activeTags, setActiveTags] = useState([])
+
+  const knownTags = useMemo(
+    () => [...new Set(recipes.flatMap(r => r.tags || []))].sort(),
+    [recipes]
+  )
 
   const formRef = useRef(null)
   useEffect(() => {
@@ -34,12 +41,19 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     }
   }, [showForm, editing])
 
+  const toggleFilter = (tag) =>
+    setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+
+  const displayed = activeTags.length === 0
+    ? recipes
+    : recipes.filter(r => activeTags.some(t => (r.tags || []).includes(t)))
+
   const handleAdd = async () => {
     if (!newRecipe.title) return
     await addRecipe({
       emoji: newRecipe.emoji,
       title: newRecipe.title,
-      tags: newRecipe.tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: newRecipe.tags,
       rating: newRecipe.rating,
       ingredients: newRecipe.ingredients,
       steps: newRecipe.steps,
@@ -55,7 +69,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     setEditFields({
       emoji: r.emoji || '🍽️',
       title: r.title,
-      tags: (r.tags || []).join(', '),
+      tags: r.tags || [],
       rating: r.rating || 0,
       ingredients: r.ingredients || '',
       steps: r.steps || '',
@@ -70,7 +84,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     await updateRecipe(editing, {
       emoji: editFields.emoji,
       title: editFields.title,
-      tags: editFields.tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: editFields.tags,
       rating: editFields.rating,
       ingredients: editFields.ingredients,
       steps: editFields.steps,
@@ -105,10 +119,12 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           />
         </div>
       </div>
-      <input
-        placeholder="Tags (kommagetrennt, z.B. Veggie, Einfach)"
+      <label className="form-label">Tags</label>
+      <TagInput
         value={fields.tags}
-        onChange={e => setFields(f => ({ ...f, tags: e.target.value }))}
+        onChange={tags => setFields(f => ({ ...f, tags }))}
+        suggestions={knownTags}
+        placeholder="Veggie, Einfach, … (Enter)"
       />
       <label className="form-label">Bewertung</label>
       <StarRating value={fields.rating} onChange={v => setFields(f => ({ ...f, rating: v }))} />
@@ -156,6 +172,20 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
       <p className="section-title">Eure <em>Rezepte</em></p>
       <p className="section-sub">{recipes.length} Gerichte gesammelt</p>
 
+      {knownTags.length > 0 && (
+        <div className="filter-bar">
+          {knownTags.map(tag => (
+            <button
+              key={tag}
+              className={`filter-chip${activeTags.includes(tag) ? ' active' : ''}`}
+              onClick={() => toggleFilter(tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
       {showForm && <div ref={formRef}>{renderForm(
         newRecipe,
         setNewRecipe,
@@ -174,7 +204,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
         </button>
       )}
 
-      {recipes.map(r => (
+      {displayed.map(r => (
         editing === r.id ? (
           <div key={r.id} ref={formRef}>
             {renderForm(

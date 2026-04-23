@@ -11,15 +11,15 @@ export const initialData = {
     { id: 4, emoji: '🍜', title: 'Ramen von Grund auf', tags: ['3h', 'Wochenende'], who: 'L', rating: '5.0' },
   ],
   series: [
-    { id: 1, emoji: '🎭', title: 'The Bear', sub: 'Staffel 3 · Hulu', progress: 40, status: 'Läuft', statusType: 'green' },
-    { id: 2, emoji: '🌊', title: 'White Lotus', sub: 'Staffel 2 · HBO', progress: 100, status: 'Fertig', statusType: 'gray' },
-    { id: 3, emoji: '🔪', title: 'Severance', sub: 'Staffel 2 · Apple TV+', progress: 0, status: 'Geplant', statusType: 'yellow' },
-    { id: 4, emoji: '🤖', title: 'Silo', sub: 'Staffel 2 · Apple TV+', progress: 70, status: 'Läuft', statusType: 'green' },
+    { id: 1, emoji: '🎭', title: 'The Bear', sub: 'Hulu', season: 3, progress: 0, status: 'Läuft', statusType: 'green' },
+    { id: 2, emoji: '🌊', title: 'White Lotus', sub: 'HBO', season: 2, progress: 0, status: 'Fertig', statusType: 'red' },
+    { id: 3, emoji: '🔪', title: 'Severance', sub: 'Apple TV+', season: 2, progress: 0, status: 'Geplant', statusType: 'yellow' },
+    { id: 4, emoji: '🤖', title: 'Silo', sub: 'Apple TV+', season: 2, progress: 0, status: 'Läuft', statusType: 'green' },
   ],
   activities: [
-    { id: 1, emoji: '🎨', title: 'Keramikkurs', meta: 'Sa Vormittag · Altstadt', who: 'L' },
-    { id: 2, emoji: '🚴', title: 'Radtour ans Meer', meta: 'Wochenende · ~40 km', who: 'M' },
-    { id: 3, emoji: '🎭', title: 'Improtheater-Abend', meta: 'Fr Abend · Innenstadt', who: 'L' },
-    { id: 4, emoji: '🧗', title: 'Kletterhalle ausprobieren', meta: 'Unter der Woche', who: 'M' },
+    { id: 1, emoji: '🎨', title: 'Keramikkurs', meta: 'Altstadt', who: 'L', status: 'Geplant' },
+    { id: 2, emoji: '🚴', title: 'Radtour ans Meer', meta: '~40 km', who: 'M', status: 'Idee' },
+    { id: 3, emoji: '🎭', title: 'Improtheater-Abend', meta: 'Innenstadt', who: 'L', status: 'Idee' },
+    { id: 4, emoji: '🧗', title: 'Kletterhalle ausprobieren', meta: '', who: 'M', status: 'Gemacht' },
   ],
 }

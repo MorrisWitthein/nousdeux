@@ -65,10 +65,12 @@ func main() {
 	mux.HandleFunc("/api/recipes", cors(requireAuth(handleRecipes)))
 	mux.HandleFunc("/api/series", cors(requireAuth(handleSeries)))
 	mux.HandleFunc("/api/activities", cors(requireAuth(handleActivities)))
+	mux.HandleFunc("/api/movies", cors(requireAuth(handleMovies)))
 	mux.HandleFunc("/api/events/stream", cors(requireAuth(eventsBroker.ServeHTTP)))
 	mux.HandleFunc("/api/recipes/stream", cors(requireAuth(recipesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/series/stream", cors(requireAuth(seriesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/activities/stream", cors(requireAuth(activitiesBroker.ServeHTTP)))
+	mux.HandleFunc("/api/movies/stream", cors(requireAuth(moviesBroker.ServeHTTP)))
 
 	srv := &http.Server{
 		Addr:        addr,
@@ -96,6 +98,7 @@ func main() {
 	recipesBroker.Shutdown()
 	seriesBroker.Shutdown()
 	activitiesBroker.Shutdown()
+	moviesBroker.Shutdown()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {

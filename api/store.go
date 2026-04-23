@@ -12,4 +12,5 @@ var (
 	recipesBroker    = sse.NewBroker()
 	seriesBroker     = sse.NewBroker()
 	activitiesBroker = sse.NewBroker()
+	moviesBroker     = sse.NewBroker()
 )

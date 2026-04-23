@@ -58,12 +58,12 @@ func TestValidateSeries(t *testing.T) {
 		wantErr string
 	}{
 		{"valid minimal", Series{Title: "Breaking Bad"}, ""},
-		{"valid full", Series{Title: "Breaking Bad", Progress: 50, StatusType: "green"}, ""},
-		{"valid progress 0", Series{Title: "x", Progress: 0}, ""},
-		{"valid progress 100", Series{Title: "x", Progress: 100}, ""},
+		{"valid full", Series{Title: "Breaking Bad", Season: 3, StatusType: "green"}, ""},
+		{"valid season 0", Series{Title: "x", Season: 0}, ""},
+		{"valid season 50", Series{Title: "x", Season: 50}, ""},
 		{"title too long", Series{Title: long}, "title exceeds"},
-		{"progress negative", Series{Title: "x", Progress: -1}, "progress must be between 0 and 100"},
-		{"progress over 100", Series{Title: "x", Progress: 101}, "progress must be between 0 and 100"},
+		{"season negative", Series{Title: "x", Season: -1}, "season must be between 0 and 50"},
+		{"season over 50", Series{Title: "x", Season: 51}, "season must be between 0 and 50"},
 		{"bad statusType", Series{Title: "x", StatusType: "blue"}, "statusType must be one of"},
 		{"valid statusType yellow", Series{Title: "x", StatusType: "yellow"}, ""},
 		{"valid statusType red", Series{Title: "x", StatusType: "red"}, ""},
@@ -97,12 +97,15 @@ func TestValidateActivity(t *testing.T) {
 		wantErr string
 	}{
 		{"valid minimal", Activity{Title: "Wandern"}, ""},
-		{"valid full", Activity{Title: "Wandern", Date: "2026-04-22", Time: "09:00"}, ""},
+		{"valid with status Idee", Activity{Title: "x", Status: "Idee"}, ""},
+		{"valid with status Geplant", Activity{Title: "x", Status: "Geplant"}, ""},
+		{"valid with status Gemacht", Activity{Title: "x", Status: "Gemacht"}, ""},
 		{"title too long", Activity{Title: long}, "title exceeds"},
 		{"bad date format slash", Activity{Title: "x", Date: "22/04/2026"}, "date must be YYYY-MM-DD"},
 		{"bad date format reversed", Activity{Title: "x", Date: "22-04-2026"}, "date must be YYYY-MM-DD"},
 		{"bad time no colon", Activity{Title: "x", Time: "0900"}, "time must be HH:MM"},
 		{"bad time single digit hour", Activity{Title: "x", Time: "9:00"}, "time must be HH:MM"},
+		{"bad status", Activity{Title: "x", Status: "Fertig"}, "status must be one of"},
 	}
 
 	for _, tc := range cases {

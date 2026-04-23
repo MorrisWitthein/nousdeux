@@ -244,8 +244,8 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
-			        COALESCE(progress,0), COALESCE(status,'Geplant'),
-			        COALESCE(status_type,'yellow'), created_at
+			        COALESCE(progress,0), COALESCE(season,0),
+			        COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
 			 FROM series ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -274,10 +274,10 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err := pool.QueryRow(ctx,
-			`INSERT INTO series (emoji, title, sub, progress, status, status_type)
-			 VALUES ($1,$2,$3,$4,$5,$6)
+			`INSERT INTO series (emoji, title, sub, progress, season, status, status_type)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7)
 			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
-			nullIfEmpty(s.Emoji), s.Title, nullIfEmpty(s.Sub), s.Progress,
+			nullIfEmpty(s.Emoji), s.Title, nullIfEmpty(s.Sub), s.Progress, s.Season,
 			nullIfEmpty(s.Status), nullIfEmpty(s.StatusType),
 		).Scan(&s.ID, &s.Status, &s.StatusType, &s.CreatedAt)
 		if err != nil {
@@ -309,10 +309,10 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE series SET emoji=$1, title=$2, sub=$3, progress=$4, status=$5, status_type=$6
-			 WHERE id=$7`,
+			`UPDATE series SET emoji=$1, title=$2, sub=$3, progress=$4, season=$5, status=$6, status_type=$7
+			 WHERE id=$8`,
 			nullIfEmpty(s.Emoji), s.Title, nullIfEmpty(s.Sub),
-			s.Progress, nullIfEmpty(s.Status), nullIfEmpty(s.StatusType), id,
+			s.Progress, s.Season, nullIfEmpty(s.Status), nullIfEmpty(s.StatusType), id,
 		)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
@@ -357,7 +357,7 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(meta,''),
-			        who, COALESCE(date,''), COALESCE(time,''), created_at
+			        who, COALESCE(date,''), COALESCE(time,''), COALESCE(status,'Idee'), created_at
 			 FROM activities ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -387,10 +387,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		}
 		a.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO activities (emoji, title, meta, who, date, time)
-			 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`,
+			`INSERT INTO activities (emoji, title, meta, who, date, time, status)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, created_at`,
 			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta), a.Who,
-			nullIfEmpty(a.Date), nullIfEmpty(a.Time),
+			nullIfEmpty(a.Date), nullIfEmpty(a.Time), nullIfEmpty(a.Status),
 		).Scan(&a.ID, &a.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
@@ -421,10 +421,10 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE activities SET emoji=$1, title=$2, meta=$3, date=$4, time=$5
-			 WHERE id=$6`,
+			`UPDATE activities SET emoji=$1, title=$2, meta=$3, date=$4, time=$5, status=$6
+			 WHERE id=$7`,
 			nullIfEmpty(a.Emoji), a.Title, nullIfEmpty(a.Meta),
-			nullIfEmpty(a.Date), nullIfEmpty(a.Time), id,
+			nullIfEmpty(a.Date), nullIfEmpty(a.Time), nullIfEmpty(a.Status), id,
 		)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
@@ -455,6 +455,126 @@ func handleActivities(w http.ResponseWriter, r *http.Request) {
 		}
 		slog.Info("activity deleted", "id", id)
 		activitiesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
+	default:
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func handleMovies(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	switch r.Method {
+	case http.MethodGet:
+		rows, err := pool.Query(ctx,
+			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
+			        COALESCE(genres,'{}'), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
+			 FROM movies ORDER BY created_at DESC`)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
+			return
+		}
+		out, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Movie])
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "scan: "+err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var m Movie
+		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if m.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateMovie(m); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		genres := m.Genres
+		if genres == nil {
+			genres = []string{}
+		}
+		err := pool.QueryRow(ctx,
+			`INSERT INTO movies (emoji, title, sub, genres, status, status_type)
+			 VALUES ($1,$2,$3,$4,$5,$6)
+			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), genres,
+			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType),
+		).Scan(&m.ID, &m.Status, &m.StatusType, &m.CreatedAt)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
+			return
+		}
+		slog.Info("movie created", "id", m.ID, "title", m.Title)
+		moviesBroker.Notify()
+		writeJSON(w, http.StatusCreated, m)
+
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var m Movie
+		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if m.Title == "" {
+			writeError(w, http.StatusBadRequest, "title is required")
+			return
+		}
+		if err := validateMovie(m); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		patchGenres := m.Genres
+		if patchGenres == nil {
+			patchGenres = []string{}
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE movies SET emoji=$1, title=$2, sub=$3, genres=$4, status=$5, status_type=$6
+			 WHERE id=$7`,
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), patchGenres,
+			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType), id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("movie updated", "id", id)
+		moviesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM movies WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("movie deleted", "id", id)
+		moviesBroker.Notify()
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
 
 	default:
