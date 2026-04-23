@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import styles from './styles.js'
+import styles from './styles/index.js'
 
 const API = import.meta.env.VITE_API_URL
 

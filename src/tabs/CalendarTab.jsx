@@ -120,18 +120,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
   const animatingRef = useRef(false)
-  const [enterFrom, setEnterFrom] = useState(null)
-
-  useEffect(() => {
-    if (!enterFrom || !gridRef.current) return
-    const el = gridRef.current
-    el.style.animation = enterFrom === 'left'
-      ? 'slideInFromLeft 0.28s ease-out'
-      : 'slideInFromRight 0.28s ease-out'
-    const done = () => { el.style.animation = ''; setEnterFrom(null) }
-    el.addEventListener('animationend', done, { once: true })
-    return () => el.removeEventListener('animationend', done)
-  }, [enterFrom])
+  const [animDir, setAnimDir] = useState(null)
+  const prevGridDataRef = useRef(null)
 
   useEffect(() => {
     const el = gridRef.current
@@ -162,24 +152,35 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const doSwipe = useCallback((dir) => {
     if (animatingRef.current) return
     animatingRef.current = true
-    const el = gridRef.current
-    el.style.transition = 'transform 0.22s ease-in'
-    el.style.transform = `translateX(${dir < 0 ? window.innerWidth : -window.innerWidth}px)`
+
+    const _now = new Date()
+    prevGridDataRef.current = {
+      grid: buildMonthGrid(year, month),
+      eventDayMap: buildEventDayMap(events, year, month),
+      todayDay: year === _now.getFullYear() && month === _now.getMonth() ? _now.getDate() : null,
+    }
+
+    if (gridRef.current) {
+      gridRef.current.style.transition = ''
+      gridRef.current.style.transform = ''
+    }
+
+    setSelectedDay(null)
+    setAnimDir(dir)
+    if (dir < 0) {
+      if (month === 0) { setMonth(11); setYear(y => y - 1) }
+      else setMonth(m => m - 1)
+    } else {
+      if (month === 11) { setMonth(0); setYear(y => y + 1) }
+      else setMonth(m => m + 1)
+    }
+
     setTimeout(() => {
-      el.style.transition = 'none'
-      el.style.transform = ''
-      setSelectedDay(null)
-      setEnterFrom(dir < 0 ? 'left' : 'right')
-      if (dir < 0) {
-        if (month === 0) { setMonth(11); setYear(y => y - 1) }
-        else setMonth(m => m - 1)
-      } else {
-        if (month === 11) { setMonth(0); setYear(y => y + 1) }
-        else setMonth(m => m + 1)
-      }
-      setTimeout(() => { animatingRef.current = false }, 300)
-    }, 220)
-  }, [month])
+      setAnimDir(null)
+      prevGridDataRef.current = null
+      animatingRef.current = false
+    }, 300)
+  }, [year, month, events])
 
   const prevMonth = () => doSwipe(-1)
   const nextMonth = () => doSwipe(1)
@@ -312,67 +313,119 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         </div>
       </div>
 
-      <div style={{ overflow: 'hidden' }}>
-      <div
-        ref={gridRef}
-        className="calendar-grid"
-        onTouchStart={e => {
-          if (animatingRef.current) return
-          touchStartX.current = e.touches[0].clientX
-          touchStartY.current = e.touches[0].clientY
-        }}
-        onTouchEnd={e => {
-          if (touchStartX.current === null) return
-          const delta = e.changedTouches[0].clientX - touchStartX.current
-          touchStartX.current = null
-          if (Math.abs(delta) < 50) {
-            gridRef.current.style.transition = 'transform 0.2s ease-out'
-            gridRef.current.style.transform = 'translateX(0)'
-            setTimeout(() => { if (gridRef.current) gridRef.current.style.transition = 'none' }, 220)
-            return
-          }
-          doSwipe(delta > 0 ? -1 : 1)
-        }}
-      >
-        {DAY_ABBR.map(d => (
-          <div key={d} className="cal-day-name">{d}</div>
-        ))}
-        {grid.map((day, i) => {
-          const info = day ? eventDayMap.get(day) : undefined
-          const stripes = info?.stripes ?? []
-          const hasSingle = info?.hasSingle ?? false
-          const hasMulti = stripes.length > 0
-          const isSelected = day === selectedDay
-          const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
-          const indBase = totalIndicators > 1 ? 2 : 4
-          const indStep = totalIndicators > 1 ? 6 : 7
+      <div style={{ overflow: 'hidden', position: 'relative' }}>
+        {animDir !== null && prevGridDataRef.current && (() => {
+          const prev = prevGridDataRef.current
           return (
             <div
-              key={i}
-              className={[
-                'cal-day',
-                !day ? 'empty' : '',
-                day === todayDay ? 'today' : '',
-                isSelected ? 'selected' : '',
-                !hasMulti && hasSingle ? 'has-event' : '',
-              ].filter(Boolean).join(' ')}
-              onClick={() => handleDayClick(day)}
+              className="calendar-grid"
+              style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0,
+                animation: `${animDir > 0 ? 'slideOutToLeft' : 'slideOutToRight'} 0.28s ease-in forwards`,
+                pointerEvents: 'none',
+              }}
             >
-              {day}
-              {stripes.map((seg, idx) => (
-                <span
-                  key={seg.eventId}
-                  className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
-                  style={{ bottom: `${indBase + idx * indStep}px` }}
-                />
+              {DAY_ABBR.map(d => (
+                <div key={d} className="cal-day-name">{d}</div>
               ))}
-              {hasMulti && hasSingle && (
-                <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
-              )}
+              {prev.grid.map((day, i) => {
+                const info = day ? prev.eventDayMap.get(day) : undefined
+                const stripes = info?.stripes ?? []
+                const hasSingle = info?.hasSingle ?? false
+                const hasMulti = stripes.length > 0
+                const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
+                const indBase = totalIndicators > 1 ? 2 : 4
+                const indStep = totalIndicators > 1 ? 6 : 7
+                return (
+                  <div
+                    key={i}
+                    className={[
+                      'cal-day',
+                      !day ? 'empty' : '',
+                      day === prev.todayDay ? 'today' : '',
+                    ].filter(Boolean).join(' ')}
+                  >
+                    {day}
+                    {stripes.map((seg, idx) => (
+                      <span
+                        key={seg.eventId}
+                        className={['cal-stripe', `cal-stripe-${seg.role}`].filter(Boolean).join(' ')}
+                        style={{ bottom: `${indBase + idx * indStep}px` }}
+                      />
+                    ))}
+                    {hasMulti && hasSingle && (
+                      <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )
-        })}
-      </div>
+        })()}
+        <div
+          ref={gridRef}
+          className="calendar-grid"
+          style={animDir !== null ? {
+            animation: `${animDir > 0 ? 'slideInFromRight' : 'slideInFromLeft'} 0.28s ease-out forwards`
+          } : undefined}
+          onTouchStart={e => {
+            if (animatingRef.current) return
+            touchStartX.current = e.touches[0].clientX
+            touchStartY.current = e.touches[0].clientY
+          }}
+          onTouchEnd={e => {
+            if (touchStartX.current === null) return
+            const delta = e.changedTouches[0].clientX - touchStartX.current
+            touchStartX.current = null
+            if (Math.abs(delta) < 50) {
+              gridRef.current.style.transition = 'transform 0.2s ease-out'
+              gridRef.current.style.transform = 'translateX(0)'
+              setTimeout(() => { if (gridRef.current) gridRef.current.style.transition = '' }, 220)
+              return
+            }
+            doSwipe(delta > 0 ? -1 : 1)
+          }}
+        >
+          {DAY_ABBR.map(d => (
+            <div key={d} className="cal-day-name">{d}</div>
+          ))}
+          {grid.map((day, i) => {
+            const info = day ? eventDayMap.get(day) : undefined
+            const stripes = info?.stripes ?? []
+            const hasSingle = info?.hasSingle ?? false
+            const hasMulti = stripes.length > 0
+            const isSelected = day === selectedDay
+            const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
+            const indBase = totalIndicators > 1 ? 2 : 4
+            const indStep = totalIndicators > 1 ? 6 : 7
+            return (
+              <div
+                key={i}
+                className={[
+                  'cal-day',
+                  !day ? 'empty' : '',
+                  day === todayDay ? 'today' : '',
+                  isSelected ? 'selected' : '',
+                  !hasMulti && hasSingle ? 'has-event' : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => handleDayClick(day)}
+              >
+                {day}
+                {stripes.map((seg, idx) => (
+                  <span
+                    key={seg.eventId}
+                    className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
+                    style={{ bottom: `${indBase + idx * indStep}px` }}
+                  />
+                ))}
+                {hasMulti && hasSingle && (
+                  <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {showForm && <div ref={formRef}>{renderForm(
