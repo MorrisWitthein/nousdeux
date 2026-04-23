@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.1] - 2026-04-23
+
+### Changed
+- Series form: replaced opaque "Fortschritt %" with a "Staffel" number and a dedicated "Plattform" field
+- Movies form: split single "Jahr / Genre / Plattform" field into separate Genre and Plattform inputs; removed year
+- Activities: removed date/time inputs (ideas belong here, scheduled items go in Events); added Idee/Geplant/Gemacht status to track bucket-list progress
+
 ## [0.3.0] - 2026-04-23
 
 ### Added

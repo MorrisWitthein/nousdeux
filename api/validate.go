@@ -32,8 +32,8 @@ func validateSeries(s Series) error {
 	if len(s.Title) > maxTitleLen {
 		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
 	}
-	if s.Progress < 0 || s.Progress > 100 {
-		return fmt.Errorf("progress must be between 0 and 100")
+	if s.Season < 0 || s.Season > 50 {
+		return fmt.Errorf("season must be between 0 and 50")
 	}
 	if s.StatusType != "" {
 		switch s.StatusType {
@@ -68,6 +68,13 @@ func validateActivity(a Activity) error {
 	}
 	if a.Time != "" && !reTime.MatchString(a.Time) {
 		return fmt.Errorf("time must be HH:MM")
+	}
+	if a.Status != "" {
+		switch a.Status {
+		case "Idee", "Geplant", "Gemacht":
+		default:
+			return fmt.Errorf("status must be one of: Idee, Geplant, Gemacht")
+		}
 	}
 	return nil
 }
