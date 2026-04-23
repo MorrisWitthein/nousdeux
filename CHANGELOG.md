@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.0] - 2026-04-23
+
+### Added
+- Filme list in the Listen tab: add, edit, and delete movies with emoji, title, sub-info (year/genre/platform), and Geplant/Gesehen status
+- Bücher tab removed (watching together, not reading)
+
 ## [0.2.6] - 2026-04-22
 
 ### Fixed

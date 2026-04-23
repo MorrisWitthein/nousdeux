@@ -1,13 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 
-const STATUS_OPTIONS = [
+const SERIES_STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
   { label: 'Läuft', type: 'green' },
   { label: 'Fertig', type: 'red' },
 ]
 
+const MOVIE_STATUS_OPTIONS = [
+  { label: 'Geplant', type: 'yellow' },
+  { label: 'Gesehen', type: 'green' },
+]
+
 const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', progress: 0, status: 'Geplant', statusType: 'yellow' }
 const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', date: '', time: '' }
+const EMPTY_MOVIE = { emoji: '🎬', title: '', sub: '', status: 'Geplant', statusType: 'yellow' }
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
@@ -23,6 +29,7 @@ function formatISOToGerman(isoDate) {
 export default function ListsTab({
   series, addSeries, updateSeries, deleteSeries,
   activities, addActivity, updateActivity, deleteActivity,
+  movies, addMovie, updateMovie, deleteMovie,
   currentUser,
 }) {
   const [activeList, setActiveList] = useState('series')
@@ -33,6 +40,12 @@ export default function ListsTab({
   const [editingSeries, setEditingSeries] = useState(null)
   const [editSeriesFields, setEditSeriesFields] = useState({ ...EMPTY_SERIES })
 
+  // Movie state
+  const [showMovieForm, setShowMovieForm] = useState(false)
+  const [newMovie, setNewMovie] = useState({ ...EMPTY_MOVIE })
+  const [editingMovie, setEditingMovie] = useState(null)
+  const [editMovieFields, setEditMovieFields] = useState({ ...EMPTY_MOVIE })
+
   // Activity state
   const [showActivityForm, setShowActivityForm] = useState(false)
   const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
@@ -41,10 +54,10 @@ export default function ListsTab({
 
   const formRef = useRef(null)
   useEffect(() => {
-    if (showSeriesForm || editingSeries || showActivityForm || editingActivity) {
+    if (showSeriesForm || editingSeries || showActivityForm || editingActivity || showMovieForm || editingMovie) {
       requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     }
-  }, [showSeriesForm, editingSeries, showActivityForm, editingActivity])
+  }, [showSeriesForm, editingSeries, showActivityForm, editingActivity, showMovieForm, editingMovie])
 
   // Series handlers
   const handleAddSeries = async () => {
@@ -83,9 +96,34 @@ export default function ListsTab({
     setEditingSeries(null)
   }
 
-  const handleStatusChange = (setFields) => (e) => {
-    const opt = STATUS_OPTIONS.find(o => o.label === e.target.value)
+  const handleSeriesStatusChange = (setFields) => (e) => {
+    const opt = SERIES_STATUS_OPTIONS.find(o => o.label === e.target.value)
     setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
+  }
+
+  const handleMovieStatusChange = (setFields) => (e) => {
+    const opt = MOVIE_STATUS_OPTIONS.find(o => o.label === e.target.value)
+    setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
+  }
+
+  // Movie handlers
+  const handleAddMovie = async () => {
+    if (!newMovie.title) return
+    await addMovie({ emoji: newMovie.emoji, title: newMovie.title, sub: newMovie.sub, status: newMovie.status, statusType: newMovie.statusType })
+    setNewMovie({ ...EMPTY_MOVIE })
+    setShowMovieForm(false)
+  }
+
+  const startEditMovie = (m) => {
+    setEditingMovie(m.id)
+    setEditMovieFields({ emoji: m.emoji || '🎬', title: m.title, sub: m.sub || '', status: m.status || 'Geplant', statusType: m.statusType || 'yellow' })
+    setShowMovieForm(false)
+  }
+
+  const handleUpdateMovie = async () => {
+    if (!editMovieFields.title) return
+    await updateMovie(editingMovie, editMovieFields)
+    setEditingMovie(null)
   }
 
   // Activity handlers
@@ -152,8 +190,48 @@ export default function ListsTab({
         </div>
         <div>
           <label className="form-label">Status</label>
-          <select value={fields.status} onChange={handleStatusChange(setFields)}>
-            {STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
+          <select value={fields.status} onChange={handleSeriesStatusChange(setFields)}>
+            {SERIES_STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={onSave}>Speichern</button>
+      </div>
+    </div>
+  )
+
+  const renderMovieForm = (fields, setFields, onSave, onCancel, title) => (
+    <div className="add-form">
+      <div className="add-form-title">{title}</div>
+      <div className="form-row">
+        <div style={{ flex: '0 0 70px' }}>
+          <label className="form-label">Emoji</label>
+          <input
+            value={fields.emoji}
+            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="form-label">Titel</label>
+          <input
+            placeholder="Titel"
+            value={fields.title}
+            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+          />
+        </div>
+      </div>
+      <input
+        placeholder="Jahr / Genre / Plattform"
+        value={fields.sub}
+        onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
+      />
+      <div className="form-row">
+        <div>
+          <label className="form-label">Status</label>
+          <select value={fields.status} onChange={handleMovieStatusChange(setFields)}>
+            {MOVIE_STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
           </select>
         </div>
       </div>
@@ -221,9 +299,8 @@ export default function ListsTab({
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
           ['series', '🍿 Serien'],
-          ['activities', '✨ Aktivitäten'],
           ['movies', '🎬 Filme'],
-          ['books', '📚 Bücher'],
+          ['activities', '✨ Aktivitäten'],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -341,14 +418,49 @@ export default function ListsTab({
         </>
       )}
 
-      {(activeList === 'movies' || activeList === 'books') && (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✨</div>
-          <div style={{ fontFamily: 'Fraunces, serif', fontSize: 18, marginBottom: 6, color: 'var(--ink)' }}>
-            Noch leer
-          </div>
-          <div style={{ fontSize: 13 }}>Fügt eure ersten Einträge hinzu</div>
-        </div>
+      {activeList === 'movies' && (
+        <>
+          {showMovieForm && <div ref={formRef}>{renderMovieForm(
+            newMovie, setNewMovie,
+            handleAddMovie, () => setShowMovieForm(false),
+            'Film hinzufügen'
+          )}</div>}
+
+          {!showMovieForm && !editingMovie && (
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              onClick={() => { setNewMovie({ ...EMPTY_MOVIE }); setShowMovieForm(true) }}
+            >
+              + Film hinzufügen
+            </button>
+          )}
+
+          {movies.map(m => (
+            editingMovie === m.id ? (
+              <div key={m.id} ref={formRef}>
+                {renderMovieForm(
+                  editMovieFields, setEditMovieFields,
+                  handleUpdateMovie, () => setEditingMovie(null),
+                  'Film bearbeiten'
+                )}
+              </div>
+            ) : (
+              <div key={m.id} className="list-item" onClick={() => startEditMovie(m)}>
+                <div className="list-emoji">{m.emoji}</div>
+                <div className="list-info">
+                  <div className="list-title">{m.title}</div>
+                  <div className="list-sub">{m.sub}</div>
+                </div>
+                <span className={`badge badge-${m.statusType}`}>{m.status}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}>✎</button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Film löschen?')) deleteMovie(m.id) }}>✕</button>
+                </div>
+              </div>
+            )
+          ))}
+        </>
       )}
     </div>
   )
