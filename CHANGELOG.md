@@ -5,18 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.3.1] - 2026-04-23
-
-### Changed
-- Series form: replaced opaque "Fortschritt %" with a "Staffel" number and a dedicated "Plattform" field
-- Movies form: split single "Jahr / Genre / Plattform" field into separate Genre and Plattform inputs; removed year
-- Activities: removed date/time inputs (ideas belong here, scheduled items go in Events); added Idee/Geplant/Gemacht status to track bucket-list progress
-
 ## [0.3.0] - 2026-04-23
 
 ### Added
 - Filme list in the Listen tab: add, edit, and delete movies with emoji, title, sub-info (year/genre/platform), and Geplant/Gesehen status
 - Bücher tab removed (watching together, not reading)
+- Tag chip input for recipe tags and movie genres: type to autocomplete from existing values, press Enter or comma to confirm, Backspace to remove the last chip
+- Movies now support multiple genres (array instead of single text field); existing data is migrated automatically
+- Filter bar above recipe list and movie list: click any tag/genre to filter, click again to deselect
+
+### Changed
+- Series form: replaced opaque "Fortschritt %" with a "Staffel" number and a dedicated "Plattform" field
+- Movies form: split single "Jahr / Genre / Plattform" field into separate Genre and Plattform inputs; removed year
+- Activities: removed date/time inputs (ideas belong here, scheduled items go in Events); added Idee/Geplant/Gemacht status to track bucket-list progress
 
 ## [0.2.6] - 2026-04-22
 

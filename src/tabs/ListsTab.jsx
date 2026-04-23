@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import TagInput from '../components/TagInput.jsx'
 
 const SERIES_STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -19,7 +20,7 @@ const ACTIVITY_STATUS_OPTIONS = [
 
 const EMPTY_SERIES   = { title: '', sub: '', emoji: '🎬', season: '', status: 'Geplant', statusType: 'yellow' }
 const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', status: 'Idee', statusType: 'yellow' }
-const EMPTY_MOVIE    = { emoji: '🍿', title: '', sub: '', genre: '', status: 'Geplant', statusType: 'yellow' }
+const EMPTY_MOVIE    = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow' }
 
 function seriesSubLine(s) {
   const ep = s.season > 0 ? `Staffel ${s.season}` : ''
@@ -27,7 +28,8 @@ function seriesSubLine(s) {
 }
 
 function movieSubLine(m) {
-  return [m.genre, m.sub].filter(Boolean).join(' · ')
+  const genres = (m.genres || []).join(', ')
+  return [genres, m.sub].filter(Boolean).join(' · ')
 }
 
 function activityStatusType(status) {
@@ -54,12 +56,25 @@ export default function ListsTab({
   const [newMovie, setNewMovie] = useState({ ...EMPTY_MOVIE })
   const [editingMovie, setEditingMovie] = useState(null)
   const [editMovieFields, setEditMovieFields] = useState({ ...EMPTY_MOVIE })
+  const [activeGenres, setActiveGenres] = useState([])
 
   // Activity state
   const [showActivityForm, setShowActivityForm] = useState(false)
   const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
   const [editingActivity, setEditingActivity] = useState(null)
   const [editActivityFields, setEditActivityFields] = useState({ ...EMPTY_ACTIVITY })
+
+  const knownGenres = useMemo(
+    () => [...new Set(movies.flatMap(m => m.genres || []))].sort(),
+    [movies]
+  )
+
+  const displayedMovies = activeGenres.length === 0
+    ? movies
+    : movies.filter(m => activeGenres.some(g => (m.genres || []).includes(g)))
+
+  const toggleGenre = (genre) =>
+    setActiveGenres(prev => prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre])
 
   const formRef = useRef(null)
   useEffect(() => {
@@ -122,14 +137,28 @@ export default function ListsTab({
   // Movie handlers
   const handleAddMovie = async () => {
     if (!newMovie.title) return
-    await addMovie({ emoji: newMovie.emoji, title: newMovie.title, sub: newMovie.sub, genre: newMovie.genre, status: newMovie.status, statusType: newMovie.statusType })
+    await addMovie({
+      emoji: newMovie.emoji,
+      title: newMovie.title,
+      sub: newMovie.sub,
+      genres: newMovie.genres,
+      status: newMovie.status,
+      statusType: newMovie.statusType,
+    })
     setNewMovie({ ...EMPTY_MOVIE })
     setShowMovieForm(false)
   }
 
   const startEditMovie = (m) => {
     setEditingMovie(m.id)
-    setEditMovieFields({ emoji: m.emoji || '🍿', title: m.title, sub: m.sub || '', genre: m.genre || '', status: m.status || 'Geplant', statusType: m.statusType || 'yellow' })
+    setEditMovieFields({
+      emoji: m.emoji || '🍿',
+      title: m.title,
+      sub: m.sub || '',
+      genres: m.genres || [],
+      status: m.status || 'Geplant',
+      statusType: m.statusType || 'yellow',
+    })
     setShowMovieForm(false)
   }
 
@@ -235,15 +264,14 @@ export default function ListsTab({
           />
         </div>
       </div>
+      <label className="form-label">Genre</label>
+      <TagInput
+        value={fields.genres}
+        onChange={genres => setFields(f => ({ ...f, genres }))}
+        suggestions={knownGenres}
+        placeholder="Komödie, Thriller, … (Enter)"
+      />
       <div className="form-row">
-        <div style={{ flex: 1 }}>
-          <label className="form-label">Genre</label>
-          <input
-            placeholder="Komödie, Thriller, …"
-            value={fields.genre}
-            onChange={e => setFields(f => ({ ...f, genre: e.target.value }))}
-          />
-        </div>
         <div style={{ flex: 1 }}>
           <label className="form-label">Plattform</label>
           <input
@@ -252,8 +280,6 @@ export default function ListsTab({
             onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
           />
         </div>
-      </div>
-      <div className="form-row">
         <div style={{ flex: 1 }}>
           <label className="form-label">Status</label>
           <select value={fields.status} onChange={handleMovieStatusChange(setFields)}>
@@ -421,6 +447,20 @@ export default function ListsTab({
 
       {activeList === 'movies' && (
         <>
+          {knownGenres.length > 0 && (
+            <div className="filter-bar">
+              {knownGenres.map(genre => (
+                <button
+                  key={genre}
+                  className={`filter-chip${activeGenres.includes(genre) ? ' active' : ''}`}
+                  onClick={() => toggleGenre(genre)}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          )}
+
           {showMovieForm && <div ref={formRef}>{renderMovieForm(
             newMovie, setNewMovie,
             handleAddMovie, () => setShowMovieForm(false),
@@ -437,7 +477,7 @@ export default function ListsTab({
             </button>
           )}
 
-          {movies.map(m => (
+          {displayedMovies.map(m => (
             editingMovie === m.id ? (
               <div key={m.id} ref={formRef}>
                 {renderMovieForm(

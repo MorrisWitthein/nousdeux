@@ -469,7 +469,7 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
-			        COALESCE(genre,''), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
+			        COALESCE(genres,'{}'), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
 			 FROM movies ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -497,11 +497,15 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		genres := m.Genres
+		if genres == nil {
+			genres = []string{}
+		}
 		err := pool.QueryRow(ctx,
-			`INSERT INTO movies (emoji, title, sub, genre, status, status_type)
+			`INSERT INTO movies (emoji, title, sub, genres, status, status_type)
 			 VALUES ($1,$2,$3,$4,$5,$6)
 			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
-			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), nullIfEmpty(m.Genre),
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), genres,
 			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType),
 		).Scan(&m.ID, &m.Status, &m.StatusType, &m.CreatedAt)
 		if err != nil {
@@ -532,10 +536,14 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		patchGenres := m.Genres
+		if patchGenres == nil {
+			patchGenres = []string{}
+		}
 		tag, err := pool.Exec(ctx,
-			`UPDATE movies SET emoji=$1, title=$2, sub=$3, genre=$4, status=$5, status_type=$6
+			`UPDATE movies SET emoji=$1, title=$2, sub=$3, genres=$4, status=$5, status_type=$6
 			 WHERE id=$7`,
-			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), nullIfEmpty(m.Genre),
+			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), patchGenres,
 			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType), id,
 		)
 		if err != nil {

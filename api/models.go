@@ -51,7 +51,7 @@ type Movie struct {
 	Emoji      string    `json:"emoji,omitempty"`
 	Title      string    `json:"title"`
 	Sub        string    `json:"sub,omitempty"`
-	Genre      string    `json:"genre,omitempty"`
+	Genres     []string  `json:"genres,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
