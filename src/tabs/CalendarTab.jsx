@@ -81,7 +81,7 @@ function buildEventDayMap(events, year, month) {
 
   singleDay.forEach(e => {
     const parsed = parseEventDate(e.date)
-    if (!parsed || parsed.month !== month) return
+    if (!parsed || parsed.month !== month || (parsed.year !== undefined && parsed.year !== year)) return
     const d = parsed.day
     if (map.has(d)) {
       map.get(d).hasSingle = true

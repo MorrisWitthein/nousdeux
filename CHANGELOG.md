@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.1] - 2026-04-24
+
+### Added
+- April 1st Easter egg on the home screen: random label and emoji from a pool of Gen-Z phrases
+
+### Fixed
+- Calendar no longer shows events from other years when months share the same number (e.g. April 2025 events leaking into April 2026)
+- Next-event card on home screen now shows "Heute" / "Morgen" / weekday name instead of raw ISO date; hides the time separator when no time is set
+
+### Changed
+- Form close/delete icon buttons enlarged (28 px → 36 px) for easier tap targets
+- Minor holiday label tweaks: "Frohen Dreikönigstag", "Besinnlichen Allerheiligen", "Besinnlichen Karfreitag"
+- Night greeting punctuation fix: "Spät noch wach?" (was missing the question mark)
+
+---
+
 ## [0.3.0] - 2026-04-23
 
 ### Added
