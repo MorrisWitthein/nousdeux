@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
+import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
 
 function StarRating({ value, onChange }) {
   return (
@@ -236,8 +237,8 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
                   Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(r) }}>✎</button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}>✕</button>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(r) }}><PencilIcon /></button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}><CloseIcon /></button>
                 </div>
               </div>
             </div>

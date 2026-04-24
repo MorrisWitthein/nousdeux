@@ -21,11 +21,13 @@ const tabs = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('home')
   const [calendarTarget, setCalendarTarget] = useState(null)
+  const [calendarPrefill, setCalendarPrefill] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const currentUser = getCurrentUser()
 
-  const navigateToCalendar = (isoDate) => {
+  const navigateToCalendar = (isoDate, prefill = null) => {
     setCalendarTarget(isoDate ?? null)
+    setCalendarPrefill(prefill)
     setActiveTab('calendar')
   }
 
@@ -80,7 +82,7 @@ export default function App() {
             />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} />
+            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} />
           )}
           {activeTab === 'lists' && (
             <ListsTab
@@ -88,6 +90,7 @@ export default function App() {
               activities={activities} addActivity={addActivity} updateActivity={updateActivity} deleteActivity={deleteActivity}
               movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie}
               currentUser={currentUser}
+              onNavigateToCalendar={navigateToCalendar}
             />
           )}
           {activeTab === 'recipes' && (

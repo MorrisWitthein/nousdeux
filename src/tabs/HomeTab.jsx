@@ -119,7 +119,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       }
     : hour < 18
     ? {
-        texts: ['Guten Tag', 'Hallo', 'Schönen Nachmittag', 'Hey', 'Na ihr zwei', 'Wie läuft\'s?', 'Alles gut?', 'Moin noch'],
+        texts: ['Guten Tag', 'Hallo', 'Schönen Nachmittag', 'Hey', 'Na ihr zwei', 'Wie läuft\'s?', 'Alles gut?'],
         emojis: ['🌤️', '🌞', '🍀', '☕', '✨', '🎵', '🌿', '🍰'],
         subs: isWeekend
           ? ['Schöner Nachmittag', 'Wochenende pur', 'Genießt die Zeit', 'Habt Spaß', 'Das Leben ist schön', 'Einfach gut', 'So soll\'s sein']

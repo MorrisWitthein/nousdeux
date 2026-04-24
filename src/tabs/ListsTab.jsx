@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
+import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 
 const SERIES_STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -42,6 +43,7 @@ export default function ListsTab({
   activities, addActivity, updateActivity, deleteActivity,
   movies, addMovie, updateMovie, deleteMovie,
   currentUser,
+  onNavigateToCalendar,
 }) {
   const [activeList, setActiveList] = useState('series')
 
@@ -390,8 +392,8 @@ export default function ListsTab({
                 </div>
                 <span className={`badge badge-${s.statusType}`}>{s.status}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}>✎</button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Serie löschen?')) deleteSeries(s.id) }}>✕</button>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Serie löschen?')) deleteSeries(s.id) }}><CloseIcon /></button>
                 </div>
               </div>
             )
@@ -436,8 +438,13 @@ export default function ListsTab({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className={`badge badge-${activityStatusType(a.status)}`}>{a.status || 'Idee'}</span>
                   <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}>✎</button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}>✕</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
+                      <button className="btn-edit" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
+                    </div>
+                    <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}><CloseIcon /></button>
+                  </div>
                 </div>
               </div>
             )
@@ -495,8 +502,8 @@ export default function ListsTab({
                 </div>
                 <span className={`badge badge-${m.statusType}`}>{m.status}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}>✎</button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Film löschen?')) deleteMovie(m.id) }}>✕</button>
+                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Film löschen?')) deleteMovie(m.id) }}><CloseIcon /></button>
                 </div>
               </div>
             )
