@@ -229,10 +229,10 @@ const forms = `
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 18px;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -249,10 +249,10 @@ const forms = `
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 18px;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;

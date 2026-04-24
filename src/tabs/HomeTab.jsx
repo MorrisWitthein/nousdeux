@@ -32,24 +32,30 @@ function getSpecialDay(now) {
   // Fixed public holidays (month is 0-based)
   const fixed = [
     { m: 0,  d: 1,  label: 'Frohes neues Jahr',      emoji: '🎆' },
-    { m: 0,  d: 6,  label: 'Frohe Heilige Drei Könige', emoji: '✨' },
+    { m: 0,  d: 6,  label: 'Frohen Dreikönigstag',   emoji: '✨' },
+    { m: 3,  d: 1,  labels: ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe'], emojis: ['💀', '🔥', '😭', '✨', '🫡', '✂️', '🦁'] },
     { m: 4,  d: 1,  label: 'Schönen Tag der Arbeit',  emoji: '🔨' },
     { m: 9,  d: 3,  label: 'Tag der Deutschen Einheit', emoji: '🇩🇪' },
-    { m: 10, d: 1,  label: 'Frohen Allerheiligen',     emoji: '🕯️' },
+    { m: 10, d: 1,  label: 'Besinnlichen Allerheiligen', emoji: '🕯️' },
     { m: 11, d: 6,  label: 'Frohen Nikolaustag',       emoji: '🎅' },
     { m: 11, d: 24, label: 'Frohe Weihnachten',        emoji: '🎄' },
     { m: 11, d: 25, label: 'Frohe Weihnachten',        emoji: '🎄' },
     { m: 11, d: 26, label: 'Frohe Weihnachten',        emoji: '🎄' },
     { m: 11, d: 31, label: 'Guten Rutsch',             emoji: '🥂' },
   ]
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
   for (const h of fixed) {
-    if (h.m === month && h.d === day) return { label: h.label, emoji: h.emoji, isHoliday: true }
+    if (h.m === month && h.d === day) {
+      const label = h.labels ? pick(h.labels) : h.label
+      const emoji = h.emojis ? pick(h.emojis) : h.emoji
+      return { label, emoji, isHoliday: true }
+    }
   }
 
   // Movable Easter-based holidays
   const easter = easterSunday(year)
   const movable = [
-    { date: addDays(easter, -2), label: 'Frohen Karfreitag',      emoji: '✝️' },
+    { date: addDays(easter, -2), label: 'Besinnlichen Karfreitag', emoji: '✝️' },
     { date: easter,              label: 'Frohe Ostern',           emoji: '🐣' },
     { date: addDays(easter,  1), label: 'Frohe Ostern',           emoji: '🐰' },
     { date: addDays(easter, 39), label: 'Frohen Himmelfahrtstag', emoji: '⛅' },
@@ -128,7 +134,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
           : ['Feierabend!', 'Gut gemacht heute', 'Abend gehört euch', 'Endlich Ruhe', 'Verdient', 'Jetzt entspannen', 'Der Tag ist eurer'],
       }
     : {
-        texts: ['Noch auf?', 'Spät noch wach', 'Nachteulen', 'Schlaflos?', 'Mitten in der Nacht', 'Hey ihr zwei'],
+        texts: ['Noch auf?', 'Spät noch wach?', 'Nachteulen', 'Schlaflos?', 'Mitten in der Nacht', 'Hey ihr zwei'],
         emojis: ['🌙', '🌃', '🦉', '⭐', '💫', '🌌'],
         subs: ['Nicht zu lange', 'Schlaf gut bald', 'Der Tag war lang', 'Bald Zeit fürs Bett', 'Morgen wartet', 'Irgendwann schlafen'],
       }
@@ -144,6 +150,17 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   const nextEvent = events
     .filter(e => e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))[0] ?? null
+
+  function formatEventDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const eventDate = new Date(y, m - 1, d)
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const diffDays = Math.round((eventDate - todayMidnight) / 86400000)
+    if (diffDays === 0) return 'Heute'
+    if (diffDays === 1) return 'Morgen'
+    if (diffDays <= 3) return eventDate.toLocaleDateString('de-DE', { weekday: 'long' })
+    return dateStr
+  }
   const runningSeries = series.filter(s => s.status === 'Läuft').length
 
   return (
@@ -177,7 +194,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
         >
           <div className="next-up-label">Als nächstes</div>
           <div className="next-up-title">{nextEvent.title}</div>
-          <div className="next-up-time">{nextEvent.date} · {nextEvent.time}</div>
+          <div className="next-up-time">{formatEventDate(nextEvent.date)}{nextEvent.time ? ` · ${nextEvent.time}` : ''}</div>
         </div>
       )}
 
