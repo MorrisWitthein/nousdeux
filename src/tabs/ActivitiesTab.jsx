@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
@@ -149,8 +150,8 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
-              <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(a) }}>✎</button>
-              <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}>✕</button>
+              <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEdit(a) }}><PencilIcon /></button>
+              <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}><CloseIcon /></button>
             </div>
           </div>
         )

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
 
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -95,7 +96,7 @@ function buildEventDayMap(events, year, month) {
 
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 
-export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed }) {
+export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -110,6 +111,14 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     setSelectedDay(parsed.day)
     onTargetConsumed?.()
   }, [targetDate])
+
+  useEffect(() => {
+    if (!prefill) return
+    setNewEvent({ ...EMPTY_EVENT, ...prefill })
+    setEditing(null)
+    setShowForm(true)
+    onPrefillConsumed?.()
+  }, [prefill])
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)
@@ -502,8 +511,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
                 Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
-                <button className="btn-edit" onClick={(ev) => { ev.stopPropagation(); startEdit(e) }}>✎</button>
-                <button className="btn-delete" onClick={(ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}>✕</button>
+                <button className="btn-edit" onClick={(ev) => { ev.stopPropagation(); startEdit(e) }}><PencilIcon /></button>
+                <button className="btn-delete" onClick={(ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}><CloseIcon /></button>
               </div>
             </div>
           </div>

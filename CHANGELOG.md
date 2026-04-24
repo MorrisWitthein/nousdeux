@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.2] - 2026-04-24
+
+### Added
+- Activities: 📅 button on each card navigates to the calendar tab and opens the new-event form pre-filled with the activity's title and emoji — event is only created when the user confirms
+
+---
+
 ## [0.3.1] - 2026-04-24
 
 ### Added
