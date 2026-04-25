@@ -40,7 +40,7 @@ export default function App() {
   }
 
   const { events,     addEvent,    updateEvent,    deleteEvent }    = useEvents()
-  const { recipes,    addRecipe,   updateRecipe,   deleteRecipe }   = useRecipes()
+  const { recipes,    addRecipe,   updateRecipe,   deleteRecipe, setRecipeImage }   = useRecipes()
   const { series,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
   const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
   const { movies, addMovie, updateMovie, deleteMovie } = useMovies()
@@ -97,7 +97,7 @@ export default function App() {
             />
           )}
           {activeTab === 'recipes' && (
-            <RecipesTab recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe} currentUser={currentUser} />
+            <RecipesTab recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe} setRecipeImage={setRecipeImage} currentUser={currentUser} />
           )}
         </div>
 

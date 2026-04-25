@@ -63,6 +63,7 @@ func main() {
 	mux.HandleFunc("/api/login", cors(handleLogin))
 	mux.HandleFunc("/api/events", cors(requireAuth(handleEvents)))
 	mux.HandleFunc("/api/recipes", cors(requireAuth(handleRecipes)))
+	mux.HandleFunc("/api/recipes/image", cors(requireAuth(handleRecipeImage)))
 	mux.HandleFunc("/api/series", cors(requireAuth(handleSeries)))
 	mux.HandleFunc("/api/activities", cors(requireAuth(handleActivities)))
 	mux.HandleFunc("/api/movies", cors(requireAuth(handleMovies)))

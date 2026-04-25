@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"os"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -131,7 +133,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(tags,'{}'),
 			        who, COALESCE(rating,0),
 			        COALESCE(ingredients,''), COALESCE(steps,''),
-			        prep_time, servings, created_at
+			        prep_time, servings, COALESCE(image_url,''), created_at
 			 FROM recipes ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -166,6 +168,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			nullIfEmpty(rec.Emoji), rec.Title, rec.Tags, rec.Who, rec.Rating,
 			nullIfEmpty(rec.Ingredients), nullIfEmpty(rec.Steps), rec.PrepTime, rec.Servings,
 		).Scan(&rec.ID, &rec.CreatedAt)
+		// image_url is set separately via PATCH /api/recipes/image after the client fetches one
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
 			return
@@ -579,6 +582,88 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 
 	default:
 		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// handleRecipeImage proxies image search to Unsplash (GET) and stores the result (PATCH).
+func handleRecipeImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	switch r.Method {
+	case http.MethodGet:
+		q := r.URL.Query().Get("q")
+		if q == "" {
+			writeError(w, http.StatusBadRequest, "q is required")
+			return
+		}
+		key := os.Getenv("UNSPLASH_ACCESS_KEY")
+		if key == "" {
+			writeError(w, http.StatusServiceUnavailable, "image search not configured")
+			return
+		}
+		apiURL := "https://api.unsplash.com/search/photos?query=" + url.QueryEscape(q+" food") +
+			"&per_page=1&orientation=squarish&content_filter=high"
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "build request: "+err.Error())
+			return
+		}
+		req.Header.Set("Authorization", "Client-ID "+key)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			slog.Error("unsplash fetch failed", "query", q, "err", err)
+			writeError(w, http.StatusBadGateway, "upstream: "+err.Error())
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("unsplash returned error", "query", q, "status", resp.StatusCode)
+			writeError(w, http.StatusBadGateway, "upstream status: "+resp.Status)
+			return
+		}
+		var result struct {
+			Results []struct {
+				Urls struct {
+					Small string `json:"small"`
+				} `json:"urls"`
+			} `json:"results"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || len(result.Results) == 0 {
+			slog.Warn("unsplash no results", "query", q)
+			writeError(w, http.StatusNotFound, "no image found")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"url": result.Results[0].Urls.Small})
+
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 32*1024)
+		var body struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		tag, err := pool.Exec(ctx, `UPDATE recipes SET image_url=$1 WHERE id=$2`, nullIfEmpty(body.URL), id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("recipe image set", "id", id)
+		recipesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
+	default:
+		w.Header().Set("Allow", "GET, PATCH, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

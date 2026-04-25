@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+
+## [0.4.0] - 2026-04-25
+
+### Added
+- Recipes: automatic Unsplash photo fetched and stored for each new recipe (shown on card and detail sheet)
+- Recipes: recipe form redesigned as a bottom sheet with inline ingredient and step lists
+- Recipes: pressing Enter in an ingredient or step field inserts a new row below and focuses it (Shift+Enter is a no-op); the add buttons also auto-focus the new field
+
+---
+
 ## [0.3.3] - 2026-04-25
 
 ### Added
