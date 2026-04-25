@@ -35,8 +35,39 @@ export function useRecipes() {
       headers: authHeaders(),
       body: JSON.stringify(recipe),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) {
+      const created = await res.json()
+      refresh()
+      return created.id
+    } else {
+      handleUnauth(res)
+    }
+  }
+
+  const setRecipeImage = async (id, query) => {
+    try {
+      const imgRes = await fetch(
+        `${API}/api/recipes/image?q=${encodeURIComponent(query)}`,
+        { headers: authHeaders() }
+      )
+      if (!imgRes.ok) {
+        const err = await imgRes.json().catch(() => ({}))
+        console.error('[recipes] image fetch failed', imgRes.status, err)
+        return
+      }
+      const { url } = await imgRes.json()
+      const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ url }),
+      })
+      if (!patchRes.ok) {
+        console.error('[recipes] image patch failed', patchRes.status)
+      }
+      // broker notification from PATCH triggers refresh via SSE
+    } catch (e) {
+      console.error('[recipes] image error', e)
+    }
   }
 
   const updateRecipe = async (id, fields) => {
@@ -58,5 +89,5 @@ export function useRecipes() {
     else handleUnauth(res)
   }
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe }
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage }
 }

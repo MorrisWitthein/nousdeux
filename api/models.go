@@ -29,6 +29,7 @@ type Recipe struct {
 	Steps       string    `json:"steps,omitempty"`
 	PrepTime    *int      `json:"prepTime,omitempty"`
 	Servings    *int      `json:"servings,omitempty"`
+	ImageURL    string    `json:"imageUrl,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
