@@ -87,7 +87,7 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
           />
         </div>
         <div>
-          <label className="form-label">Uhrzeit (optional)</label>
+          <label className="form-label">Uhrzeit (opt.)</label>
           <input
             type="time"
             value={fields.time}

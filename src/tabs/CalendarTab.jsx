@@ -270,7 +270,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           </div>
         </div>
         <div>
-          <label className="form-label">Uhrzeit</label>
+          <label className="form-label">Uhrzeit (opt.)</label>
           <input
             type="time"
             value={fields.time}

@@ -225,6 +225,8 @@ export default function ListsTab({
           <label className="form-label">Staffel</label>
           <input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             min="0"
             max="50"
             placeholder="–"

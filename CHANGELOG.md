@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.3] - 2026-04-25
+
+### Added
+- Home screen greeting emoji reflects current Hamburg weather (fetched from Open-Meteo, cached 2 h server-side); falls back to time-of-day emoji when unavailable
+
+---
+
 ## [0.3.2] - 2026-04-24
 
 ### Added

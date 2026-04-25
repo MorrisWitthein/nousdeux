@@ -75,7 +75,7 @@ function getSpecialDay(now) {
   return null
 }
 
-export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser }) {
+export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser, weatherEmoji }) {
   const now = new Date()
   const dateStr = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const hour = now.getHours()
@@ -140,7 +140,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       }
 
   const timeGreeting = rnd(greetings.texts)
-  const timeEmoji = rnd(greetings.emojis)
+  const timeEmoji = weatherEmoji ?? rnd(greetings.emojis)
   const timeSub = rnd(greetings.subs)
 
   const special = getSpecialDay(now)
