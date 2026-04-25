@@ -6,6 +6,7 @@ import { useRecipes } from './hooks/useRecipes.js'
 import { useSeries } from './hooks/useSeries.js'
 import { useActivities } from './hooks/useActivities.js'
 import { useMovies } from './hooks/useMovies.js'
+import { useWeather } from './hooks/useWeather.js'
 import HomeTab from './tabs/HomeTab.jsx'
 import CalendarTab from './tabs/CalendarTab.jsx'
 import ListsTab from './tabs/ListsTab.jsx'
@@ -43,6 +44,7 @@ export default function App() {
   const { series,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
   const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
   const { movies, addMovie, updateMovie, deleteMovie } = useMovies()
+  const weatherEmoji = useWeather()
 
   const displayName = currentUser
     ? currentUser.charAt(0).toUpperCase() + currentUser.slice(1)
@@ -79,6 +81,7 @@ export default function App() {
               onNavigateToCalendar={navigateToCalendar}
               onNavigate={navigateTo}
               currentUser={currentUser}
+              weatherEmoji={weatherEmoji}
             />
           )}
           {activeTab === 'calendar' && (

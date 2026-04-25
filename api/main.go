@@ -66,6 +66,7 @@ func main() {
 	mux.HandleFunc("/api/series", cors(requireAuth(handleSeries)))
 	mux.HandleFunc("/api/activities", cors(requireAuth(handleActivities)))
 	mux.HandleFunc("/api/movies", cors(requireAuth(handleMovies)))
+	mux.HandleFunc("/api/weather", cors(requireAuth(handleWeather)))
 	mux.HandleFunc("/api/events/stream", cors(requireAuth(eventsBroker.ServeHTTP)))
 	mux.HandleFunc("/api/recipes/stream", cors(requireAuth(recipesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/series/stream", cors(requireAuth(seriesBroker.ServeHTTP)))
