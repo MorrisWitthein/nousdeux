@@ -39,7 +39,7 @@ export default function App() {
     setShowProfile(false)
   }
 
-  const { events,     addEvent,    updateEvent,    deleteEvent }    = useEvents()
+  const { events, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl } = useEvents()
   const { recipes,    addRecipe,   updateRecipe,   deleteRecipe, setRecipeImage }   = useRecipes()
   const { series,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
   const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
@@ -85,7 +85,7 @@ export default function App() {
             />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} />
+            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} listAttachments={listAttachments} uploadAttachment={uploadAttachment} deleteAttachment={deleteAttachment} attachmentUrl={attachmentUrl} />
           )}
           {activeTab === 'lists' && (
             <ListsTab
