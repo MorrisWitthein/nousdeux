@@ -1,6 +1,59 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
 
+function Sheet({ title, onClose, children }) {
+  return (
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet">
+        <div className="sheet-handle" />
+        <div className="sheet-header">
+          <span className="sheet-title">{title}</span>
+          <button className="btn-delete" onClick={onClose}><CloseIcon /></button>
+        </div>
+        <div className="sheet-body">{children}</div>
+      </div>
+    </>
+  )
+}
+
+function EventDetail({ event, onEdit, onClose, currentUser, formatDate }) {
+  const isMultiDay = event.endDate && event.endDate > event.date
+  const dateDisplay = isMultiDay
+    ? `${formatDate(event.date)} – ${formatDate(event.endDate)}`
+    : (formatDate(event.date) || event.date)
+
+  return (
+    <Sheet title="" onClose={onClose}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>
+          {event.title}
+        </div>
+        <span className={`badge badge-${event.badgeType}`}>{event.badge}</span>
+      </div>
+
+      <div className="recipe-detail-section">
+        <div className="recipe-detail-section-title">Datum</div>
+        <div style={{ fontSize: 14, color: 'var(--ink)' }}>{dateDisplay}</div>
+        {event.time && <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>{event.time} Uhr</div>}
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
+          <div className="dot" style={{ background: event.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+          Von {event.who.charAt(0).toUpperCase() + event.who.slice(1)}
+        </div>
+        <button className="btn btn-primary" style={{ flex: '0 0 auto', padding: '10px 20px' }} onClick={onEdit}>
+          Bearbeiten
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
 const MONTH_NAMES = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
@@ -101,6 +154,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [selectedDay, setSelectedDay] = useState(null)
+  const [sheet, setSheet] = useState(null) // null | 'detail'
+  const [viewingId, setViewingId] = useState(null)
 
   useEffect(() => {
     if (!targetDate) return
@@ -201,6 +256,16 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     setShowForm(false)
   }
 
+  const openDetail = (e) => {
+    setViewingId(e.id)
+    setSheet('detail')
+  }
+
+  const closeSheet = () => {
+    setSheet(null)
+    setViewingId(null)
+  }
+
   const handleAdd = async () => {
     if (!newEvent.title) return
     await addEvent(newEvent)
@@ -293,6 +358,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       </div>
     )
   }
+
+  const viewingEvent = events.find(e => e.id === viewingId)
 
   // Filter events visible for the selected day — includes multi-day events spanning it
   const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
@@ -488,16 +555,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             )}
           </div>
         ) : (
-          <div key={e.id} className="card" onClick={() => {
-              const parsed = parseEventDate(e.date)
-              if (parsed) {
-                if (parsed.year) setYear(parsed.year)
-                setMonth(parsed.month)
-                setSelectedDay(parsed.day)
-              }
-              setEditing(null)
-              setShowForm(false)
-            }}>
+          <div key={e.id} className="card" onClick={() => openDetail(e)}>
             <div className="card-header">
               <div>
                 <div className="card-title">{e.title}</div>
@@ -518,6 +576,16 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           </div>
         )
       })}
+
+      {sheet === 'detail' && viewingEvent && (
+        <EventDetail
+          event={viewingEvent}
+          onEdit={() => { closeSheet(); startEdit(viewingEvent) }}
+          onClose={closeSheet}
+          currentUser={currentUser}
+          formatDate={formatISOToGerman}
+        />
+      )}
     </div>
   )
 }
