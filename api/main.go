@@ -67,6 +67,10 @@ func main() {
 	}
 	slog.Info("database ready")
 
+	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())
+	defer cleanupCancel()
+	startCleanupWorker(cleanupCtx)
+
 	// Routes.
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handleHealth)

@@ -83,7 +83,10 @@ func validateEvent(e Event) error {
 	if len(e.Title) > maxTitleLen {
 		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
 	}
-	if e.Date != "" && !reDate.MatchString(e.Date) {
+	if e.Date == "" {
+		return fmt.Errorf("date is required")
+	}
+	if !reDate.MatchString(e.Date) {
 		return fmt.Errorf("date must be YYYY-MM-DD")
 	}
 	if e.EndDate != "" && !reDate.MatchString(e.EndDate) {

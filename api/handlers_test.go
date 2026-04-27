@@ -52,13 +52,18 @@ func TestHandleEventsPostValidation(t *testing.T) {
 			"title exceeds",
 		},
 		{
+			"missing date",
+			`{"title":"x"}`,
+			"date is required",
+		},
+		{
 			"bad date format",
 			`{"title":"x","date":"22-04-2026"}`,
 			"date must be YYYY-MM-DD",
 		},
 		{
 			"bad endDate format",
-			`{"title":"x","endDate":"not-a-date"}`,
+			`{"title":"x","date":"2026-04-22","endDate":"not-a-date"}`,
 			"endDate must be YYYY-MM-DD",
 		},
 		{
@@ -68,12 +73,12 @@ func TestHandleEventsPostValidation(t *testing.T) {
 		},
 		{
 			"bad time format",
-			`{"title":"x","time":"1800"}`,
+			`{"title":"x","date":"2026-04-22","time":"1800"}`,
 			"time must be HH:MM",
 		},
 		{
 			"bad badgeType",
-			`{"title":"x","badgeType":"blue"}`,
+			`{"title":"x","date":"2026-04-22","badgeType":"blue"}`,
 			"badgeType must be one of",
 		},
 	}
@@ -92,6 +97,11 @@ func TestHandleEventsPatchValidation(t *testing.T) {
 		wantMsg string
 	}{
 		{
+			"missing date",
+			`{"title":"x"}`,
+			"date is required",
+		},
+		{
 			"bad date format",
 			`{"title":"x","date":"22/04/2026"}`,
 			"date must be YYYY-MM-DD",
@@ -103,12 +113,12 @@ func TestHandleEventsPatchValidation(t *testing.T) {
 		},
 		{
 			"bad time format",
-			`{"title":"x","time":"9:00"}`,
+			`{"title":"x","date":"2026-04-22","time":"9:00"}`,
 			"time must be HH:MM",
 		},
 		{
 			"bad badgeType",
-			`{"title":"x","badgeType":"orange"}`,
+			`{"title":"x","date":"2026-04-22","badgeType":"orange"}`,
 			"badgeType must be one of",
 		},
 	}
