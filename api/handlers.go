@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -20,8 +21,12 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, title, COALESCE(date,''), COALESCE(end_date,''), COALESCE(time,''),
-			        who, COALESCE(badge,''), COALESCE(badge_type,''), created_at
-			 FROM events ORDER BY created_at DESC`)
+			        who, COALESCE(badge,''), COALESCE(badge_type,''), created_at,
+			        COALESCE(ac.c, 0)
+			 FROM events
+			 LEFT JOIN (SELECT event_id, COUNT(*) AS c FROM event_attachments GROUP BY event_id) ac
+			   ON ac.event_id = events.id
+			 ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
 			return
@@ -115,6 +120,7 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "not found")
 			return
 		}
+		os.RemoveAll(filepath.Join(attachmentsDir, id))
 		slog.Info("event deleted", "id", id)
 		eventsBroker.Notify()
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})

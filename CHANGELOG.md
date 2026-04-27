@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.1] - 2026-04-27
+
+### Added
+- Calendar: attachments can now be added while creating an event ("Neuer Termin" form) — files are queued and uploaded after the event is saved
+- Calendar: event cards show a paperclip icon and count when an event has attachments, without opening the detail view
+
+---
+
 ## [0.5.0] - 2026-04-27
 
 ### Added

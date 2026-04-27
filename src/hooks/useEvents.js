@@ -35,8 +35,13 @@ export function useEvents() {
       headers: authHeaders(),
       body: JSON.stringify(event),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) {
+      const created = await res.json()
+      refresh()
+      return created
+    }
+    handleUnauth(res)
+    return null
   }
 
   const updateEvent = async (id, fields) => {

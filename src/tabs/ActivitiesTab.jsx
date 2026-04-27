@@ -23,7 +23,13 @@ export default function ActivitiesTab({ activities, addActivity, updateActivity,
   const formRef = useRef(null)
   useEffect(() => {
     if (showForm || editing) {
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
+      requestAnimationFrame(() => {
+        const el = formRef.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const navHeight = document.querySelector('.bottom-nav')?.offsetHeight ?? 0
+        window.scrollBy({ top: rect.bottom - (window.innerHeight - navHeight), behavior: 'smooth' })
+      })
     }
   }, [showForm, editing])
 

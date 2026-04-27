@@ -6,15 +6,16 @@ import (
 
 // Event mirrors the events table.
 type Event struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Date      string    `json:"date,omitempty"`
-	EndDate   string    `json:"endDate,omitempty"`
-	Time      string    `json:"time,omitempty"`
-	Who       string    `json:"who"`
-	Badge     string    `json:"badge,omitempty"`
-	BadgeType string    `json:"badgeType,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID              string    `json:"id"`
+	Title           string    `json:"title"`
+	Date            string    `json:"date,omitempty"`
+	EndDate         string    `json:"endDate,omitempty"`
+	Time            string    `json:"time,omitempty"`
+	Who             string    `json:"who"`
+	Badge           string    `json:"badge,omitempty"`
+	BadgeType       string    `json:"badgeType,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	AttachmentCount int       `json:"attachmentCount"`
 }
 
 // Recipe mirrors the recipes table.

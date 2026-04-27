@@ -173,7 +173,13 @@ export default function ListsTab({
   const formRef = useRef(null)
   useEffect(() => {
     if (showSeriesForm || editingSeries || showActivityForm || editingActivity || showMovieForm || editingMovie) {
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
+      requestAnimationFrame(() => {
+        const el = formRef.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const navHeight = document.querySelector('.bottom-nav')?.offsetHeight ?? 0
+        window.scrollBy({ top: rect.bottom - (window.innerHeight - navHeight), behavior: 'smooth' })
+      })
     }
   }, [showSeriesForm, editingSeries, showActivityForm, editingActivity, showMovieForm, editingMovie])
 
