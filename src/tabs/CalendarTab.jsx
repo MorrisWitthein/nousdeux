@@ -248,9 +248,12 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
+  const [formError, setFormError] = useState(null)
 
   const [pendingFiles, setPendingFiles] = useState([])
   const pendingFileInputRef = useRef(null)
+  const [pendingEditFiles, setPendingEditFiles] = useState([])
+  const pendingEditFileInputRef = useRef(null)
   const formRef = useRef(null)
   const gridRef = useRef(null)
   const touchStartX = useRef(null)
@@ -346,15 +349,20 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const handleAdd = async () => {
     if (!newEvent.title) return
-    const created = await addEvent(newEvent)
-    if (created && pendingFiles.length > 0) {
-      for (const file of pendingFiles) {
-        await uploadAttachment(created.id, file)
+    try {
+      const created = await addEvent(newEvent)
+      if (created && pendingFiles.length > 0) {
+        for (const file of pendingFiles) {
+          await uploadAttachment(created.id, file)
+        }
       }
+      setPendingFiles([])
+      setNewEvent({ ...EMPTY_EVENT })
+      setFormError(null)
+      setShowForm(false)
+    } catch (err) {
+      setFormError(err.message)
     }
-    setPendingFiles([])
-    setNewEvent({ ...EMPTY_EVENT })
-    setShowForm(false)
   }
 
   const startEdit = (e) => {
@@ -372,8 +380,19 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const handleUpdate = async () => {
     if (!editFields.title) return
-    await updateEvent(editing, editFields)
-    setEditing(null)
+    try {
+      await updateEvent(editing, editFields)
+      if (pendingEditFiles.length > 0) {
+        for (const file of pendingEditFiles) {
+          await uploadAttachment(editing, file)
+        }
+        setPendingEditFiles([])
+      }
+      setFormError(null)
+      setEditing(null)
+    } catch (err) {
+      setFormError(err.message)
+    }
   }
 
   const badgeOptions = [
@@ -383,7 +402,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     { label: 'Abgesagt', type: 'red' },
   ]
 
-  const renderForm = (fields, setFields, onSave, onCancel, title) => {
+  const renderForm = (fields, setFieldsRaw, onSave, onCancel, title, error) => {
+    const setFields = (...args) => { setFormError(null); setFieldsRaw(...args) }
     const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
     return (
       <div className="add-form">
@@ -435,6 +455,9 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         >
           {badgeOptions.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
         </select>
+        {error && (
+          <div style={{ color: 'var(--accent)', fontSize: 13, padding: '6px 2px' }}>{error}</div>
+        )}
         <div className="btn-row">
           <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
           <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid}>Speichern</button>
@@ -594,8 +617,9 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             newEvent,
             setNewEvent,
             handleAdd,
-            () => { setShowForm(false); setPendingFiles([]) },
-            'Neuer Termin'
+            () => { setShowForm(false); setPendingFiles([]); setFormError(null) },
+            'Neuer Termin',
+            formError
           )}
           <div style={{ margin: '-8px 0 16px', padding: '0 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -673,9 +697,45 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
               editFields,
               setEditFields,
               handleUpdate,
-              () => setEditing(null),
-              'Termin bearbeiten'
+              () => { setEditing(null); setPendingEditFiles([]); setFormError(null) },
+              'Termin bearbeiten',
+              formError
             )}
+            <div style={{ margin: '-8px 0 16px', padding: '0 4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Anhänge (opt.)</span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '5px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+                  onClick={() => pendingEditFileInputRef.current?.click()}
+                >
+                  <PaperclipIcon /> Datei wählen
+                </button>
+                <input
+                  ref={pendingEditFileInputRef}
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) setPendingEditFiles(prev => [...prev, file])
+                    e.target.value = ''
+                  }}
+                />
+              </div>
+              {pendingEditFiles.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {pendingEditFiles.map((f, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '6px 10px', background: 'var(--warm)', borderRadius: 10,
+                    }}>
+                      <span style={{ fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{f.name}</span>
+                      <button className="btn-delete" onClick={() => setPendingEditFiles(prev => prev.filter((_, j) => j !== i))}><CloseIcon /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div key={e.id} className="card" onClick={() => openDetail(e)}>
