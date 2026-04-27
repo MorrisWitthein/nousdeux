@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.2] - 2026-04-27
+
+### Fixed
+- Uploads larger than 1 MB no longer fail with 413 — nginx `client_max_body_size` raised to 25 MB to match the API limit
+
+---
+
 ## [0.5.1] - 2026-04-27
 
 ### Added
