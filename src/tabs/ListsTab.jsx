@@ -2,6 +2,91 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 
+function Sheet({ title, onClose, children }) {
+  return (
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet">
+        <div className="sheet-handle" />
+        <div className="sheet-header">
+          <span className="sheet-title">{title}</span>
+          <button className="btn-delete" onClick={onClose}><CloseIcon /></button>
+        </div>
+        <div className="sheet-body">{children}</div>
+      </div>
+    </>
+  )
+}
+
+function SeriesDetail({ series, onEdit, onClose }) {
+  const sub = seriesSubLine(series)
+  return (
+    <Sheet title="" onClose={onClose}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>{series.emoji}</div>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{series.title}</div>
+        <span className={`badge badge-${series.statusType}`}>{series.status}</span>
+      </div>
+      {sub && (
+        <div className="recipe-detail-section">
+          <div className="recipe-detail-section-title">Details</div>
+          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
+      </div>
+    </Sheet>
+  )
+}
+
+function MovieDetail({ movie, onEdit, onClose }) {
+  const sub = movieSubLine(movie)
+  return (
+    <Sheet title="" onClose={onClose}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{movie.title}</div>
+        <span className={`badge badge-${movie.statusType}`}>{movie.status}</span>
+      </div>
+      {sub && (
+        <div className="recipe-detail-section">
+          <div className="recipe-detail-section-title">Details</div>
+          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
+      </div>
+    </Sheet>
+  )
+}
+
+function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar }) {
+  return (
+    <Sheet title="" onClose={onClose}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>{activity.emoji}</div>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{activity.title}</div>
+        <span className={`badge badge-${activityStatusType(activity.status)}`}>{activity.status || 'Idee'}</span>
+      </div>
+      {activity.meta && (
+        <div className="recipe-detail-section">
+          <div className="recipe-detail-section-title">Notizen</div>
+          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{activity.meta}</div>
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => { onClose(); onNavigateToCalendar(null, { title: `${activity.emoji} ${activity.title}` }) }}>
+          <CalendarIcon /> Als Termin
+        </button>
+        <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
+      </div>
+    </Sheet>
+  )
+}
+
 const SERIES_STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
   { label: 'Läuft', type: 'green' },
@@ -65,6 +150,13 @@ export default function ListsTab({
   const [newAct, setNewAct] = useState({ ...EMPTY_ACTIVITY })
   const [editingActivity, setEditingActivity] = useState(null)
   const [editActivityFields, setEditActivityFields] = useState({ ...EMPTY_ACTIVITY })
+
+  // Detail sheet state
+  const [sheet, setSheet] = useState(null) // null | 'series' | 'movie' | 'activity'
+  const [viewingId, setViewingId] = useState(null)
+
+  const openDetail = (type, id) => { setSheet(type); setViewingId(id) }
+  const closeDetail = () => { setSheet(null); setViewingId(null) }
 
   const knownGenres = useMemo(
     () => [...new Set(movies.flatMap(m => m.genres || []))].sort(),
@@ -338,6 +430,10 @@ export default function ListsTab({
     </div>
   )
 
+  const viewingSeriesItem = series.find(s => s.id === viewingId)
+  const viewingMovieItem = movies.find(m => m.id === viewingId)
+  const viewingActivityItem = activities.find(a => a.id === viewingId)
+
   return (
     <div>
       <p className="section-title">Eure <em>Listen</em></p>
@@ -386,7 +482,7 @@ export default function ListsTab({
                 )}
               </div>
             ) : (
-              <div key={s.id} className="list-item" onClick={() => startEditSeries(s)}>
+              <div key={s.id} className="list-item" onClick={() => openDetail('series', s.id)}>
                 <div className="list-emoji">{s.emoji}</div>
                 <div className="list-info">
                   <div className="list-title">{s.title}</div>
@@ -431,7 +527,7 @@ export default function ListsTab({
                 )}
               </div>
             ) : (
-              <div key={a.id} className="activity-card" onClick={() => startEditActivity(a)}>
+              <div key={a.id} className="activity-card" onClick={() => openDetail('activity', a.id)}>
                 <div className="activity-icon">{a.emoji}</div>
                 <div style={{ flex: 1 }}>
                   <div className="list-title">{a.title}</div>
@@ -496,7 +592,7 @@ export default function ListsTab({
                 )}
               </div>
             ) : (
-              <div key={m.id} className="list-item" onClick={() => startEditMovie(m)}>
+              <div key={m.id} className="list-item" onClick={() => openDetail('movie', m.id)}>
                 <div className="list-emoji">{m.emoji}</div>
                 <div className="list-info">
                   <div className="list-title">{m.title}</div>
@@ -511,6 +607,29 @@ export default function ListsTab({
             )
           ))}
         </>
+      )}
+
+      {sheet === 'series' && viewingSeriesItem && (
+        <SeriesDetail
+          series={viewingSeriesItem}
+          onEdit={() => { closeDetail(); startEditSeries(viewingSeriesItem) }}
+          onClose={closeDetail}
+        />
+      )}
+      {sheet === 'movie' && viewingMovieItem && (
+        <MovieDetail
+          movie={viewingMovieItem}
+          onEdit={() => { closeDetail(); startEditMovie(viewingMovieItem) }}
+          onClose={closeDetail}
+        />
+      )}
+      {sheet === 'activity' && viewingActivityItem && (
+        <ActivityDetail
+          activity={viewingActivityItem}
+          onEdit={() => { closeDetail(); startEditActivity(viewingActivityItem) }}
+          onClose={closeDetail}
+          onNavigateToCalendar={onNavigateToCalendar}
+        />
       )}
     </div>
   )
