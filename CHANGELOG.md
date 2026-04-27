@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.3] - 2026-04-27
+
+### Added
+- Calendar: edit form now has an attachment upload section ("Datei wählen") matching the create form — files are queued and uploaded when saving
+
+### Fixed
+- API errors (e.g. missing date) are no longer swallowed silently — the error message from the server is shown in red above the form buttons for both create and edit
+
+---
+
 ## [0.5.2] - 2026-04-27
 
 ### Fixed

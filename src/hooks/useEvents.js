@@ -41,6 +41,10 @@ export function useEvents() {
       return created
     }
     handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
     return null
   }
 
@@ -50,8 +54,12 @@ export function useEvents() {
       headers: authHeaders(),
       body: JSON.stringify(fields),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const deleteEvent = async (id) => {
