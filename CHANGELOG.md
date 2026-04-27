@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.4.1] - 2026-04-27
+
+### Added
+- Calendar: tapping an event card opens a detail sheet (title, date/time, badge, author) with an edit button
+- Lists: tapping a series, movie, or activity opens a detail sheet; activities include a shortcut to add as a calendar event
+
+---
+
 ## [0.4.0] - 2026-04-25
 
 ### Added
