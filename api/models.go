@@ -58,6 +58,17 @@ type Movie struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// Attachment mirrors the event_attachments table.
+type Attachment struct {
+	ID          string    `json:"id"`
+	EventID     string    `json:"eventId"`
+	Filename    string    `json:"filename"`
+	ContentType string    `json:"contentType"`
+	Size        int64     `json:"size"`
+	UploadedBy  string    `json:"uploadedBy"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 // Activity mirrors the activities table.
 type Activity struct {
 	ID        string    `json:"id"`
