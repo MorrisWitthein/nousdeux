@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
+import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 
 function Sheet({ title, onClose, children }) {
   return (
@@ -17,11 +17,41 @@ function Sheet({ title, onClose, children }) {
   )
 }
 
-function EventDetail({ event, onEdit, onClose, currentUser, formatDate }) {
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function EventDetail({ event, onEdit, onClose, currentUser, formatDate, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const isMultiDay = event.endDate && event.endDate > event.date
   const dateDisplay = isMultiDay
     ? `${formatDate(event.date)} – ${formatDate(event.endDate)}`
     : (formatDate(event.date) || event.date)
+
+  const [attachments, setAttachments] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    listAttachments(event.id).then(setAttachments)
+  }, [event.id])
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const result = await uploadAttachment(event.id, file)
+    if (result) setAttachments(prev => [...prev, result])
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Anhang löschen?')) return
+    const ok = await deleteAttachment(id)
+    if (ok) setAttachments(prev => prev.filter(a => a.id !== id))
+  }
 
   return (
     <Sheet title="" onClose={onClose}>
@@ -36,6 +66,46 @@ function EventDetail({ event, onEdit, onClose, currentUser, formatDate }) {
         <div className="recipe-detail-section-title">Datum</div>
         <div style={{ fontSize: 14, color: 'var(--ink)' }}>{dateDisplay}</div>
         {event.time && <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>{event.time} Uhr</div>}
+      </div>
+
+      <div className="recipe-detail-section">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div className="recipe-detail-section-title" style={{ marginBottom: 0 }}>Anhänge</div>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: '5px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <PaperclipIcon />
+            {uploading ? 'Lädt…' : 'Hochladen'}
+          </button>
+          <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
+        </div>
+        {attachments.length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Keine Anhänge</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {attachments.map(a => (
+              <div key={a.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 10px', background: 'var(--warm)', borderRadius: 10,
+              }}>
+                <a
+                  href={attachmentUrl(a.id)}
+                  download={a.filename}
+                  style={{ fontSize: 13, color: 'var(--ink)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}
+                >
+                  {a.filename}
+                </a>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{formatBytes(a.size)}</span>
+                  <button className="btn-delete" onClick={() => handleDelete(a.id)}><CloseIcon /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{
@@ -149,7 +219,7 @@ function buildEventDayMap(events, year, month) {
 
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 
-export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed }) {
+export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -584,6 +654,10 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           onClose={closeSheet}
           currentUser={currentUser}
           formatDate={formatISOToGerman}
+          listAttachments={listAttachments}
+          uploadAttachment={uploadAttachment}
+          deleteAttachment={deleteAttachment}
+          attachmentUrl={attachmentUrl}
         />
       )}
     </div>

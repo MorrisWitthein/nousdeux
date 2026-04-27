@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.0] - 2026-04-27
+
+### Added
+- Calendar: event detail sheet now shows an "Anhänge" section — list, download, upload, and delete file attachments per event (backed by the new API endpoints)
+
+---
+
 ## [0.4.1] - 2026-04-27
 
 ### Added

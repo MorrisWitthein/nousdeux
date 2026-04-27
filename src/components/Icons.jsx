@@ -17,6 +17,14 @@ export function CloseIcon() {
   )
 }
 
+export function PaperclipIcon() {
+  return (
+    <svg {...props}>
+      <path d="M13.5 7L6.5 14a3.5 3.5 0 0 1-5-5l7-7a2.333 2.333 0 0 1 3.3 3.3L5 12a1.167 1.167 0 0 1-1.65-1.65L9.5 4" />
+    </svg>
+  )
+}
+
 export function CalendarIcon() {
   return (
     <svg {...props}>

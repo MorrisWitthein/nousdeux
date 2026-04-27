@@ -58,5 +58,39 @@ export function useEvents() {
     else handleUnauth(res)
   }
 
-  return { events, addEvent, updateEvent, deleteEvent }
+  const listAttachments = async (eventId) => {
+    const res = await fetch(`${API}/api/events/${eventId}/attachments`, { headers: authHeaders() })
+    if (res.ok) return res.json()
+    handleUnauth(res)
+    return []
+  }
+
+  const uploadAttachment = async (eventId, file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch(`${API}/api/events/${eventId}/attachments`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: form,
+    })
+    if (res.ok) return res.json()
+    handleUnauth(res)
+    return null
+  }
+
+  const deleteAttachment = async (attachmentId) => {
+    const res = await fetch(`${API}/api/attachments/${attachmentId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    handleUnauth(res)
+    return res.ok
+  }
+
+  const attachmentUrl = (attachmentId) => {
+    const token = localStorage.getItem('token')
+    return `${API}/api/attachments/${attachmentId}?token=${token}`
+  }
+
+  return { events, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }
 }
