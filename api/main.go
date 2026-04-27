@@ -37,6 +37,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Attachments storage directory.
+	attachmentsDir = os.Getenv("ATTACHMENTS_DIR")
+	if attachmentsDir == "" {
+		attachmentsDir = "/data/attachments"
+	}
+	if err := os.MkdirAll(attachmentsDir, 0o755); err != nil {
+		slog.Error("cannot create attachments dir", "dir", attachmentsDir, "err", err)
+		os.Exit(1)
+	}
+
 	// Connect to Postgres.
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
@@ -68,6 +78,8 @@ func main() {
 	mux.HandleFunc("/api/activities", cors(requireAuth(handleActivities)))
 	mux.HandleFunc("/api/movies", cors(requireAuth(handleMovies)))
 	mux.HandleFunc("/api/weather", cors(requireAuth(handleWeather)))
+	mux.HandleFunc("/api/events/{id}/attachments", cors(requireAuth(handleEventAttachments)))
+	mux.HandleFunc("/api/attachments/{id}", cors(requireAuth(handleAttachment)))
 	mux.HandleFunc("/api/events/stream", cors(requireAuth(eventsBroker.ServeHTTP)))
 	mux.HandleFunc("/api/recipes/stream", cors(requireAuth(recipesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/series/stream", cors(requireAuth(seriesBroker.ServeHTTP)))
