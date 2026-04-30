@@ -6,36 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
-## [0.5.7] - 2026-04-30
-
-### Changed
-- Recipe creation form now has a "Bild hochladen" button; if a file is chosen it is used instead of the Unsplash auto-fetch
-
----
-
-
-## [0.5.6] - 2026-04-30
-
-### Added
-- Recipe edit form now shows the current image with an option to upload a new one or remove it
-
----
-
-
-## [0.5.5] - 2026-04-30
-
-### Changed
-- Calendar event list now starts from the first day of the currently viewed month instead of today, so navigating to a future month shows its events immediately
-- Event list is paginated: first 5 events are shown, with a "Mehr anzeigen (N weitere)" button to load 5 more at a time; the limit resets when switching months or selecting a day
-
----
-
-
 ## [0.5.4] - 2026-04-30
 
+### Added
+- Recipe image upload in the create form: a "Bild hochladen" button lets you pick a local file; if chosen it is used instead of the Unsplash auto-fetch
+- Recipe edit form now shows the current image with options to upload a replacement or remove it
+
 ### Changed
-- All "add" buttons (Calendar, Lists: series/activities/movies, Recipes) are now floating action buttons (FAB) instead of full-width inline buttons — consistent with the PWA's mobile-first layout
-- FAB horizontal position now uses `calc(max(0px, (100vw - 390px) / 2) + 24px)` so it stays 24 px from the right edge of the content area on wide screens; also raised from 84 px to 100 px above the bottom edge
+- All "add" buttons (Calendar, Lists: series/activities/movies, Recipes) are now floating action buttons (FAB) instead of full-width inline buttons, consistent with the PWA's mobile-first layout; FAB position uses `calc(max(0px, (100vw - 390px) / 2) + 24px)` so it stays 24 px from the right edge on wide screens, raised to 100 px above the bottom edge
+- Calendar event list now starts from the first day of the currently viewed month (not today); paginated 5 at a time with a "Mehr anzeigen (N weitere)" button; resets when switching months or selecting a day
+- Series add form: Platform field now has a visible label; season/status fields no longer use fixed flex widths
+
+### Fixed
+- Inputs, selects, and textareas inside `.form-row` no longer add an extra bottom margin
 
 ---
 

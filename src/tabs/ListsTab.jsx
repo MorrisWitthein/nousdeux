@@ -334,13 +334,16 @@ export default function ListsTab({
           {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
         </div>
       </div>
-      <input
-        placeholder="Plattform (Netflix, HBO, …)"
-        value={fields.sub}
-        onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
-      />
+      <div>
+        <label className="form-label">Plattform</label>
+        <input
+          placeholder="Plattform (Netflix, HBO, …)"
+          value={fields.sub}
+          onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
+        />
+      </div>
       <div className="form-row">
-        <div style={{ flex: '0 0 120px' }}>
+        <div>
           <label className="form-label">Staffel</label>
           <input
             type="number"
@@ -353,7 +356,7 @@ export default function ListsTab({
             onChange={e => setFields(f => ({ ...f, season: e.target.value }))}
           />
         </div>
-        <div style={{ flex: 1 }}>
+        <div>
           <label className="form-label">Status</label>
           <select value={fields.status} onChange={handleSeriesStatusChange(setFields)}>
             {SERIES_STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}

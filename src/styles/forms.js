@@ -292,6 +292,10 @@ const forms = `
   margin-bottom: 0;
 }
 
+.form-row input, .form-row select, .form-row textarea {
+  margin-bottom: 0;
+}
+
 .form-label {
   display: block;
   font-size: 11px;
