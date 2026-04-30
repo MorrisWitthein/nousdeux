@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.6.0] - 2026-04-30
+
+### Added
+- Recipe import: a teal import FAB on the Recipes tab opens an "Importieren" sheet where you can paste a URL or pick a photo; Claude extracts title, emoji, tags, ingredients, steps, prep time and servings (translated to German) and pre-fills the add form for review before saving
+
+---
+
 ## [0.5.4] - 2026-04-30
 
 ### Added

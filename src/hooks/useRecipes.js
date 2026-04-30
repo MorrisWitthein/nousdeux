@@ -114,6 +114,20 @@ export function useRecipes() {
     }
   }
 
+  const importRecipe = async (payload) => {
+    const res = await fetch(`${API}/api/recipes/import`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      handleUnauth(res)
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Import fehlgeschlagen')
+    }
+    return res.json()
+  }
+
   const clearRecipeImage = async (id) => {
     try {
       await fetch(`${API}/api/recipes/image?id=${id}`, {
@@ -126,5 +140,5 @@ export function useRecipes() {
     }
   }
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage }
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }
 }
