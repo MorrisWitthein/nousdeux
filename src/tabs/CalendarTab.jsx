@@ -671,8 +671,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
       {!showForm && !editing && (
         <button
-          className="btn btn-primary"
-          style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+          className="fab"
+          aria-label="Termin hinzufügen"
           onClick={() => {
             setNewEvent({
               ...EMPTY_EVENT,
@@ -681,7 +681,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             setShowForm(true)
           }}
         >
-          + Termin hinzufügen
+          +
         </button>
       )}
 

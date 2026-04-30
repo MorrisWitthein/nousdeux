@@ -354,13 +354,9 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
         </div>
       )}
 
-      <button
-        className="btn btn-primary"
-        style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
-        onClick={openAdd}
-      >
-        + Rezept hinzufügen
-      </button>
+      {sheet === null && (
+        <button className="fab" aria-label="Rezept hinzufügen" onClick={openAdd}>+</button>
+      )}
 
       {displayed.map(r => (
         <div key={r.id} className="recipe-card" onClick={() => openDetail(r)}>

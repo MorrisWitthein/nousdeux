@@ -2,8 +2,8 @@ const nav = `
 /* ADD BUTTON */
 .fab {
   position: fixed;
-  bottom: 84px;
-  right: 24px;
+  bottom: 100px;
+  right: calc(max(0px, (100vw - 390px) / 2) + 24px);
   width: 52px; height: 52px;
   background: var(--accent);
   border: none;

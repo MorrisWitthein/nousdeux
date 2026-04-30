@@ -6,6 +6,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.4] - 2026-04-30
+
+### Changed
+- All "add" buttons (Calendar, Lists: series/activities/movies, Recipes) are now floating action buttons (FAB) instead of full-width inline buttons — consistent with the PWA's mobile-first layout
+- FAB horizontal position now uses `calc(max(0px, (100vw - 390px) / 2) + 24px)` so it stays 24 px from the right edge of the content area on wide screens; also raised from 84 px to 100 px above the bottom edge
+
+---
+
+
 ## [0.5.3] - 2026-04-27
 
 ### Added

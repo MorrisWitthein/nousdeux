@@ -470,12 +470,10 @@ export default function ListsTab({
 
           {!showSeriesForm && !editingSeries && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Serie hinzufügen"
               onClick={() => { setNewSeries({ ...EMPTY_SERIES }); setShowSeriesForm(true) }}
-            >
-              + Serie hinzufügen
-            </button>
+            >+</button>
           )}
 
           {series.map(s => (
@@ -515,12 +513,10 @@ export default function ListsTab({
 
           {!showActivityForm && !editingActivity && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Aktivität vorschlagen"
               onClick={() => { setNewAct({ ...EMPTY_ACTIVITY }); setShowActivityForm(true) }}
-            >
-              + Aktivität vorschlagen
-            </button>
+            >+</button>
           )}
 
           {activities.map(a => (
@@ -580,12 +576,10 @@ export default function ListsTab({
 
           {!showMovieForm && !editingMovie && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Film hinzufügen"
               onClick={() => { setNewMovie({ ...EMPTY_MOVIE }); setShowMovieForm(true) }}
-            >
-              + Film hinzufügen
-            </button>
+            >+</button>
           )}
 
           {displayedMovies.map(m => (
