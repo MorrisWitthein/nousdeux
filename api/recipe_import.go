@@ -157,7 +157,7 @@ func stripMarkdownFences(s string) string {
 }
 
 const extractPrompt = `Extract the recipe from the content below and return a JSON object with these fields:
-- title (string)
+- title (string, just the dish name — no possessives, origin stories, or adjectives like "Grandma's", "Original", "Best ever"; e.g. "Spaghetti Carbonara" not "Grandma's Original Spaghetti Carbonara")
 - emoji (single emoji that fits the dish)
 - tags (array of strings, max 4, lowercase)
 - ingredients (newline-separated list, amounts first, e.g. "200g Mehl")

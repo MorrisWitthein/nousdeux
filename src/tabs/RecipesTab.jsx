@@ -26,13 +26,19 @@ const EMPTY_FIELDS = {
   ingredients: [], steps: [], prepTime: '', servings: '',
 }
 
+function parseIngredient(s) {
+  const m = s.match(/^(\d[\d.,/]*[a-zA-ZäöüÄÖÜ]*)\s+(.+)$/)
+  if (m) return { qty: m[1], name: m[2] }
+  return { qty: '', name: s }
+}
+
 function recipeToFields(r) {
   return {
     title: r.title || '',
     emoji: r.emoji || '',
     tags: r.tags || [],
     rating: r.rating || 0,
-    ingredients: parseLines(r.ingredients).map(s => ({ qty: '', name: s })),
+    ingredients: parseLines(r.ingredients).map(parseIngredient),
     steps: parseLines(r.steps),
     prepTime: r.prepTime || '',
     servings: r.servings || '',
@@ -365,9 +371,7 @@ function ImportSheet({ onImport, onClose }) {
       <div className="btn-row" style={{ marginTop: 16 }}>
         <button className="btn btn-secondary" onClick={onClose} disabled={loading}>Abbrechen</button>
         <button className="btn btn-primary" disabled={loading || !canSubmit} onClick={handleImport}>
-          {loading
-            ? <><div className="spinner" /><span>Importiere…</span></>
-            : 'Importieren'}
+          Importieren
         </button>
       </div>
     </Sheet>
@@ -444,6 +448,7 @@ function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
 
 export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
   const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import'
+  const [fabOpen, setFabOpen] = useState(false)
   const [viewingId, setViewingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [fields, setFields] = useState({ ...EMPTY_FIELDS })
@@ -493,6 +498,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     setViewingId(null)
     setEditingId(null)
     setPendingImageFile(null)
+    setFabOpen(false)
   }
 
   const handleAdd = async () => {
@@ -552,11 +558,26 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
 
       {sheet === null && (
         <>
-          <button className="fab" aria-label="Rezept hinzufügen" onClick={openAdd}>+</button>
-          <button className="fab" aria-label="Rezept importieren" onClick={openImport}
-            style={{ bottom: 164, background: 'var(--accent2)', boxShadow: '0 4px 20px rgba(74,124,111,0.4)', fontSize: 16 }}>
-            <ImportIcon />
-          </button>
+          {fabOpen && (
+            <>
+              <div className="fab-backdrop" onClick={() => setFabOpen(false)} />
+              <div className="fab-menu">
+                <button className="fab-sub" onClick={() => { setFabOpen(false); openImport() }}>
+                  <span className="fab-sub-label">Importieren</span>
+                  <span className="fab-sub-icon import"><ImportIcon /></span>
+                </button>
+                <button className="fab-sub" onClick={() => { setFabOpen(false); openAdd() }}>
+                  <span className="fab-sub-label">Erstellen</span>
+                  <span className="fab-sub-icon create">+</span>
+                </button>
+              </div>
+            </>
+          )}
+          <button
+            className={`fab${fabOpen ? ' fab-open' : ''}`}
+            aria-label="Rezept hinzufügen"
+            onClick={() => setFabOpen(o => !o)}
+          >+</button>
         </>
       )}
 
