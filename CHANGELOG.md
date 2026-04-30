@@ -6,6 +6,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.6.1] - 2026-04-30
+
+### Fixed
+- Recipe import: ingredient quantities (e.g. `200g`) are now parsed into the dedicated quantity field instead of being lumped into the ingredient name
+- Recipe import: removed duplicate loading spinner on the "Importieren" button (the spinner above the button row is sufficient)
+- Recipe import: Claude prompt now strips possessives and marketing adjectives from the dish title (e.g. "Grandma's Original Spaghetti Carbonara" → "Spaghetti Carbonara")
+
+### Changed
+- Merged the two recipe FAB buttons (create + import) into a single speed-dial FAB: tap `+` to expand a mini-menu with "Erstellen" and "Importieren" options; tap outside or choose an option to close
+
+---
+
 ## [0.6.0] - 2026-04-30
 
 ### Added

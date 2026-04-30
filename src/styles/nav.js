@@ -24,6 +24,74 @@ const nav = `
   box-shadow: 0 6px 28px rgba(200,85,61,0.5);
 }
 
+.fab.fab-open {
+  transform: rotate(45deg);
+}
+
+.fab.fab-open:hover {
+  transform: rotate(45deg) scale(1.05);
+}
+
+.fab-menu {
+  position: fixed;
+  bottom: 162px;
+  right: calc(max(0px, (100vw - 390px) / 2) + 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 20;
+}
+
+.fab-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 28px;
+  padding: 9px 16px 9px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  animation: fabSubIn 0.18s ease both;
+  color: var(--ink);
+}
+
+.fab-sub:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.fab-sub span.fab-sub-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.fab-sub-icon {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.fab-sub-icon.create { background: var(--accent); color: white; }
+.fab-sub-icon.import { background: var(--accent2); color: white; }
+
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+}
+
+@keyframes fabSubIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* BOTTOM NAV */
 .bottom-nav {
   position: fixed;
