@@ -6,6 +6,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## [0.5.7] - 2026-04-30
+
+### Changed
+- Recipe creation form now has a "Bild hochladen" button; if a file is chosen it is used instead of the Unsplash auto-fetch
+
+---
+
+
+## [0.5.6] - 2026-04-30
+
+### Added
+- Recipe edit form now shows the current image with an option to upload a new one or remove it
+
+---
+
+
+## [0.5.5] - 2026-04-30
+
+### Changed
+- Calendar event list now starts from the first day of the currently viewed month instead of today, so navigating to a future month shows its events immediately
+- Event list is paginated: first 5 events are shown, with a "Mehr anzeigen (N weitere)" button to load 5 more at a time; the limit resets when switching months or selecting a day
+
+---
+
+
 ## [0.5.4] - 2026-04-30
 
 ### Changed

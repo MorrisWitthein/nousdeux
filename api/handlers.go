@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -237,6 +238,7 @@ func handleRecipes(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "not found")
 			return
 		}
+		removeRecipeImageFile(id)
 		slog.Info("recipe deleted", "id", id)
 		recipesBroker.Notify()
 		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
@@ -654,6 +656,11 @@ func handleRecipeImage(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 			return
+		}
+		// Remove an old uploaded file unless the new URL points to it
+		// (upload flow: store file first, then PATCH with the new URL).
+		if !strings.Contains(body.URL, "/api/recipes/"+id+"/image-file") {
+			removeRecipeImageFile(id)
 		}
 		tag, err := pool.Exec(ctx, `UPDATE recipes SET image_url=$1 WHERE id=$2`, nullIfEmpty(body.URL), id)
 		if err != nil {

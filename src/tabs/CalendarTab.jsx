@@ -218,6 +218,7 @@ function buildEventDayMap(events, year, month) {
 }
 
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
+const PAGE_SIZE = 5
 
 export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const now = new Date()
@@ -249,6 +250,9 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
   const [formError, setFormError] = useState(null)
+  const [submitted, setSubmitted] = useState(false)
+
+  const [eventLimit, setEventLimit] = useState(PAGE_SIZE)
 
   const [pendingFiles, setPendingFiles] = useState([])
   const pendingFileInputRef = useRef(null)
@@ -292,6 +296,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const grid = buildMonthGrid(year, month)
   const todayDay = now.getFullYear() === year && now.getMonth() === month ? now.getDate() : null
+  useEffect(() => { setEventLimit(PAGE_SIZE) }, [year, month, selectedDay])
+
   const eventDayMap = buildEventDayMap(events, year, month)
 
   const doSwipe = useCallback((dir) => {
@@ -348,7 +354,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   }
 
   const handleAdd = async () => {
-    if (!newEvent.title) return
+    setSubmitted(true)
+    if (!newEvent.title.trim()) return
     try {
       const created = await addEvent(newEvent)
       if (created && pendingFiles.length > 0) {
@@ -359,6 +366,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       setPendingFiles([])
       setNewEvent({ ...EMPTY_EVENT })
       setFormError(null)
+      setSubmitted(false)
       setShowForm(false)
     } catch (err) {
       setFormError(err.message)
@@ -366,6 +374,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   }
 
   const startEdit = (e) => {
+    setSubmitted(false)
     setEditing(e.id)
     setEditFields({
       title: e.title,
@@ -379,7 +388,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   }
 
   const handleUpdate = async () => {
-    if (!editFields.title) return
+    setSubmitted(true)
+    if (!editFields.title.trim()) return
     try {
       await updateEvent(editing, editFields)
       if (pendingEditFiles.length > 0) {
@@ -389,6 +399,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         setPendingEditFiles([])
       }
       setFormError(null)
+      setSubmitted(false)
       setEditing(null)
     } catch (err) {
       setFormError(err.message)
@@ -402,17 +413,20 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     { label: 'Abgesagt', type: 'red' },
   ]
 
-  const renderForm = (fields, setFieldsRaw, onSave, onCancel, title, error) => {
+  const renderForm = (fields, setFieldsRaw, onSave, onCancel, title, error, pendingFiles, setPendingFiles, fileInputRef, submitted) => {
     const setFields = (...args) => { setFormError(null); setFieldsRaw(...args) }
     const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
+    const titleMissing = submitted && !fields.title.trim()
     return (
       <div className="add-form">
         <div className="add-form-title">{title}</div>
         <input
+          className={titleMissing ? 'input-error' : ''}
           placeholder="Titel"
           value={fields.title}
           onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
         />
+        {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
         <div className="form-row">
           <div>
             <label className="form-label">Von</label>
@@ -455,6 +469,39 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         >
           {badgeOptions.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
         </select>
+        <div style={{ marginBottom: 10 }}>
+          <label className="form-label">Anhänge (opt.)</label>
+          <button
+            className="btn btn-secondary"
+            style={{ width: '100%', padding: '8px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <PaperclipIcon /> Datei wählen
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) setPendingFiles(prev => [...prev, file])
+              e.target.value = ''
+            }}
+          />
+          {pendingFiles.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 6 }}>
+              {pendingFiles.map((f, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '6px 10px', background: 'var(--warm)', borderRadius: 10,
+                }}>
+                  <span style={{ fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{f.name}</span>
+                  <button className="btn-delete" onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}><CloseIcon /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {error && (
           <div style={{ color: 'var(--accent)', fontSize: 13, padding: '6px 2px' }}>{error}</div>
         )}
@@ -470,14 +517,16 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   // Filter events visible for the selected day — includes multi-day events spanning it
   const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
+  const monthStartISO = `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}-01`
   const visibleEvents = (selectedDayISO
     ? events.filter(e => {
         const startISO = e.date
         const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
         return startISO && selectedDayISO >= startISO && selectedDayISO <= endISO
       })
-    : events.filter(e => (e.date ?? '') >= now.toISOString().slice(0, 10))
+    : events.filter(e => (e.date ?? '') >= monthStartISO)
   ).slice().sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? ''))
+  const displayedEvents = visibleEvents.slice(0, eventLimit)
 
   return (
     <div>
@@ -617,45 +666,14 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             newEvent,
             setNewEvent,
             handleAdd,
-            () => { setShowForm(false); setPendingFiles([]); setFormError(null) },
+            () => { setShowForm(false); setPendingFiles([]); setFormError(null); setSubmitted(false) },
             'Neuer Termin',
-            formError
+            formError,
+            pendingFiles,
+            setPendingFiles,
+            pendingFileInputRef,
+            submitted
           )}
-          <div style={{ margin: '-8px 0 16px', padding: '0 4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>Anhänge (opt.)</span>
-              <button
-                className="btn btn-secondary"
-                style={{ padding: '5px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-                onClick={() => pendingFileInputRef.current?.click()}
-              >
-                <PaperclipIcon /> Datei wählen
-              </button>
-              <input
-                ref={pendingFileInputRef}
-                type="file"
-                style={{ display: 'none' }}
-                onChange={e => {
-                  const file = e.target.files?.[0]
-                  if (file) setPendingFiles(prev => [...prev, file])
-                  e.target.value = ''
-                }}
-              />
-            </div>
-            {pendingFiles.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {pendingFiles.map((f, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '6px 10px', background: 'var(--warm)', borderRadius: 10,
-                  }}>
-                    <span style={{ fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{f.name}</span>
-                    <button className="btn-delete" onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}><CloseIcon /></button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -685,7 +703,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         </button>
       )}
 
-      {visibleEvents.map(e => {
+      {displayedEvents.map(e => {
         const isMultiDay = e.endDate && e.endDate > e.date
         const dateDisplay = isMultiDay
           ? `${formatISOToGerman(e.date)} – ${formatISOToGerman(e.endDate)}`
@@ -697,45 +715,14 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
               editFields,
               setEditFields,
               handleUpdate,
-              () => { setEditing(null); setPendingEditFiles([]); setFormError(null) },
+              () => { setEditing(null); setPendingEditFiles([]); setFormError(null); setSubmitted(false) },
               'Termin bearbeiten',
-              formError
+              formError,
+              pendingEditFiles,
+              setPendingEditFiles,
+              pendingEditFileInputRef,
+              submitted
             )}
-            <div style={{ margin: '-8px 0 16px', padding: '0 4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 13, color: 'var(--muted)' }}>Anhänge (opt.)</span>
-                <button
-                  className="btn btn-secondary"
-                  style={{ padding: '5px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-                  onClick={() => pendingEditFileInputRef.current?.click()}
-                >
-                  <PaperclipIcon /> Datei wählen
-                </button>
-                <input
-                  ref={pendingEditFileInputRef}
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={e => {
-                    const file = e.target.files?.[0]
-                    if (file) setPendingEditFiles(prev => [...prev, file])
-                    e.target.value = ''
-                  }}
-                />
-              </div>
-              {pendingEditFiles.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {pendingEditFiles.map((f, i) => (
-                    <div key={i} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '6px 10px', background: 'var(--warm)', borderRadius: 10,
-                    }}>
-                      <span style={{ fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>{f.name}</span>
-                      <button className="btn-delete" onClick={() => setPendingEditFiles(prev => prev.filter((_, j) => j !== i))}><CloseIcon /></button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         ) : (
           <div key={e.id} className="card" onClick={() => openDetail(e)}>
@@ -766,6 +753,16 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           </div>
         )
       })}
+
+      {visibleEvents.length > eventLimit && (
+        <button
+          className="btn btn-secondary"
+          style={{ width: '100%', marginTop: 4, marginBottom: 12, borderRadius: 14, padding: '10px' }}
+          onClick={() => setEventLimit(l => l + PAGE_SIZE)}
+        >
+          Mehr anzeigen ({visibleEvents.length - eventLimit} weitere)
+        </button>
+      )}
 
       {sheet === 'detail' && viewingEvent && (
         <EventDetail

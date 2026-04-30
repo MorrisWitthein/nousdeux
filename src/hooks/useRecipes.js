@@ -89,5 +89,42 @@ export function useRecipes() {
     else handleUnauth(res)
   }
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage }
+  const uploadRecipeImage = async (id, file) => {
+    const form = new FormData()
+    form.append('file', file)
+    try {
+      const uploadRes = await fetch(`${API}/api/recipes/${id}/upload-image`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: form,
+      })
+      if (!uploadRes.ok) {
+        console.error('[recipes] upload image failed', uploadRes.status)
+        return
+      }
+      const { path } = await uploadRes.json()
+      const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ url: `${API}${path}` }),
+      })
+      if (!patchRes.ok) console.error('[recipes] image url patch failed', patchRes.status)
+    } catch (e) {
+      console.error('[recipes] upload image error', e)
+    }
+  }
+
+  const clearRecipeImage = async (id) => {
+    try {
+      await fetch(`${API}/api/recipes/image?id=${id}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ url: '' }),
+      })
+    } catch (e) {
+      console.error('[recipes] clear image error', e)
+    }
+  }
+
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage }
 }

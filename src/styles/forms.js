@@ -76,6 +76,21 @@ const forms = `
   border-color: var(--ink);
 }
 
+.sheet-body input.input-error,
+.sheet-body textarea.input-error,
+.add-form input.input-error,
+.add-form textarea.input-error {
+  border-color: var(--accent);
+}
+
+.form-error {
+  display: block;
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: -6px;
+  margin-bottom: 10px;
+}
+
 .sheet-body .tag-input {
   border: none !important;
   border-radius: 0 !important;
@@ -139,6 +154,12 @@ const forms = `
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.ingredient-qty {
+  flex: 0 0 80px !important;
+  min-width: 0 !important;
+  width: 80px !important;
 }
 
 .step-number {
