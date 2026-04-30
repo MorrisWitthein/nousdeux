@@ -155,6 +155,8 @@ export default function ListsTab({
   const [sheet, setSheet] = useState(null) // null | 'series' | 'movie' | 'activity'
   const [viewingId, setViewingId] = useState(null)
 
+  const [submitted, setSubmitted] = useState(false)
+
   const openDetail = (type, id) => { setSheet(type); setViewingId(id) }
   const closeDetail = () => { setSheet(null); setViewingId(null) }
 
@@ -185,7 +187,8 @@ export default function ListsTab({
 
   // Series handlers
   const handleAddSeries = async () => {
-    if (!newSeries.title) return
+    setSubmitted(true)
+    if (!newSeries.title.trim()) return
     await addSeries({
       emoji: newSeries.emoji,
       title: newSeries.title,
@@ -195,10 +198,12 @@ export default function ListsTab({
       statusType: newSeries.statusType,
     })
     setNewSeries({ ...EMPTY_SERIES })
+    setSubmitted(false)
     setShowSeriesForm(false)
   }
 
   const startEditSeries = (s) => {
+    setSubmitted(false)
     setEditingSeries(s.id)
     setEditSeriesFields({
       title: s.title,
@@ -212,11 +217,13 @@ export default function ListsTab({
   }
 
   const handleUpdateSeries = async () => {
-    if (!editSeriesFields.title) return
+    setSubmitted(true)
+    if (!editSeriesFields.title.trim()) return
     await updateSeries(editingSeries, {
       ...editSeriesFields,
       season: parseInt(editSeriesFields.season, 10) || 0,
     })
+    setSubmitted(false)
     setEditingSeries(null)
   }
 
@@ -236,7 +243,8 @@ export default function ListsTab({
 
   // Movie handlers
   const handleAddMovie = async () => {
-    if (!newMovie.title) return
+    setSubmitted(true)
+    if (!newMovie.title.trim()) return
     await addMovie({
       emoji: newMovie.emoji,
       title: newMovie.title,
@@ -246,10 +254,12 @@ export default function ListsTab({
       statusType: newMovie.statusType,
     })
     setNewMovie({ ...EMPTY_MOVIE })
+    setSubmitted(false)
     setShowMovieForm(false)
   }
 
   const startEditMovie = (m) => {
+    setSubmitted(false)
     setEditingMovie(m.id)
     setEditMovieFields({
       emoji: m.emoji || '🍿',
@@ -263,20 +273,25 @@ export default function ListsTab({
   }
 
   const handleUpdateMovie = async () => {
-    if (!editMovieFields.title) return
+    setSubmitted(true)
+    if (!editMovieFields.title.trim()) return
     await updateMovie(editingMovie, editMovieFields)
+    setSubmitted(false)
     setEditingMovie(null)
   }
 
   // Activity handlers
   const handleAddActivity = async () => {
-    if (!newAct.title) return
+    setSubmitted(true)
+    if (!newAct.title.trim()) return
     await addActivity({ emoji: newAct.emoji, title: newAct.title, meta: newAct.meta, status: newAct.status })
     setNewAct({ ...EMPTY_ACTIVITY })
+    setSubmitted(false)
     setShowActivityForm(false)
   }
 
   const startEditActivity = (a) => {
+    setSubmitted(false)
     setEditingActivity(a.id)
     setEditActivityFields({
       emoji: a.emoji || '✨',
@@ -288,12 +303,16 @@ export default function ListsTab({
   }
 
   const handleUpdateActivity = async () => {
-    if (!editActivityFields.title) return
+    setSubmitted(true)
+    if (!editActivityFields.title.trim()) return
     await updateActivity(editingActivity, editActivityFields)
+    setSubmitted(false)
     setEditingActivity(null)
   }
 
-  const renderSeriesForm = (fields, setFields, onSave, onCancel, title) => (
+  const renderSeriesForm = (fields, setFields, onSave, onCancel, title, submitted) => {
+    const titleMissing = submitted && !fields.title.trim()
+    return (
     <div className="add-form">
       <div className="add-form-title">{title}</div>
       <div className="form-row">
@@ -307,19 +326,24 @@ export default function ListsTab({
         <div style={{ flex: 1 }}>
           <label className="form-label">Titel</label>
           <input
+            className={titleMissing ? 'input-error' : ''}
             placeholder="Titel"
             value={fields.title}
             onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
           />
+          {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
         </div>
       </div>
-      <input
-        placeholder="Plattform (Netflix, HBO, …)"
-        value={fields.sub}
-        onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
-      />
+      <div>
+        <label className="form-label">Plattform</label>
+        <input
+          placeholder="Plattform (Netflix, HBO, …)"
+          value={fields.sub}
+          onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
+        />
+      </div>
       <div className="form-row">
-        <div style={{ flex: '0 0 120px' }}>
+        <div>
           <label className="form-label">Staffel</label>
           <input
             type="number"
@@ -332,7 +356,7 @@ export default function ListsTab({
             onChange={e => setFields(f => ({ ...f, season: e.target.value }))}
           />
         </div>
-        <div style={{ flex: 1 }}>
+        <div>
           <label className="form-label">Status</label>
           <select value={fields.status} onChange={handleSeriesStatusChange(setFields)}>
             {SERIES_STATUS_OPTIONS.map(o => <option key={o.label} value={o.label}>{o.label}</option>)}
@@ -345,8 +369,11 @@ export default function ListsTab({
       </div>
     </div>
   )
+  }
 
-  const renderMovieForm = (fields, setFields, onSave, onCancel, title) => (
+  const renderMovieForm = (fields, setFields, onSave, onCancel, title, submitted) => {
+    const titleMissing = submitted && !fields.title.trim()
+    return (
     <div className="add-form">
       <div className="add-form-title">{title}</div>
       <div className="form-row">
@@ -360,10 +387,12 @@ export default function ListsTab({
         <div style={{ flex: 1 }}>
           <label className="form-label">Titel</label>
           <input
+            className={titleMissing ? 'input-error' : ''}
             placeholder="Titel"
             value={fields.title}
             onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
           />
+          {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
         </div>
       </div>
       <label className="form-label">Genre</label>
@@ -395,8 +424,11 @@ export default function ListsTab({
       </div>
     </div>
   )
+  }
 
-  const renderActivityForm = (fields, setFields, onSave, onCancel, title) => (
+  const renderActivityForm = (fields, setFields, onSave, onCancel, title, submitted) => {
+    const titleMissing = submitted && !fields.title.trim()
+    return (
     <div className="add-form">
       <div className="add-form-title">{title}</div>
       <div className="form-row">
@@ -410,10 +442,12 @@ export default function ListsTab({
         <div style={{ flex: 1 }}>
           <label className="form-label">Was?</label>
           <input
+            className={titleMissing ? 'input-error' : ''}
             placeholder="Keramikkurs, Wanderung, …"
             value={fields.title}
             onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
           />
+          {titleMissing && <span className="form-error">Bitte ausfüllen</span>}
         </div>
       </div>
       <input
@@ -435,6 +469,7 @@ export default function ListsTab({
       </div>
     </div>
   )
+  }
 
   const viewingSeriesItem = series.find(s => s.id === viewingId)
   const viewingMovieItem = movies.find(m => m.id === viewingId)
@@ -464,18 +499,16 @@ export default function ListsTab({
         <>
           {showSeriesForm && <div ref={formRef}>{renderSeriesForm(
             newSeries, setNewSeries,
-            handleAddSeries, () => setShowSeriesForm(false),
-            'Serie hinzufügen'
+            handleAddSeries, () => { setShowSeriesForm(false); setSubmitted(false) },
+            'Serie hinzufügen', submitted
           )}</div>}
 
           {!showSeriesForm && !editingSeries && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Serie hinzufügen"
               onClick={() => { setNewSeries({ ...EMPTY_SERIES }); setShowSeriesForm(true) }}
-            >
-              + Serie hinzufügen
-            </button>
+            >+</button>
           )}
 
           {series.map(s => (
@@ -483,8 +516,8 @@ export default function ListsTab({
               <div key={s.id} ref={formRef}>
                 {renderSeriesForm(
                   editSeriesFields, setEditSeriesFields,
-                  handleUpdateSeries, () => setEditingSeries(null),
-                  'Serie bearbeiten'
+                  handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
+                  'Serie bearbeiten', submitted
                 )}
               </div>
             ) : (
@@ -509,18 +542,16 @@ export default function ListsTab({
         <>
           {showActivityForm && <div ref={formRef}>{renderActivityForm(
             newAct, setNewAct,
-            handleAddActivity, () => setShowActivityForm(false),
-            'Aktivität hinzufügen'
+            handleAddActivity, () => { setShowActivityForm(false); setSubmitted(false) },
+            'Aktivität hinzufügen', submitted
           )}</div>}
 
           {!showActivityForm && !editingActivity && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Aktivität vorschlagen"
               onClick={() => { setNewAct({ ...EMPTY_ACTIVITY }); setShowActivityForm(true) }}
-            >
-              + Aktivität vorschlagen
-            </button>
+            >+</button>
           )}
 
           {activities.map(a => (
@@ -528,8 +559,8 @@ export default function ListsTab({
               <div key={a.id} ref={formRef}>
                 {renderActivityForm(
                   editActivityFields, setEditActivityFields,
-                  handleUpdateActivity, () => setEditingActivity(null),
-                  'Aktivität bearbeiten'
+                  handleUpdateActivity, () => { setEditingActivity(null); setSubmitted(false) },
+                  'Aktivität bearbeiten', submitted
                 )}
               </div>
             ) : (
@@ -574,18 +605,16 @@ export default function ListsTab({
 
           {showMovieForm && <div ref={formRef}>{renderMovieForm(
             newMovie, setNewMovie,
-            handleAddMovie, () => setShowMovieForm(false),
-            'Film hinzufügen'
+            handleAddMovie, () => { setShowMovieForm(false); setSubmitted(false) },
+            'Film hinzufügen', submitted
           )}</div>}
 
           {!showMovieForm && !editingMovie && (
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
+              className="fab"
+              aria-label="Film hinzufügen"
               onClick={() => { setNewMovie({ ...EMPTY_MOVIE }); setShowMovieForm(true) }}
-            >
-              + Film hinzufügen
-            </button>
+            >+</button>
           )}
 
           {displayedMovies.map(m => (
@@ -593,8 +622,8 @@ export default function ListsTab({
               <div key={m.id} ref={formRef}>
                 {renderMovieForm(
                   editMovieFields, setEditMovieFields,
-                  handleUpdateMovie, () => setEditingMovie(null),
-                  'Film bearbeiten'
+                  handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
+                  'Film bearbeiten', submitted
                 )}
               </div>
             ) : (

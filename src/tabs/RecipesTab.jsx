@@ -31,7 +31,7 @@ function recipeToFields(r) {
     title: r.title || '',
     tags: r.tags || [],
     rating: r.rating || 0,
-    ingredients: parseLines(r.ingredients),
+    ingredients: parseLines(r.ingredients).map(s => ({ qty: '', name: s })),
     steps: parseLines(r.steps),
     prepTime: r.prepTime || '',
     servings: r.servings || '',
@@ -54,11 +54,35 @@ function Sheet({ title, onClose, children }) {
   )
 }
 
-function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags }) {
+function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, currentImageUrl, onImageSelected, onClearImage }) {
   const ingRefs = useRef([])
   const stepRefs = useRef([])
+  const fileInputRef = useRef(null)
   const [focusIng, setFocusIng] = useState(null)
   const [focusStep, setFocusStep] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [localPreview, setLocalPreview] = useState(null)
+  const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    return () => { if (localPreview) URL.revokeObjectURL(localPreview) }
+  }, [localPreview])
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !onImageSelected) return
+    const blobUrl = URL.createObjectURL(file)
+    setLocalPreview(blobUrl)
+    setUploading(true)
+    await onImageSelected(file)
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  const handleClear = () => {
+    if (localPreview) { URL.revokeObjectURL(localPreview); setLocalPreview(null) }
+    onClearImage?.()
+  }
 
   useEffect(() => {
     if (focusIng !== null && ingRefs.current[focusIng]) {
@@ -78,7 +102,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags }) {
     const idx = afterIndex ?? fields.ingredients.length
     setFields(f => {
       const next = [...f.ingredients]
-      next.splice(idx, 0, '')
+      next.splice(idx, 0, { qty: '', name: '' })
       return { ...f, ingredients: next }
     })
     setFocusIng(idx)
@@ -96,12 +120,38 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags }) {
 
   return (
     <Sheet title={title} onClose={onCancel}>
+      {onImageSelected && (
+        <div style={{ marginBottom: 16 }}>
+          <label className="form-label">Bild</label>
+          {(localPreview || currentImageUrl) && (
+            <div style={{ position: 'relative', marginBottom: 8 }}>
+              <img src={localPreview || currentImageUrl} alt=""
+                style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12 }} />
+              <button className="btn-delete"
+                style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.45)', borderRadius: '50%' }}
+                onClick={handleClear}>
+                <CloseIcon />
+              </button>
+            </div>
+          )}
+          <button className="btn btn-secondary" style={{ width: '100%' }}
+            onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            {uploading ? 'Lädt hoch…' : (localPreview || currentImageUrl) ? 'Bild ersetzen' : 'Bild hochladen'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+        </div>
+      )}
+
       <label className="form-label">Name</label>
       <input
+        className={submitted && !fields.title.trim() ? 'input-error' : ''}
         placeholder="Name des Rezepts"
         value={fields.title}
         onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
       />
+      {submitted && !fields.title.trim() && (
+        <span className="form-error">Name ist erforderlich</span>
+      )}
 
       <label className="form-label">Tags</label>
       <TagInput
@@ -118,12 +168,23 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags }) {
       {fields.ingredients.map((ing, i) => (
         <div key={i} className="ingredient-row">
           <input
-            ref={el => { ingRefs.current[i] = el }}
-            placeholder={`Zutat ${i + 1}`}
-            value={ing}
+            className="ingredient-qty"
+            placeholder="Menge"
+            value={ing.qty}
             onChange={e => {
               const next = [...fields.ingredients]
-              next[i] = e.target.value
+              next[i] = { ...next[i], qty: e.target.value }
+              setFields(f => ({ ...f, ingredients: next }))
+            }}
+          />
+          <input
+            ref={el => { ingRefs.current[i] = el }}
+            style={{ flex: 1, minWidth: 0 }}
+            placeholder={`Zutat ${i + 1}`}
+            value={ing.name}
+            onChange={e => {
+              const next = [...fields.ingredients]
+              next[i] = { ...next[i], name: e.target.value }
               setFields(f => ({ ...f, ingredients: next }))
             }}
             onKeyDown={e => {
@@ -190,7 +251,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags }) {
 
       <div className="btn-row" style={{ marginTop: 8 }}>
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={!fields.title}>Speichern</button>
+        <button className="btn btn-primary" onClick={() => { setSubmitted(true); if (fields.title.trim()) onSave() }}>Speichern</button>
       </div>
     </Sheet>
   )
@@ -264,11 +325,12 @@ function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
   )
 }
 
-export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, currentUser }) {
+export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, currentUser }) {
   const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail'
   const [viewingId, setViewingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [fields, setFields] = useState({ ...EMPTY_FIELDS })
+  const [pendingImageFile, setPendingImageFile] = useState(null)
   const [activeTags, setActiveTags] = useState([])
 
   const knownTags = useMemo(
@@ -285,6 +347,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
 
   const openAdd = () => {
     setFields({ ...EMPTY_FIELDS })
+    setPendingImageFile(null)
     setSheet('add')
   }
 
@@ -303,31 +366,36 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     setSheet(null)
     setViewingId(null)
     setEditingId(null)
+    setPendingImageFile(null)
   }
 
   const handleAdd = async () => {
-    if (!fields.title) return
+    if (!fields.title.trim()) return
     const title = fields.title
+    const file = pendingImageFile
     const id = await addRecipe({
       title,
       tags: fields.tags,
       rating: fields.rating,
-      ingredients: joinLines(fields.ingredients),
+      ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
       steps: joinLines(fields.steps),
       prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
       servings: fields.servings ? parseInt(fields.servings, 10) : null,
     })
     closeSheet()
-    if (id) setRecipeImage(id, title) // fire-and-forget, image appears via SSE
+    if (id) {
+      if (file) uploadRecipeImage(id, file)      // use the chosen file
+      else setRecipeImage(id, title)             // fall back to Unsplash
+    }
   }
 
   const handleUpdate = async () => {
-    if (!fields.title) return
+    if (!fields.title.trim()) return
     await updateRecipe(editingId, {
       title: fields.title,
       tags: fields.tags,
       rating: fields.rating,
-      ingredients: joinLines(fields.ingredients),
+      ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
       steps: joinLines(fields.steps),
       prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
       servings: fields.servings ? parseInt(fields.servings, 10) : null,
@@ -336,6 +404,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   }
 
   const viewingRecipe = recipes.find(r => r.id === viewingId)
+  const editingRecipe = recipes.find(r => r.id === editingId)
 
   return (
     <div>
@@ -354,13 +423,9 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
         </div>
       )}
 
-      <button
-        className="btn btn-primary"
-        style={{ width: '100%', marginBottom: 16, borderRadius: 14, padding: '13px' }}
-        onClick={openAdd}
-      >
-        + Rezept hinzufügen
-      </button>
+      {sheet === null && (
+        <button className="fab" aria-label="Rezept hinzufügen" onClick={openAdd}>+</button>
+      )}
 
       {displayed.map(r => (
         <div key={r.id} className="recipe-card" onClick={() => openDetail(r)}>
@@ -404,6 +469,8 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           onCancel={closeSheet}
           title="Rezept hinzufügen"
           knownTags={knownTags}
+          onImageSelected={(file) => setPendingImageFile(file)}
+          onClearImage={() => setPendingImageFile(null)}
         />
       )}
 
@@ -415,6 +482,9 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           onCancel={closeSheet}
           title="Rezept bearbeiten"
           knownTags={knownTags}
+          currentImageUrl={editingRecipe?.imageUrl}
+          onImageSelected={(file) => uploadRecipeImage(editingId, file)}
+          onClearImage={() => clearRecipeImage(editingId)}
         />
       )}
 
