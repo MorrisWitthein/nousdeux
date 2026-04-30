@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.2] - 2026-04-30
+
+### Fixed
+- Add button covering delete and edit options for items in lists
+
+---
 
 ## [0.6.1] - 2026-04-30
 

@@ -83,7 +83,7 @@ const layout = `
 
 /* CONTENT */
 .content {
-  padding: 16px 24px 100px;
+  padding: 16px 24px 160px;
   animation: fadeUp 0.3s ease;
 }
 
