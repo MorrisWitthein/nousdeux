@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
-import { PencilIcon, CloseIcon } from '../components/Icons.jsx'
+import { PencilIcon, CloseIcon, ImportIcon } from '../components/Icons.jsx'
 
 function StarRating({ value, onChange }) {
   return (
@@ -22,13 +22,14 @@ function joinLines(arr) {
 }
 
 const EMPTY_FIELDS = {
-  title: '', tags: [], rating: 0,
+  title: '', emoji: '', tags: [], rating: 0,
   ingredients: [], steps: [], prepTime: '', servings: '',
 }
 
 function recipeToFields(r) {
   return {
     title: r.title || '',
+    emoji: r.emoji || '',
     tags: r.tags || [],
     rating: r.rating || 0,
     ingredients: parseLines(r.ingredients).map(s => ({ qty: '', name: s })),
@@ -257,6 +258,122 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
   )
 }
 
+function ImportSheet({ onImport, onClose }) {
+  const [mode, setMode] = useState('url')
+  const [url, setUrl] = useState('')
+  const [imageBase64, setImageBase64] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const fileRef = useRef(null)
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setImageBase64(ev.target.result)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const urlValid = (() => {
+    try { return ['http:', 'https:'].includes(new URL(url).protocol) } catch { return false }
+  })()
+
+  const handleImport = async () => {
+    if (mode === 'url' && !urlValid) {
+      setError('Bitte eine gültige URL eingeben (https://…)')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      await onImport(mode === 'url' ? { url } : { imageBase64 })
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const canSubmit = mode === 'url' ? urlValid : imageBase64 !== null
+
+  return (
+    <Sheet title="Rezept importieren" onClose={onClose}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button className={`filter-chip${mode === 'url' ? ' active' : ''}`} onClick={() => setMode('url')}>
+          URL
+        </button>
+        <button className={`filter-chip${mode === 'image' ? ' active' : ''}`} onClick={() => setMode('image')}>
+          Bild
+        </button>
+      </div>
+
+      {mode === 'url' && (
+        <>
+          <label className="form-label">Rezept-URL</label>
+          <input
+            type="url"
+            placeholder="https://example.com/rezept"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && canSubmit && !loading) handleImport() }}
+          />
+        </>
+      )}
+
+      {mode === 'image' && (
+        <>
+          <label className="form-label">Foto des Rezepts</label>
+          {imageBase64 ? (
+            <div style={{ position: 'relative', marginBottom: 8 }}>
+              <img src={imageBase64} alt=""
+                style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12 }} />
+              <button className="btn-delete"
+                style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.45)', borderRadius: '50%' }}
+                onClick={() => setImageBase64(null)}>
+                <CloseIcon />
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-secondary" style={{ width: '100%' }}
+              onClick={() => fileRef.current?.click()}>
+              Bild auswählen
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={handleFileChange} />
+        </>
+      )}
+
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '24px 0 8px' }}>
+          <div style={{
+            width: 40, height: 40,
+            border: '3px solid var(--border)',
+            borderTopColor: 'var(--accent2)',
+            borderRadius: '50%',
+            animation: 'spin 0.7s linear infinite',
+          }} />
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Rezept wird analysiert…</span>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 8 }}>{error}</div>
+      )}
+
+      <div className="btn-row" style={{ marginTop: 16 }}>
+        <button className="btn btn-secondary" onClick={onClose} disabled={loading}>Abbrechen</button>
+        <button className="btn btn-primary" disabled={loading || !canSubmit} onClick={handleImport}>
+          {loading
+            ? <><div className="spinner" /><span>Importiere…</span></>
+            : 'Importieren'}
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
 function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
   const ingredients = parseLines(recipe.ingredients)
   const steps = parseLines(recipe.steps)
@@ -325,8 +442,8 @@ function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
   )
 }
 
-export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, currentUser }) {
-  const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail'
+export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
+  const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import'
   const [viewingId, setViewingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [fields, setFields] = useState({ ...EMPTY_FIELDS })
@@ -347,6 +464,15 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
 
   const openAdd = () => {
     setFields({ ...EMPTY_FIELDS })
+    setPendingImageFile(null)
+    setSheet('add')
+  }
+
+  const openImport = () => setSheet('import')
+
+  const handleImport = async (payload) => {
+    const parsed = await importRecipe(payload)
+    setFields(recipeToFields(parsed))
     setPendingImageFile(null)
     setSheet('add')
   }
@@ -375,6 +501,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     const file = pendingImageFile
     const id = await addRecipe({
       title,
+      emoji: fields.emoji || undefined,
       tags: fields.tags,
       rating: fields.rating,
       ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
@@ -424,7 +551,13 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
       )}
 
       {sheet === null && (
-        <button className="fab" aria-label="Rezept hinzufügen" onClick={openAdd}>+</button>
+        <>
+          <button className="fab" aria-label="Rezept hinzufügen" onClick={openAdd}>+</button>
+          <button className="fab" aria-label="Rezept importieren" onClick={openImport}
+            style={{ bottom: 164, background: 'var(--accent2)', boxShadow: '0 4px 20px rgba(74,124,111,0.4)', fontSize: 16 }}>
+            <ImportIcon />
+          </button>
+        </>
       )}
 
       {displayed.map(r => (
@@ -495,6 +628,10 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           onClose={closeSheet}
           currentUser={currentUser}
         />
+      )}
+
+      {sheet === 'import' && (
+        <ImportSheet onImport={handleImport} onClose={closeSheet} />
       )}
     </div>
   )

@@ -25,6 +25,16 @@ export function PaperclipIcon() {
   )
 }
 
+export function ImportIcon() {
+  return (
+    <svg {...props}>
+      <path d="M10 2H14V6" />
+      <line x1="14" y1="2" x2="8" y2="8" />
+      <path d="M7 4H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9" />
+    </svg>
+  )
+}
+
 export function CalendarIcon() {
   return (
     <svg {...props}>
