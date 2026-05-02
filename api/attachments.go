@@ -200,5 +200,9 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, id string) {
 
 // sanitizeFilename strips all directory components, preventing path traversal.
 func sanitizeFilename(name string) string {
-	return filepath.Base(name)
+	base := filepath.Base(name)
+	if base == "." || base == ".." || base == "" {
+		return "unnamed"
+	}
+	return base
 }

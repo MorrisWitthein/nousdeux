@@ -48,14 +48,13 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 	defer weatherCache.mu.Unlock()
 
 	if time.Now().Before(weatherCache.expires) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"emoji": weatherCache.emoji})
+		writeJSON(w, http.StatusOK, map[string]string{"emoji": weatherCache.emoji})
 		return
 	}
 
 	resp, err := http.Get("https://api.open-meteo.com/v1/forecast?latitude=53.5753&longitude=10.0153&current=weather_code,is_day")
 	if err != nil {
-		http.Error(w, "weather fetch failed", http.StatusBadGateway)
+		writeError(w, http.StatusBadGateway, "weather fetch failed")
 		return
 	}
 	defer resp.Body.Close()
@@ -67,7 +66,7 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 		} `json:"current"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		http.Error(w, "weather parse failed", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "weather parse failed")
 		return
 	}
 
@@ -75,6 +74,5 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 	weatherCache.emoji = emoji
 	weatherCache.expires = time.Now().Add(weatherTTL)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"emoji": emoji})
+	writeJSON(w, http.StatusOK, map[string]string{"emoji": emoji})
 }

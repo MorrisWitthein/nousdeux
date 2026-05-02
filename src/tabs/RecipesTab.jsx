@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, ImportIcon } from '../components/Icons.jsx'
+import Sheet from '../components/Sheet.jsx'
 
 function StarRating({ value, onChange }) {
   return (
@@ -43,22 +44,6 @@ function recipeToFields(r) {
     prepTime: r.prepTime || '',
     servings: r.servings || '',
   }
-}
-
-function Sheet({ title, onClose, children }) {
-  return (
-    <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet">
-        <div className="sheet-handle" />
-        <div className="sheet-header">
-          <span className="sheet-title">{title}</span>
-          <button className="btn-delete" onClick={onClose}><CloseIcon /></button>
-        </div>
-        <div className="sheet-body">{children}</div>
-      </div>
-    </>
-  )
 }
 
 function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, currentImageUrl, onImageSelected, onClearImage }) {
