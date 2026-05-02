@@ -1,18 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { connectStream } from './connectStream.js'
-
-const API = import.meta.env.VITE_API_URL
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  }
-}
-
-function handleUnauth(res) {
-  if (res.status === 401 && window.__nousdeux_logout) window.__nousdeux_logout()
-}
+import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useShoppingList() {
   const [items, setItems] = useState([])
@@ -29,7 +17,7 @@ export function useShoppingList() {
     return connectStream(`${API}/api/shopping/stream?token=${token}`, refresh)
   }, [])
 
-  const history = [...new Set(items.map(i => i.name))]
+  const history = useMemo(() => [...new Set(items.map(i => i.name))], [items])
 
   const addItem = async (name) => {
     const trimmed = name.trim()

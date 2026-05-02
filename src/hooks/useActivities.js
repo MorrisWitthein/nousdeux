@@ -1,18 +1,6 @@
 import { useState, useEffect } from 'react'
 import { connectStream } from './connectStream.js'
-
-const API = import.meta.env.VITE_API_URL
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  }
-}
-
-function handleUnauth(res) {
-  if (res.status === 401 && window.__nousdeux_logout) window.__nousdeux_logout()
-}
+import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useActivities() {
   const [activities, setActivities] = useState([])

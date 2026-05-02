@@ -2,22 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
-
-function Sheet({ title, onClose, children }) {
-  return (
-    <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet">
-        <div className="sheet-handle" />
-        <div className="sheet-header">
-          <span className="sheet-title">{title}</span>
-          <button className="btn-delete" onClick={onClose}><CloseIcon /></button>
-        </div>
-        <div className="sheet-body">{children}</div>
-      </div>
-    </>
-  )
-}
+import Sheet from '../components/Sheet.jsx'
 
 function SeriesDetail({ series, onEdit, onClose }) {
   const sub = seriesSubLine(series)
