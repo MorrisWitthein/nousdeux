@@ -35,6 +35,8 @@ const calendar = `
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   margin-bottom: 20px;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .cal-day-name {

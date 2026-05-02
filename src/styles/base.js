@@ -41,20 +41,20 @@ const base = `
 }
 
 @keyframes slideInFromLeft {
-  from { transform: translateX(-105%); }
-  to   { transform: translateX(0); }
+  from { transform: translate3d(-105%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 @keyframes slideInFromRight {
-  from { transform: translateX(105%); }
-  to   { transform: translateX(0); }
+  from { transform: translate3d(105%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 @keyframes slideOutToLeft {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-105%); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-105%, 0, 0); }
 }
 @keyframes slideOutToRight {
-  from { transform: translateX(0); }
-  to   { transform: translateX(105%); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(105%, 0, 0); }
 }
 `
 

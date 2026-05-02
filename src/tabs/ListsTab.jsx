@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
+import { useShoppingList } from '../hooks/useShoppingList.js'
 
 function Sheet({ title, onClose, children }) {
   return (
@@ -131,6 +132,10 @@ export default function ListsTab({
   onNavigateToCalendar,
 }) {
   const [activeList, setActiveList] = useState('series')
+  const { items: shopItems, history: shopHistory, addItem: addShopItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
+  const [shopInput, setShopInput] = useState('')
+  const [shopSuggestions, setShopSuggestions] = useState([])
+  const shopInputRef = useRef(null)
 
   // Series state
   const [showSeriesForm, setShowSeriesForm] = useState(false)
@@ -484,6 +489,7 @@ export default function ListsTab({
           ['series', '🍿 Serien'],
           ['movies', '🎬 Filme'],
           ['activities', '✨ Aktivitäten'],
+          ['shopping', '🛒 Einkauf'],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -641,6 +647,109 @@ export default function ListsTab({
               </div>
             )
           ))}
+        </>
+      )}
+
+      {activeList === 'shopping' && (
+        <>
+          <div className="shopping-input-row">
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                ref={shopInputRef}
+                className="shopping-input"
+                placeholder="Artikel hinzufügen…"
+                value={shopInput}
+                onChange={e => {
+                  const val = e.target.value
+                  setShopInput(val)
+                  if (val.trim().length > 0) {
+                    setShopSuggestions(
+                      shopHistory.filter(h => h.toLowerCase().startsWith(val.toLowerCase()) && h.toLowerCase() !== val.toLowerCase()).slice(0, 5)
+                    )
+                  } else {
+                    setShopSuggestions([])
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && shopInput.trim()) {
+                    addShopItem(shopInput)
+                    setShopInput('')
+                    setShopSuggestions([])
+                  } else if (e.key === 'Escape') {
+                    setShopSuggestions([])
+                  }
+                }}
+              />
+              {shopSuggestions.length > 0 && (
+                <div className="shop-suggestions">
+                  {shopSuggestions.map(s => (
+                    <div
+                      key={s}
+                      className="shop-suggestion-item"
+                      onMouseDown={e => { e.preventDefault(); setShopInput(s); setShopSuggestions([]); shopInputRef.current?.focus() }}
+                    >
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              className="shop-add-btn"
+              onClick={() => {
+                if (shopInput.trim()) { addShopItem(shopInput); setShopInput(''); setShopSuggestions([]) }
+              }}
+            >+</button>
+          </div>
+
+          {shopItems.some(i => i.checked) && (
+            <button
+              className="btn btn-secondary"
+              style={{ width: '100%', marginBottom: 12, fontSize: 13 }}
+              onClick={clearChecked}
+            >Erledigte löschen</button>
+          )}
+
+          <div>
+            {shopItems.filter(i => !i.checked).map(item => (
+              <div key={item.id} className="shop-item">
+                <button className="shop-check" onClick={() => toggleItem(item.id, item.checked)} aria-label="Abhaken">
+                  <span className="shop-check-inner" />
+                </button>
+                <span className="shop-item-name">{item.name}</span>
+                <span
+                  className="shop-author-dot"
+                  style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }}
+                  title={item.who}
+                />
+                <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => deleteItem(item.id)}><CloseIcon /></button>
+              </div>
+            ))}
+            {shopItems.some(i => i.checked) && (
+              <>
+                <div className="shop-divider">Erledigt</div>
+                {shopItems.filter(i => i.checked).map(item => (
+                  <div key={item.id} className="shop-item shop-item-checked">
+                    <button className="shop-check shop-check-done" onClick={() => toggleItem(item.id, item.checked)} aria-label="Wiederherstellen">
+                      <span className="shop-check-inner shop-check-inner-done">✓</span>
+                    </button>
+                    <span className="shop-item-name shop-item-name-checked">{item.name}</span>
+                    <span
+                      className="shop-author-dot"
+                      style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)', opacity: 0.4 }}
+                      title={item.who}
+                    />
+                    <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => deleteItem(item.id)}><CloseIcon /></button>
+                  </div>
+                ))}
+              </>
+            )}
+            {shopItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14, padding: '32px 0' }}>
+                Liste ist leer 🛒
+              </div>
+            )}
+          </div>
         </>
       )}
 

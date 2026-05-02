@@ -13,4 +13,5 @@ var (
 	seriesBroker     = sse.NewBroker()
 	activitiesBroker = sse.NewBroker()
 	moviesBroker     = sse.NewBroker()
+	shoppingBroker   = sse.NewBroker()
 )

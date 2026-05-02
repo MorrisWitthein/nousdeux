@@ -681,6 +681,102 @@ func handleRecipeImage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleShoppingList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	switch r.Method {
+	case http.MethodGet:
+		rows, err := pool.Query(ctx,
+			`SELECT id, name, checked, who, created_at FROM shopping_items ORDER BY created_at ASC`)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
+			return
+		}
+		out, err := pgx.CollectRows(rows, pgx.RowToStructByPos[ShoppingItem])
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "scan: "+err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, out)
+
+	case http.MethodPost:
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var item ShoppingItem
+		if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		if item.Name == "" {
+			writeError(w, http.StatusBadRequest, "name is required")
+			return
+		}
+		item.Who = userFromContext(ctx)
+		err := pool.QueryRow(ctx,
+			`INSERT INTO shopping_items (name, who) VALUES ($1,$2) RETURNING id, created_at`,
+			item.Name, item.Who,
+		).Scan(&item.ID, &item.CreatedAt)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
+			return
+		}
+		slog.Info("shopping item created", "id", item.ID, "name", item.Name)
+		shoppingBroker.Notify()
+		writeJSON(w, http.StatusCreated, item)
+
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		var patch struct {
+			Checked bool `json:"checked"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		tag, err := pool.Exec(ctx,
+			`UPDATE shopping_items SET checked=$1 WHERE id=$2`,
+			patch.Checked, id,
+		)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("shopping item updated", "id", id, "checked", patch.Checked)
+		shoppingBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		tag, err := pool.Exec(ctx, `DELETE FROM shopping_items WHERE id = $1`, id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "delete: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("shopping item deleted", "id", id)
+		shoppingBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"deleted": id})
+
+	default:
+		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
 // nullIfEmpty returns nil for empty strings so Postgres uses the column DEFAULT.
 func nullIfEmpty(s string) any {
 	if s == "" {

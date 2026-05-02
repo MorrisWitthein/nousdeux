@@ -70,6 +70,15 @@ type Attachment struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// ShoppingItem mirrors the shopping_items table.
+type ShoppingItem struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Checked   bool      `json:"checked"`
+	Who       string    `json:"who"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // Activity mirrors the activities table.
 type Activity struct {
 	ID        string    `json:"id"`

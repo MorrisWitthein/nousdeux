@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.1] - 2026-05-02
+
+### Changed
+- Shopping list now syncs between users via the API (PostgreSQL-backed) instead of localStorage — items added by Max are immediately visible to Lena and vice versa
+- Autocomplete history is now derived from existing items fetched from the API (no separate localStorage key)
+
+---
+
+## [0.7.0] - 2026-05-02
+
+### Added
+- Shopping list tab in the Lists section with localStorage persistence
+- Autocomplete suggestions based on previously entered items
+- Per-item check-off while shopping; checked items move to an "Erledigt" section
+- Quick delete button per item
+- "Erledigte löschen" button to clear only checked items
+- Author indicator dot (coloured per user) on each item
+
+---
+
 ## [0.6.2] - 2026-04-30
 
 ### Fixed
