@@ -74,6 +74,7 @@ type Attachment struct {
 type ShoppingItem struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
+	Qty       string    `json:"qty"`
 	Checked   bool      `json:"checked"`
 	Who       string    `json:"who"`
 	CreatedAt time.Time `json:"created_at"`

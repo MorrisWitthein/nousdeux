@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.2] - 2026-05-02
+
+### Changed
+- Shopping list quantities are now stored separately from item names — entering "200g Joghurt" saves `qty=200g` and `name=Joghurt`, keeping autocomplete suggestions clean
+- Quantity is displayed muted before the item name (both unchecked and checked items)
+- Autocomplete suggestions now trigger on the name fragment even when a quantity prefix is typed (e.g. "200g J" suggests "200g Joghurt")
+
+---
+
 ## [0.7.1] - 2026-05-02
 
 ### Changed
