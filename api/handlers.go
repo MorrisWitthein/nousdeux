@@ -686,7 +686,7 @@ func handleShoppingList(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
-			`SELECT id, name, checked, who, created_at FROM shopping_items ORDER BY created_at ASC`)
+			`SELECT id, name, qty, checked, who, created_at FROM shopping_items ORDER BY created_at ASC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
 			return
@@ -711,8 +711,8 @@ func handleShoppingList(w http.ResponseWriter, r *http.Request) {
 		}
 		item.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO shopping_items (name, who) VALUES ($1,$2) RETURNING id, created_at`,
-			item.Name, item.Who,
+			`INSERT INTO shopping_items (name, qty, who) VALUES ($1,$2,$3) RETURNING id, created_at`,
+			item.Name, item.Qty, item.Who,
 		).Scan(&item.ID, &item.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
-import { useShoppingList } from '../hooks/useShoppingList.js'
+import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
 import Sheet from '../components/Sheet.jsx'
 
 function SeriesDetail({ series, onEdit, onClose }) {
@@ -647,9 +647,14 @@ export default function ListsTab({
                 onChange={e => {
                   const val = e.target.value
                   setShopInput(val)
-                  if (val.trim().length > 0) {
+                  const { qty, name } = parseQty(val.trim())
+                  const namePart = name.toLowerCase()
+                  if (namePart.length > 0) {
                     setShopSuggestions(
-                      shopHistory.filter(h => h.toLowerCase().startsWith(val.toLowerCase()) && h.toLowerCase() !== val.toLowerCase()).slice(0, 5)
+                      shopHistory
+                        .filter(h => h.toLowerCase().startsWith(namePart) && h.toLowerCase() !== namePart)
+                        .map(h => qty ? `${qty} ${h}` : h)
+                        .slice(0, 5)
                     )
                   } else {
                     setShopSuggestions([])
@@ -701,7 +706,10 @@ export default function ListsTab({
                 <button className="shop-check" onClick={() => toggleItem(item.id, item.checked)} aria-label="Abhaken">
                   <span className="shop-check-inner" />
                 </button>
-                <span className="shop-item-name">{item.name}</span>
+                <span className="shop-item-name">
+                  {item.qty && <span style={{ color: 'var(--muted)', marginRight: 4 }}>{item.qty}</span>}
+                  {item.name}
+                </span>
                 <span
                   className="shop-author-dot"
                   style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }}
@@ -718,7 +726,10 @@ export default function ListsTab({
                     <button className="shop-check shop-check-done" onClick={() => toggleItem(item.id, item.checked)} aria-label="Wiederherstellen">
                       <span className="shop-check-inner shop-check-inner-done">✓</span>
                     </button>
-                    <span className="shop-item-name shop-item-name-checked">{item.name}</span>
+                    <span className="shop-item-name shop-item-name-checked">
+                      {item.qty && <span style={{ marginRight: 4 }}>{item.qty}</span>}
+                      {item.name}
+                    </span>
                     <span
                       className="shop-author-dot"
                       style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)', opacity: 0.4 }}

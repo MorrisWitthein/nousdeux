@@ -1,4 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
+
+// Extracts an optional leading quantity+unit prefix from free-text input.
+// "4 Bananen" → {qty:"4", name:"Bananen"}
+// "200g Joghurt" → {qty:"200g", name:"Joghurt"}
+// "500 ml Milch" → {qty:"500 ml", name:"Milch"}
+// "Bananen" → {qty:"", name:"Bananen"}
+export function parseQty(input) {
+  const m = input.match(/^(\d+\s*[a-zA-ZäöüÄÖÜ]*)\s+(.+)/)
+  if (m) return { qty: m[1].trim(), name: m[2].trim() }
+  return { qty: '', name: input.trim() }
+}
 import { connectStream } from './connectStream.js'
 import { API, authHeaders, handleUnauth } from './api.js'
 
@@ -19,13 +30,14 @@ export function useShoppingList() {
 
   const history = useMemo(() => [...new Set(items.map(i => i.name))], [items])
 
-  const addItem = async (name) => {
-    const trimmed = name.trim()
+  const addItem = async (input) => {
+    const trimmed = input.trim()
     if (!trimmed) return
+    const { qty, name } = parseQty(trimmed)
     const res = await fetch(`${API}/api/shopping`, {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ name: trimmed }),
+      body: JSON.stringify({ name, qty }),
     })
     if (res.ok) refresh()
     else handleUnauth(res)
