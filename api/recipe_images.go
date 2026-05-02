@@ -2,14 +2,20 @@ package main
 
 import (
 	"fmt"
+	"image"
+	_ "image/gif"
+	"image/jpeg"
+	_ "image/png"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/image/draw"
 )
 
-const maxImageSize = 5 << 20 // 5 MB
+const maxDimension = 800 // resize to fit within 800×800
 
 // removeRecipeImageFile deletes an uploaded recipe image from disk, ignoring
 // errors if the file never existed (e.g. the image was an external URL).
@@ -42,23 +48,18 @@ func handleRecipeUploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxImageSize+1024)
-	if err := r.ParseMultipartForm(maxImageSize); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize+1024)
+	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
 		writeError(w, http.StatusBadRequest, "file too large or invalid form")
 		return
 	}
 
-	file, header, err := r.FormFile("file")
+	file, _, err := r.FormFile("file")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "file field required")
 		return
 	}
 	defer file.Close()
-
-	if header.Size > maxImageSize {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("image exceeds %d MB", maxImageSize>>20))
-		return
-	}
 
 	dir := filepath.Join(attachmentsDir, "recipe-images")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -74,9 +75,15 @@ func handleRecipeUploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, file); err != nil {
+	img, _, err := image.Decode(file)
+	if err != nil {
 		os.Remove(dest)
-		writeError(w, http.StatusInternalServerError, "write: "+err.Error())
+		writeError(w, http.StatusBadRequest, "invalid image: "+err.Error())
+		return
+	}
+	if err := encodeResized(f, img); err != nil {
+		os.Remove(dest)
+		writeError(w, http.StatusInternalServerError, "encode: "+err.Error())
 		return
 	}
 
@@ -121,4 +128,25 @@ func handleRecipeImageFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
 	}
 	io.Copy(w, f)
+}
+
+// encodeResized writes src as JPEG to w, scaling it down if either dimension
+// exceeds maxDimension. Aspect ratio is preserved.
+func encodeResized(w io.Writer, src image.Image) error {
+	b := src.Bounds()
+	width, height := b.Dx(), b.Dy()
+	if width <= maxDimension && height <= maxDimension {
+		return jpeg.Encode(w, src, &jpeg.Options{Quality: 85})
+	}
+	var newW, newH int
+	if width > height {
+		newW = maxDimension
+		newH = height * maxDimension / width
+	} else {
+		newH = maxDimension
+		newW = width * maxDimension / height
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), src, b, draw.Over, nil)
+	return jpeg.Encode(w, dst, &jpeg.Options{Quality: 85})
 }

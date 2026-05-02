@@ -9,7 +9,7 @@ import (
 "github.com/jackc/pgx/v5"
 )
 
-const maxUploadSize = 20 << 20 // 20 MB
+const maxUploadSize = 30 << 20 // 30 MB — raw iPhone photos can exceed 20 MB
 
 var attachmentsDir string
 
