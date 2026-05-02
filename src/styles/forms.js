@@ -102,7 +102,8 @@ const forms = `
 }
 
 .sheet-body .ingredient-row input,
-.sheet-body .step-row input {
+.sheet-body .step-row input,
+.sheet-body .step-row textarea {
   margin-bottom: 0;
 }
 

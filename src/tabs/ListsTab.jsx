@@ -672,7 +672,7 @@ export default function ListsTab({
                 }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && shopInput.trim()) {
-                    addShopItem(shopInput, currentUser)
+                    addShopItem(shopInput)
                     setShopInput('')
                     setShopSuggestions([])
                   } else if (e.key === 'Escape') {
@@ -697,7 +697,7 @@ export default function ListsTab({
             <button
               className="shop-add-btn"
               onClick={() => {
-                if (shopInput.trim()) { addShopItem(shopInput, currentUser); setShopInput(''); setShopSuggestions([]) }
+                if (shopInput.trim()) { addShopItem(shopInput); setShopInput(''); setShopSuggestions([]) }
               }}
             >+</button>
           </div>
@@ -713,7 +713,7 @@ export default function ListsTab({
           <div>
             {shopItems.filter(i => !i.checked).map(item => (
               <div key={item.id} className="shop-item">
-                <button className="shop-check" onClick={() => toggleItem(item.id)} aria-label="Abhaken">
+                <button className="shop-check" onClick={() => toggleItem(item.id, item.checked)} aria-label="Abhaken">
                   <span className="shop-check-inner" />
                 </button>
                 <span className="shop-item-name">{item.name}</span>
@@ -730,7 +730,7 @@ export default function ListsTab({
                 <div className="shop-divider">Erledigt</div>
                 {shopItems.filter(i => i.checked).map(item => (
                   <div key={item.id} className="shop-item shop-item-checked">
-                    <button className="shop-check shop-check-done" onClick={() => toggleItem(item.id)} aria-label="Wiederherstellen">
+                    <button className="shop-check shop-check-done" onClick={() => toggleItem(item.id, item.checked)} aria-label="Wiederherstellen">
                       <span className="shop-check-inner shop-check-inner-done">✓</span>
                     </button>
                     <span className="shop-item-name shop-item-name-checked">{item.name}</span>

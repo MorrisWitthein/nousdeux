@@ -1,53 +1,77 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import { connectStream } from './connectStream.js'
 
-const STORE_KEY = 'nousdeux_shopping'
-const HISTORY_KEY = 'nousdeux_shopping_history'
+const API = import.meta.env.VITE_API_URL
 
-function loadItems() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) ?? [] } catch { return [] }
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  }
 }
 
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) ?? [] } catch { return [] }
-}
-
-function saveItems(items) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(items))
-}
-
-function saveHistory(history) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+function handleUnauth(res) {
+  if (res.status === 401 && window.__nousdeux_logout) window.__nousdeux_logout()
 }
 
 export function useShoppingList() {
-  const [items, setItems] = useState(loadItems)
-  const [history, setHistory] = useState(loadHistory)
+  const [items, setItems] = useState([])
 
-  useEffect(() => { saveItems(items) }, [items])
-  useEffect(() => { saveHistory(history) }, [history])
+  const refresh = async () => {
+    const res = await fetch(`${API}/api/shopping`, { headers: authHeaders() })
+    if (res.ok) setItems(await res.json())
+    else handleUnauth(res)
+  }
 
-  const addItem = useCallback((name, who) => {
+  useEffect(() => {
+    refresh()
+    const token = localStorage.getItem('token')
+    return connectStream(`${API}/api/shopping/stream?token=${token}`, refresh)
+  }, [])
+
+  const history = [...new Set(items.map(i => i.name))]
+
+  const addItem = async (name) => {
     const trimmed = name.trim()
     if (!trimmed) return
-    const item = { id: Date.now(), name: trimmed, checked: false, who }
-    setItems(prev => [item, ...prev])
-    setHistory(prev => {
-      const merged = [trimmed, ...prev.filter(h => h.toLowerCase() !== trimmed.toLowerCase())]
-      return merged.slice(0, 100)
+    const res = await fetch(`${API}/api/shopping`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ name: trimmed }),
     })
-  }, [])
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
 
-  const toggleItem = useCallback((id) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, checked: !i.checked } : i))
-  }, [])
+  const toggleItem = async (id, currentChecked) => {
+    const res = await fetch(`${API}/api/shopping?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ checked: !currentChecked }),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
 
-  const deleteItem = useCallback((id) => {
-    setItems(prev => prev.filter(i => i.id !== id))
-  }, [])
+  const deleteItem = async (id) => {
+    const res = await fetch(`${API}/api/shopping?id=${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) refresh()
+    else handleUnauth(res)
+  }
 
-  const clearChecked = useCallback(() => {
-    setItems(prev => prev.filter(i => !i.checked))
-  }, [])
+  const clearChecked = async () => {
+    const checked = items.filter(i => i.checked)
+    await Promise.all(checked.map(i =>
+      fetch(`${API}/api/shopping?id=${i.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+    ))
+    refresh()
+  }
 
   return { items, history, addItem, toggleItem, deleteItem, clearChecked }
 }

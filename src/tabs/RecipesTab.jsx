@@ -215,11 +215,16 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
       {fields.steps.map((step, i) => (
         <div key={i} className="step-row">
           <div className="step-number">{i + 1}</div>
-          <input
+          <textarea
             ref={el => { stepRefs.current[i] = el }}
             placeholder={`Schritt ${i + 1}`}
             value={step}
+            rows={1}
+            style={{ resize: 'none', overflow: 'auto', minHeight: '38px', maxHeight: '160px' }}
             onChange={e => {
+              const el = e.target
+              el.style.height = 'auto'
+              el.style.height = Math.min(el.scrollHeight, 160) + 'px'
               const next = [...fields.steps]
               next[i] = e.target.value
               setFields(f => ({ ...f, steps: next }))

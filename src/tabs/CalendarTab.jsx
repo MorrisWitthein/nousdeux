@@ -275,7 +275,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       const dy = e.touches[0].clientY - touchStartY.current
       if (Math.abs(dx) > Math.abs(dy)) {
         e.preventDefault()
-        el.style.transform = `translateX(${dx}px)`
+        el.style.transform = `translate3d(${dx}px, 0, 0)`
       }
     }
     el.addEventListener('touchmove', onTouchMove, { passive: false })
@@ -326,11 +326,18 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       else setMonth(m => m + 1)
     }
 
-    setTimeout(() => {
+    const el = gridRef.current
+    const onEnd = () => {
       setAnimDir(null)
       prevGridDataRef.current = null
       animatingRef.current = false
-    }, 300)
+      el?.removeEventListener('animationend', onEnd)
+    }
+    if (el) {
+      el.addEventListener('animationend', onEnd, { once: true })
+    } else {
+      setTimeout(onEnd, 280)
+    }
   }, [year, month, events])
 
   const prevMonth = () => doSwipe(-1)
@@ -612,7 +619,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             touchStartX.current = null
             if (Math.abs(delta) < 50) {
               gridRef.current.style.transition = 'transform 0.2s ease-out'
-              gridRef.current.style.transform = 'translateX(0)'
+              gridRef.current.style.transform = 'translate3d(0, 0, 0)'
               setTimeout(() => { if (gridRef.current) gridRef.current.style.transition = '' }, 220)
               return
             }
