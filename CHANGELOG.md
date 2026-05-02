@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.3] - 2026-05-02
+
+### Changed
+- Shopping list autocomplete suggestions are now stored permanently — items added once will always appear as suggestions, even after the list is cleared
+
+---
+
 ## [0.7.2] - 2026-05-02
 
 ### Changed

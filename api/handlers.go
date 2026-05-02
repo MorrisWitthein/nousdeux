@@ -718,6 +718,8 @@ func handleShoppingList(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
 			return
 		}
+		_, _ = pool.Exec(ctx,
+			`INSERT INTO shopping_history (name) VALUES ($1) ON CONFLICT DO NOTHING`, item.Name)
 		slog.Info("shopping item created", "id", item.ID, "name", item.Name)
 		shoppingBroker.Notify()
 		writeJSON(w, http.StatusCreated, item)
@@ -775,6 +777,31 @@ func handleShoppingList(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", "GET, POST, PATCH, DELETE, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func handleShoppingHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	rows, err := pool.Query(ctx, `SELECT name FROM shopping_history ORDER BY name ASC`)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "query: "+err.Error())
+		return
+	}
+	defer rows.Close()
+	names := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			writeError(w, http.StatusInternalServerError, "scan: "+err.Error())
+			return
+		}
+		names = append(names, name)
+	}
+	writeJSON(w, http.StatusOK, names)
 }
 
 // nullIfEmpty returns nil for empty strings so Postgres uses the column DEFAULT.

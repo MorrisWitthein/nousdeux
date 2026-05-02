@@ -93,6 +93,7 @@ func main() {
 	mux.HandleFunc("/api/activities/stream", cors(requireAuth(activitiesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/movies/stream", cors(requireAuth(moviesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/shopping", cors(requireAuth(handleShoppingList)))
+	mux.HandleFunc("/api/shopping/history", cors(requireAuth(handleShoppingHistory)))
 	mux.HandleFunc("/api/shopping/stream", cors(requireAuth(shoppingBroker.ServeHTTP)))
 
 	srv := &http.Server{

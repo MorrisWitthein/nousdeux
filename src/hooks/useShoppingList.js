@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 // Extracts an optional leading quantity+unit prefix from free-text input.
 // "4 Bananen" → {qty:"4", name:"Bananen"}
@@ -15,20 +15,25 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useShoppingList() {
   const [items, setItems] = useState([])
+  const [history, setHistory] = useState([])
 
-  const refresh = async () => {
+  const refreshHistory = useCallback(async () => {
+    const res = await fetch(`${API}/api/shopping/history`, { headers: authHeaders() })
+    if (res.ok) setHistory(await res.json())
+  }, [])
+
+  const refresh = useCallback(async () => {
     const res = await fetch(`${API}/api/shopping`, { headers: authHeaders() })
     if (res.ok) setItems(await res.json())
     else handleUnauth(res)
-  }
+  }, [])
 
   useEffect(() => {
     refresh()
+    refreshHistory()
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/shopping/stream?token=${token}`, refresh)
   }, [])
-
-  const history = useMemo(() => [...new Set(items.map(i => i.name))], [items])
 
   const addItem = async (input) => {
     const trimmed = input.trim()
@@ -39,7 +44,7 @@ export function useShoppingList() {
       headers: authHeaders(),
       body: JSON.stringify({ name, qty }),
     })
-    if (res.ok) refresh()
+    if (res.ok) { refresh(); refreshHistory() }
     else handleUnauth(res)
   }
 
