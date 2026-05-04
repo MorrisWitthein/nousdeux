@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.0] - 2026-05-04
+
+### Added
+- Recipe search — filter recipes by name or ingredient as you type
+- Swipe between calendar months using embla-carousel — three month slides (prev/current/next) are rendered simultaneously so the gesture reveals the adjacent month instantly
+
+---
+
 ## [0.7.3] - 2026-05-02
 
 ### Changed
