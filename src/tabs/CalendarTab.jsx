@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import useEmblaCarousel from 'embla-carousel-react'
 import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
 
@@ -118,7 +119,7 @@ const SHORT_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', '
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 
 function buildMonthGrid(year, month) {
-  const firstDay = new Date(year, month, 1).getDay() // 0=Sun
+  const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const offset = (firstDay + 6) % 7
   const grid = []
@@ -128,7 +129,6 @@ function buildMonthGrid(year, month) {
   return grid
 }
 
-// Format ISO date (YYYY-MM-DD) to German display string
 function formatISOToGerman(isoDate) {
   if (!isoDate) return ''
   const [y, m, d] = isoDate.split('-').map(Number)
@@ -137,22 +137,18 @@ function formatISOToGerman(isoDate) {
   return `${WEEKDAYS[date.getDay()]}, ${d}. ${SHORT_MONTHS[m - 1]} ${y}`
 }
 
-// Build ISO date string from year, month (0-based), day
 function toISO(year, month, day) {
   const m = String(month + 1).padStart(2, '0')
   const d = String(day).padStart(2, '0')
   return `${year}-${m}-${d}`
 }
 
-// Parse event date — handles ISO (YYYY-MM-DD) and legacy German format
 function parseEventDate(dateStr) {
   if (!dateStr) return null
-  // ISO format
   const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (isoMatch) {
     return { day: parseInt(isoMatch[3], 10), month: parseInt(isoMatch[2], 10) - 1, year: parseInt(isoMatch[1], 10) }
   }
-  // Legacy German format: "19. Apr" or "Sa, 19. Apr"
   const match = dateStr.match(/(\d+)\.\s*(\w+)/)
   if (!match) return null
   const day = parseInt(match[1], 10)
@@ -162,9 +158,6 @@ function parseEventDate(dateStr) {
   return { day, month: idx }
 }
 
-// Build a map of day -> { stripes: [{role, eventId}], hasSingle: bool }
-// stripes: one entry per multi-day event covering that day (in array order → consistent stacking)
-// hasSingle: true if any single-day event also falls on that day
 function buildEventDayMap(events, year, month) {
   const map = new Map()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -202,22 +195,94 @@ function buildEventDayMap(events, year, month) {
   return map
 }
 
+function offsetMonth(year, month, delta) {
+  let m = month + delta
+  let y = year
+  while (m < 0) { m += 12; y-- }
+  while (m > 11) { m -= 12; y++ }
+  return { year: y, month: m }
+}
+
+function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowMonth, nowDay }) {
+  const grid = buildMonthGrid(year, month)
+  const todayDay = nowYear === year && nowMonth === month ? nowDay : null
+  const eventDayMap = buildEventDayMap(events, year, month)
+
+  return (
+    <div className="calendar-grid">
+      {DAY_ABBR.map(d => (
+        <div key={d} className="cal-day-name">{d}</div>
+      ))}
+      {grid.map((day, i) => {
+        const info = day ? eventDayMap.get(day) : undefined
+        const stripes = info?.stripes ?? []
+        const hasSingle = info?.hasSingle ?? false
+        const hasMulti = stripes.length > 0
+        const isSelected = !!onDayClick && day === selectedDay
+        const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
+        const indBase = totalIndicators > 1 ? 2 : 4
+        const indStep = totalIndicators > 1 ? 6 : 7
+        return (
+          <div
+            key={i}
+            className={[
+              'cal-day',
+              !day ? 'empty' : '',
+              day === todayDay ? 'today' : '',
+              isSelected ? 'selected' : '',
+              !hasMulti && hasSingle ? 'has-event' : '',
+            ].filter(Boolean).join(' ')}
+            onClick={() => onDayClick?.(day)}
+          >
+            {day}
+            {stripes.map((seg, idx) => (
+              <span
+                key={seg.eventId}
+                className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
+                style={{ bottom: `${indBase + idx * indStep}px` }}
+              />
+            ))}
+            {hasMulti && hasSingle && (
+              <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 const PAGE_SIZE = 5
 
 export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const now = new Date()
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth())
+  const nowYear = now.getFullYear()
+  const nowMonth = now.getMonth()
+  const nowDay = now.getDate()
+
+  const [year, setYear] = useState(nowYear)
+  const [month, setMonth] = useState(nowMonth)
   const [selectedDay, setSelectedDay] = useState(null)
-  const [sheet, setSheet] = useState(null) // null | 'detail'
+  const [sheet, setSheet] = useState(null)
   const [viewingId, setViewingId] = useState(null)
+
+  const [headerOffset, setHeaderOffset] = useState(0)
+
+  // duration: 8 keeps the snap animation under ~100ms — fast enough that
+  // the brief window before the carousel re-centres is imperceptible.
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', containScroll: false, duration: 4 })
+
+  const yearRef = useRef(year)
+  const monthRef = useRef(month)
+  useEffect(() => { yearRef.current = year }, [year])
+  useEffect(() => { monthRef.current = month }, [month])
 
   useEffect(() => {
     if (!targetDate) return
     const parsed = parseEventDate(targetDate)
     if (!parsed) return
-    setYear(parsed.year ?? now.getFullYear())
+    setYear(parsed.year ?? nowYear)
     setMonth(parsed.month)
     setSelectedDay(parsed.day)
     onTargetConsumed?.()
@@ -230,6 +295,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     setShowForm(true)
     onPrefillConsumed?.()
   }, [prefill])
+
   const [showForm, setShowForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)
@@ -244,28 +310,47 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [pendingEditFiles, setPendingEditFiles] = useState([])
   const pendingEditFileInputRef = useRef(null)
   const formRef = useRef(null)
-  const gridRef = useRef(null)
-  const touchStartX = useRef(null)
-  const touchStartY = useRef(null)
-  const animatingRef = useRef(false)
-  const [animDir, setAnimDir] = useState(null)
-  const prevGridDataRef = useRef(null)
 
   useEffect(() => {
-    const el = gridRef.current
-    if (!el) return
-    const onTouchMove = (e) => {
-      if (touchStartX.current === null || animatingRef.current) return
-      const dx = e.touches[0].clientX - touchStartX.current
-      const dy = e.touches[0].clientY - touchStartY.current
-      if (Math.abs(dx) > Math.abs(dy)) {
-        e.preventDefault()
-        el.style.transform = `translate3d(${dx}px, 0, 0)`
-      }
+    if (!emblaApi) return
+
+    const onSelect = () => {
+      setHeaderOffset(emblaApi.selectedScrollSnap() - 1)
     }
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    return () => el.removeEventListener('touchmove', onTouchMove)
-  }, [])
+
+    const onSettle = () => {
+      const idx = emblaApi.selectedScrollSnap()
+      setHeaderOffset(0)
+      if (idx === 1) return
+      const dir = idx - 1
+      let m = monthRef.current
+      let y = yearRef.current
+      if (dir < 0) {
+        if (m === 0) { m = 11; y = y - 1 }
+        else m = m - 1
+      } else {
+        if (m === 11) { m = 0; y = y + 1 }
+        else m = m + 1
+      }
+      monthRef.current = m
+      yearRef.current = y
+      setSelectedDay(null)
+      setMonth(m)
+      setYear(y)
+    }
+
+    emblaApi.on('select', onSelect)
+    emblaApi.on('settle', onSettle)
+    return () => {
+      emblaApi.off('select', onSelect)
+      emblaApi.off('settle', onSettle)
+    }
+  }, [emblaApi])
+
+  useLayoutEffect(() => {
+    if (!emblaApi) return
+    emblaApi.scrollTo(1, true)
+  }, [year, month, emblaApi])
 
   useEffect(() => {
     if (showForm || editing) {
@@ -279,54 +364,15 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     }
   }, [showForm, editing])
 
-  const grid = buildMonthGrid(year, month)
-  const todayDay = now.getFullYear() === year && now.getMonth() === month ? now.getDate() : null
   useEffect(() => { setEventLimit(PAGE_SIZE) }, [year, month, selectedDay])
 
-  const eventDayMap = buildEventDayMap(events, year, month)
+  const prevMonth = () => emblaApi?.scrollTo(0)
+  const nextMonth = () => emblaApi?.scrollTo(2)
 
-  const doSwipe = useCallback((dir) => {
-    if (animatingRef.current) return
-    animatingRef.current = true
+  const prevM = offsetMonth(year, month, -1)
+  const nextM = offsetMonth(year, month, 1)
 
-    const _now = new Date()
-    prevGridDataRef.current = {
-      grid: buildMonthGrid(year, month),
-      eventDayMap: buildEventDayMap(events, year, month),
-      todayDay: year === _now.getFullYear() && month === _now.getMonth() ? _now.getDate() : null,
-    }
-
-    if (gridRef.current) {
-      gridRef.current.style.transition = ''
-      gridRef.current.style.transform = ''
-    }
-
-    setSelectedDay(null)
-    setAnimDir(dir)
-    if (dir < 0) {
-      if (month === 0) { setMonth(11); setYear(y => y - 1) }
-      else setMonth(m => m - 1)
-    } else {
-      if (month === 11) { setMonth(0); setYear(y => y + 1) }
-      else setMonth(m => m + 1)
-    }
-
-    const el = gridRef.current
-    const onEnd = () => {
-      setAnimDir(null)
-      prevGridDataRef.current = null
-      animatingRef.current = false
-      el?.removeEventListener('animationend', onEnd)
-    }
-    if (el) {
-      el.addEventListener('animationend', onEnd, { once: true })
-    } else {
-      setTimeout(onEnd, 280)
-    }
-  }, [year, month, events])
-
-  const prevMonth = () => doSwipe(-1)
-  const nextMonth = () => doSwipe(1)
+  const headerMonth = offsetMonth(year, month, headerOffset)
 
   const handleDayClick = (day) => {
     if (!day) return
@@ -507,7 +553,6 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const viewingEvent = events.find(e => e.id === viewingId)
 
-  // Filter events visible for the selected day — includes multi-day events spanning it
   const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
   const monthStartISO = `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}-01`
   const visibleEvents = (selectedDayISO
@@ -525,130 +570,41 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
       <p className="section-title">Eure <em>Termine</em></p>
 
       <div className="month-nav">
-        <div className="month-name">{MONTH_NAMES[month]} {year}</div>
+        <div className="month-name">{MONTH_NAMES[headerMonth.month]} {headerMonth.year}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="nav-btn" onClick={prevMonth}>‹</button>
           <button
             className="nav-btn"
             style={{ fontSize: 11, padding: '4px 14px', letterSpacing: 0.3, borderRadius: 999, width: 'auto', height: 'auto' }}
-            onClick={() => { setYear(now.getFullYear()); setMonth(now.getMonth()); setSelectedDay(now.getDate()) }}
+            onClick={() => { setYear(nowYear); setMonth(nowMonth); setSelectedDay(nowDay) }}
           >Heute</button>
           <button className="nav-btn" onClick={nextMonth}>›</button>
         </div>
       </div>
 
-      <div style={{ overflow: 'hidden', position: 'relative' }}>
-        {animDir !== null && prevGridDataRef.current && (() => {
-          const prev = prevGridDataRef.current
-          return (
-            <div
-              className="calendar-grid"
-              style={{
-                position: 'absolute',
-                top: 0, left: 0, right: 0,
-                animation: `${animDir > 0 ? 'slideOutToLeft' : 'slideOutToRight'} 0.28s ease-in forwards`,
-                pointerEvents: 'none',
-              }}
-            >
-              {DAY_ABBR.map(d => (
-                <div key={d} className="cal-day-name">{d}</div>
-              ))}
-              {prev.grid.map((day, i) => {
-                const info = day ? prev.eventDayMap.get(day) : undefined
-                const stripes = info?.stripes ?? []
-                const hasSingle = info?.hasSingle ?? false
-                const hasMulti = stripes.length > 0
-                const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
-                const indBase = totalIndicators > 1 ? 2 : 4
-                const indStep = totalIndicators > 1 ? 6 : 7
-                return (
-                  <div
-                    key={i}
-                    className={[
-                      'cal-day',
-                      !day ? 'empty' : '',
-                      day === prev.todayDay ? 'today' : '',
-                    ].filter(Boolean).join(' ')}
-                  >
-                    {day}
-                    {stripes.map((seg, idx) => (
-                      <span
-                        key={seg.eventId}
-                        className={['cal-stripe', `cal-stripe-${seg.role}`].filter(Boolean).join(' ')}
-                        style={{ bottom: `${indBase + idx * indStep}px` }}
-                      />
-                    ))}
-                    {hasMulti && hasSingle && (
-                      <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })()}
-        <div
-          ref={gridRef}
-          className="calendar-grid"
-          style={animDir !== null ? {
-            animation: `${animDir > 0 ? 'slideInFromRight' : 'slideInFromLeft'} 0.28s ease-out forwards`
-          } : undefined}
-          onTouchStart={e => {
-            if (animatingRef.current) return
-            touchStartX.current = e.touches[0].clientX
-            touchStartY.current = e.touches[0].clientY
-          }}
-          onTouchEnd={e => {
-            if (touchStartX.current === null) return
-            const delta = e.changedTouches[0].clientX - touchStartX.current
-            touchStartX.current = null
-            if (Math.abs(delta) < 50) {
-              gridRef.current.style.transition = 'transform 0.2s ease-out'
-              gridRef.current.style.transform = 'translate3d(0, 0, 0)'
-              setTimeout(() => { if (gridRef.current) gridRef.current.style.transition = '' }, 220)
-              return
-            }
-            doSwipe(delta > 0 ? -1 : 1)
-          }}
-        >
-          {DAY_ABBR.map(d => (
-            <div key={d} className="cal-day-name">{d}</div>
-          ))}
-          {grid.map((day, i) => {
-            const info = day ? eventDayMap.get(day) : undefined
-            const stripes = info?.stripes ?? []
-            const hasSingle = info?.hasSingle ?? false
-            const hasMulti = stripes.length > 0
-            const isSelected = day === selectedDay
-            const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
-            const indBase = totalIndicators > 1 ? 2 : 4
-            const indStep = totalIndicators > 1 ? 6 : 7
-            return (
-              <div
-                key={i}
-                className={[
-                  'cal-day',
-                  !day ? 'empty' : '',
-                  day === todayDay ? 'today' : '',
-                  isSelected ? 'selected' : '',
-                  !hasMulti && hasSingle ? 'has-event' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => handleDayClick(day)}
-              >
-                {day}
-                {stripes.map((seg, idx) => (
-                  <span
-                    key={seg.eventId}
-                    className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
-                    style={{ bottom: `${indBase + idx * indStep}px` }}
-                  />
-                ))}
-                {hasMulti && hasSingle && (
-                  <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
-                )}
-              </div>
-            )
-          })}
+      <div ref={emblaRef} style={{ overflow: 'hidden' }}>
+        <div style={{ display: 'flex' }}>
+          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
+            <MonthGrid
+              year={prevM.year} month={prevM.month} events={events}
+              selectedDay={null} onDayClick={null}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+            />
+          </div>
+          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
+            <MonthGrid
+              year={year} month={month} events={events}
+              selectedDay={selectedDay} onDayClick={handleDayClick}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+            />
+          </div>
+          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
+            <MonthGrid
+              year={nextM.year} month={nextM.month} events={events}
+              selectedDay={null} onDayClick={null}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+            />
+          </div>
         </div>
       </div>
 
