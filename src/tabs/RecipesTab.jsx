@@ -90,6 +90,14 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
     }
   }, [focusStep])
 
+  useEffect(() => {
+    stepRefs.current.forEach(el => {
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+    })
+  }, [fields.steps])
+
   const addIngredient = (afterIndex) => {
     const idx = afterIndex ?? fields.ingredients.length
     setFields(f => {
@@ -205,7 +213,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
             placeholder={`Schritt ${i + 1}`}
             value={step}
             rows={1}
-            style={{ resize: 'none', overflow: 'auto', minHeight: '38px', maxHeight: '160px' }}
+            style={{ resize: 'none', overflow: 'hidden', minHeight: '38px', maxHeight: '160px' }}
             onChange={e => {
               const el = e.target
               el.style.height = 'auto'
