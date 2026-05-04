@@ -443,19 +443,19 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   const [editingId, setEditingId] = useState(null)
   const [fields, setFields] = useState({ ...EMPTY_FIELDS })
   const [pendingImageFile, setPendingImageFile] = useState(null)
-  const [activeTags, setActiveTags] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   const knownTags = useMemo(
     () => [...new Set(recipes.flatMap(r => r.tags || []))].sort(),
     [recipes]
   )
 
-  const toggleFilter = tag =>
-    setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
-
-  const displayed = activeTags.length === 0
+  const displayed = searchQuery.trim() === ''
     ? recipes
-    : recipes.filter(r => activeTags.some(t => (r.tags || []).includes(t)))
+    : recipes.filter(r => {
+        const q = searchQuery.toLowerCase()
+        return r.title.toLowerCase().includes(q) || (r.tags || []).some(t => t.toLowerCase().includes(q))
+      })
 
   const openAdd = () => {
     setFields({ ...EMPTY_FIELDS })
@@ -534,17 +534,13 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
       <p className="section-title">Eure <em>Rezepte</em></p>
       <p className="section-sub">{recipes.length} Gerichte gesammelt</p>
 
-      {knownTags.length > 0 && (
-        <div className="filter-bar">
-          {knownTags.map(tag => (
-            <button key={tag}
-              className={`filter-chip${activeTags.includes(tag) ? ' active' : ''}`}
-              onClick={() => toggleFilter(tag)}>
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="tag-filter">
+        <input
+          placeholder="Rezepte suchen…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+      </div>
 
       {sheet === null && (
         <>

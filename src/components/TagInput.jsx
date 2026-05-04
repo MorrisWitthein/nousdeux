@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function TagInput({ value = [], onChange, suggestions = [], placeholder = '' }) {
+export default function TagInput({ value = [], onChange, suggestions = [], placeholder = '', restrictToSuggestions = false }) {
   const [input, setInput] = useState('')
   const [open, setOpen] = useState(false)
   const inputRef = useRef(null)
@@ -11,7 +11,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
 
   const addTag = (tag) => {
     const t = tag.trim()
-    if (t && !value.includes(t)) onChange([...value, t])
+    if (t && !value.includes(t) && (!restrictToSuggestions || suggestions.includes(t))) onChange([...value, t])
     setInput('')
     setOpen(false)
     inputRef.current?.focus()

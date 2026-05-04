@@ -101,6 +101,23 @@ const forms = `
   min-width: 60px;
 }
 
+.tag-filter input {
+  width: 100%;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--warm);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  outline: none;
+  margin-bottom: 14px;
+}
+
+.tag-filter input:focus {
+  border-color: var(--accent2);
+}
+
 .sheet-body .ingredient-row input,
 .sheet-body .step-row input,
 .sheet-body .step-row textarea {
