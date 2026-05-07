@@ -1,5 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
 
@@ -268,15 +267,10 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [viewingId, setViewingId] = useState(null)
 
   const [headerOffset, setHeaderOffset] = useState(0)
-
-  // duration: 8 keeps the snap animation under ~100ms — fast enough that
-  // the brief window before the carousel re-centres is imperceptible.
-  const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', containScroll: false, duration: 4 })
-
-  const yearRef = useRef(year)
-  const monthRef = useRef(month)
-  useEffect(() => { yearRef.current = year }, [year])
-  useEffect(() => { monthRef.current = month }, [month])
+  const [swipeX, setSwipeX] = useState(0)
+  const [swiping, setSwiping] = useState(false)
+  const touchRef = useRef({ startX: 0, startY: 0, locked: null })
+  const calendarRef = useRef(null)
 
   useEffect(() => {
     if (!targetDate) return
@@ -311,46 +305,52 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const pendingEditFileInputRef = useRef(null)
   const formRef = useRef(null)
 
-  useEffect(() => {
-    if (!emblaApi) return
+  const SWIPE_THRESHOLD = 50
 
-    const onSelect = () => {
-      setHeaderOffset(emblaApi.selectedScrollSnap() - 1)
-    }
+  const onTouchStart = useCallback((e) => {
+    const t = e.touches[0]
+    touchRef.current = { startX: t.clientX, startY: t.clientY, locked: null }
+    setSwiping(true)
+  }, [])
 
-    const onSettle = () => {
-      const idx = emblaApi.selectedScrollSnap()
-      setHeaderOffset(0)
-      if (idx === 1) return
-      const dir = idx - 1
-      let m = monthRef.current
-      let y = yearRef.current
-      if (dir < 0) {
-        if (m === 0) { m = 11; y = y - 1 }
-        else m = m - 1
-      } else {
-        if (m === 11) { m = 0; y = y + 1 }
-        else m = m + 1
+  const onTouchMove = useCallback((e) => {
+    const t = e.touches[0]
+    const dx = t.clientX - touchRef.current.startX
+    const dy = t.clientY - touchRef.current.startY
+
+    if (touchRef.current.locked === null) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        touchRef.current.locked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
       }
-      monthRef.current = m
-      yearRef.current = y
+    }
+
+    if (touchRef.current.locked === 'x') {
+      e.preventDefault()
+      setSwipeX(dx)
+      const w = calendarRef.current?.offsetWidth ?? 1
+      if (Math.abs(dx) > w * 0.25) {
+        setHeaderOffset(dx > 0 ? -1 : 1)
+      } else {
+        setHeaderOffset(0)
+      }
+    }
+  }, [])
+
+  const onTouchEnd = useCallback(() => {
+    const dx = swipeX
+    const w = calendarRef.current?.offsetWidth ?? 1
+    setSwiping(false)
+    setSwipeX(0)
+    setHeaderOffset(0)
+
+    if (touchRef.current.locked === 'x' && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > w * 0.15) {
+      const dir = dx > 0 ? -1 : 1
       setSelectedDay(null)
-      setMonth(m)
-      setYear(y)
+      const next = offsetMonth(year, month, dir)
+      setMonth(next.month)
+      setYear(next.year)
     }
-
-    emblaApi.on('select', onSelect)
-    emblaApi.on('settle', onSettle)
-    return () => {
-      emblaApi.off('select', onSelect)
-      emblaApi.off('settle', onSettle)
-    }
-  }, [emblaApi])
-
-  useLayoutEffect(() => {
-    if (!emblaApi) return
-    emblaApi.scrollTo(1, true)
-  }, [year, month, emblaApi])
+  }, [swipeX, year, month])
 
   useEffect(() => {
     if (showForm || editing) {
@@ -366,11 +366,8 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   useEffect(() => { setEventLimit(PAGE_SIZE) }, [year, month, selectedDay])
 
-  const prevMonth = () => emblaApi?.scrollTo(0)
-  const nextMonth = () => emblaApi?.scrollTo(2)
-
-  const prevM = offsetMonth(year, month, -1)
-  const nextM = offsetMonth(year, month, 1)
+  const prevMonth = () => { setSelectedDay(null); const p = offsetMonth(year, month, -1); setMonth(p.month); setYear(p.year) }
+  const nextMonth = () => { setSelectedDay(null); const n = offsetMonth(year, month, 1); setMonth(n.month); setYear(n.year) }
 
   const headerMonth = offsetMonth(year, month, headerOffset)
 
@@ -582,29 +579,22 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         </div>
       </div>
 
-      <div ref={emblaRef} style={{ overflow: 'hidden' }}>
-        <div style={{ display: 'flex' }}>
-          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
-            <MonthGrid
-              year={prevM.year} month={prevM.month} events={events}
-              selectedDay={null} onDayClick={null}
-              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
-            />
-          </div>
-          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
-            <MonthGrid
-              year={year} month={month} events={events}
-              selectedDay={selectedDay} onDayClick={handleDayClick}
-              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
-            />
-          </div>
-          <div style={{ flex: '0 0 100%', minWidth: 0 }}>
-            <MonthGrid
-              year={nextM.year} month={nextM.month} events={events}
-              selectedDay={null} onDayClick={null}
-              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
-            />
-          </div>
+      <div
+        ref={calendarRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{ overflow: 'hidden', touchAction: 'pan-y' }}
+      >
+        <div style={{
+          transform: swipeX ? `translateX(${swipeX}px)` : undefined,
+          transition: swiping ? 'none' : 'transform 0.2s ease-out',
+        }}>
+          <MonthGrid
+            year={year} month={month} events={events}
+            selectedDay={selectedDay} onDayClick={handleDayClick}
+            nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+          />
         </div>
       </div>
 

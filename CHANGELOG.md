@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.1] - 2026-05-07
+
+### Fixed
+- Remove embla-carousel and revert back to custom logic for calender component
+
+---
+
 ## [0.8.0] - 2026-05-04
 
 ### Added
