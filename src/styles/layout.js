@@ -1,7 +1,7 @@
 const layout = `
 /* HEADER */
 .header {
-  padding: 52px 24px 20px;
+  padding: 52px 24px 10px;
   background: var(--cream);
   position: sticky;
   top: 0;
@@ -12,7 +12,7 @@ const layout = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .logo {
@@ -83,7 +83,7 @@ const layout = `
 
 /* CONTENT */
 .content {
-  padding: 16px 24px 160px;
+  padding: 8px 24px 160px;
   animation: fadeUp 0.3s ease;
 }
 

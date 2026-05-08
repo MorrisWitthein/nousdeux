@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.1] - 2026-05-08
+
+### Fixed
+- Header and content area padding reduced for a more compact layout
+- Tag dropdown positioning corrected (no longer overflows container edges)
+- Recipe search clear button vertically centered in the input field
+
+---
+
 ## [0.9.0] - 2026-05-08
 
 ### Added

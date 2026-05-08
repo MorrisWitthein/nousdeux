@@ -636,7 +636,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           <button
             type="button"
             onMouseDown={e => { e.preventDefault(); setSearchQuery(''); setSearchOpen(false); searchRef.current?.focus() }}
-            style={{ position: 'absolute', right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, lineHeight: 1, padding: 2 }}
+            style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, lineHeight: 1, padding: 2 }}
           >×</button>
         )}
         {searchOpen && (() => {

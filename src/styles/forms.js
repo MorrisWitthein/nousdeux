@@ -101,6 +101,10 @@ const forms = `
   min-width: 60px;
 }
 
+.tag-filter {
+  margin-bottom: 14px;
+}
+
 .tag-filter input {
   width: 100%;
   font-size: 14px;
@@ -111,7 +115,6 @@ const forms = `
   border-radius: 10px;
   padding: 10px 14px;
   outline: none;
-  margin-bottom: 14px;
 }
 
 .tag-filter input:focus {
@@ -427,9 +430,9 @@ const forms = `
 
 .tag-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
-  left: -10px;
-  right: -10px;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
   background: var(--cream);
   border: 1.5px solid var(--border);
   border-radius: 12px;
