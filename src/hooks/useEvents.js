@@ -55,8 +55,12 @@ export function useEvents() {
       method: 'DELETE',
       headers: authHeaders(),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const listAttachments = async (eventId) => {
@@ -76,6 +80,7 @@ export function useEvents() {
     })
     if (res.ok) return res.json()
     handleUnauth(res)
+    if (res.status !== 401) throw new Error(`Anhang hochladen fehlgeschlagen`)
     return null
   }
 
@@ -84,8 +89,10 @@ export function useEvents() {
       method: 'DELETE',
       headers: authHeaders(),
     })
+    if (res.ok) return true
     handleUnauth(res)
-    return res.ok
+    if (res.status !== 401) throw new Error(`Anhang löschen fehlgeschlagen`)
+    return false
   }
 
   const attachmentUrl = (attachmentId) => {

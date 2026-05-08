@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`
@@ -9,6 +10,7 @@ function formatBytes(bytes) {
 }
 
 function EventDetail({ event, onEdit, onClose, currentUser, formatDate, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
+  const showToast = useToast()
   const isMultiDay = event.endDate && event.endDate > event.date
   const dateDisplay = isMultiDay
     ? `${formatDate(event.date)} – ${formatDate(event.endDate)}`
@@ -26,16 +28,24 @@ function EventDetail({ event, onEdit, onClose, currentUser, formatDate, listAtta
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    const result = await uploadAttachment(event.id, file)
-    if (result) setAttachments(prev => [...prev, result])
+    try {
+      const result = await uploadAttachment(event.id, file)
+      if (result) setAttachments(prev => [...prev, result])
+    } catch (err) {
+      showToast(err.message)
+    }
     setUploading(false)
     e.target.value = ''
   }
 
   const handleDelete = async (id) => {
     if (!window.confirm('Anhang löschen?')) return
-    const ok = await deleteAttachment(id)
-    if (ok) setAttachments(prev => prev.filter(a => a.id !== id))
+    try {
+      const ok = await deleteAttachment(id)
+      if (ok) setAttachments(prev => prev.filter(a => a.id !== id))
+    } catch (err) {
+      showToast(err.message)
+    }
   }
 
   return (
@@ -255,6 +265,7 @@ const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplan
 const PAGE_SIZE = 5
 
 export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
+  const showToast = useToast()
   const now = new Date()
   const nowYear = now.getFullYear()
   const nowMonth = now.getMonth()
@@ -684,7 +695,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
                 )}
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button className="btn-edit" onClick={(ev) => { ev.stopPropagation(); startEdit(e) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={(ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) deleteEvent(e.id) }}><CloseIcon /></button>
+                  <button className="btn-delete" onClick={async (ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) try { await deleteEvent(e.id) } catch (err) { showToast(err.message) } }}><CloseIcon /></button>
                 </div>
               </div>
             </div>

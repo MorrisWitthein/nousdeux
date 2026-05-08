@@ -87,7 +87,7 @@ const forms = `
   display: block;
   font-size: 12px;
   color: var(--accent);
-  margin-top: -6px;
+  margin-top: 4px;
   margin-bottom: 10px;
 }
 

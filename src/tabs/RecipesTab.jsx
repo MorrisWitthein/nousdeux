@@ -3,6 +3,7 @@ import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, ImportIcon, CartIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
+import { useToast } from '../context/ToastContext.jsx'
 
 function StarRating({ value, onChange }) {
   return (
@@ -517,6 +518,7 @@ function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
 }
 
 export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
+  const showToast = useToast()
   const { addItem } = useShoppingList()
   const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import' | 'shopping'
   const [fabOpen, setFabOpen] = useState(false)
@@ -583,35 +585,48 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     if (!fields.title.trim()) return
     const title = fields.title
     const file = pendingImageFile
-    const id = await addRecipe({
-      title,
-      emoji: fields.emoji || undefined,
-      tags: fields.tags,
-      rating: fields.rating,
-      ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
-      steps: joinLines(fields.steps),
-      prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
-      servings: fields.servings ? parseInt(fields.servings, 10) : null,
-    })
-    closeSheet()
-    if (id) {
-      if (file) uploadRecipeImage(id, file)      // use the chosen file
-      else setRecipeImage(id, title)             // fall back to Unsplash
+    try {
+      const id = await addRecipe({
+        title,
+        emoji: fields.emoji || undefined,
+        tags: fields.tags,
+        rating: fields.rating,
+        ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
+        steps: joinLines(fields.steps),
+        prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
+        servings: fields.servings ? parseInt(fields.servings, 10) : null,
+      })
+      closeSheet()
+      if (id) {
+        if (file) uploadRecipeImage(id, file).catch(err => showToast(err.message))
+        else setRecipeImage(id, title).catch(err => showToast(err.message))
+      }
+    } catch (err) {
+      showToast(err.message)
     }
   }
 
   const handleUpdate = async () => {
     if (!fields.title.trim()) return
-    await updateRecipe(editingId, {
-      title: fields.title,
-      tags: fields.tags,
-      rating: fields.rating,
-      ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
-      steps: joinLines(fields.steps),
-      prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
-      servings: fields.servings ? parseInt(fields.servings, 10) : null,
-    })
-    closeSheet()
+    try {
+      await updateRecipe(editingId, {
+        title: fields.title,
+        tags: fields.tags,
+        rating: fields.rating,
+        ingredients: joinLines(fields.ingredients.map(i => [i.qty, i.name].filter(Boolean).join(' '))),
+        steps: joinLines(fields.steps),
+        prepTime: fields.prepTime ? parseInt(fields.prepTime, 10) : null,
+        servings: fields.servings ? parseInt(fields.servings, 10) : null,
+      })
+      closeSheet()
+    } catch (err) {
+      showToast(err.message)
+    }
+  }
+
+  const handleDeleteRecipe = async (id) => {
+    if (!window.confirm('Rezept löschen?')) return
+    try { await deleteRecipe(id) } catch (err) { showToast(err.message) }
   }
 
   const viewingRecipe = recipes.find(r => r.id === viewingId)
@@ -705,7 +720,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
               <div style={{ display: 'flex', gap: 4 }}>
                 {r.ingredients && <button className="btn-edit" onClick={e => { e.stopPropagation(); openShopping(r) }}><CartIcon /></button>}
                 <button className="btn-edit" onClick={e => { e.stopPropagation(); openEdit(r) }}><PencilIcon /></button>
-                <button className="btn-delete" onClick={e => { e.stopPropagation(); if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}><CloseIcon /></button>
+                <button className="btn-delete" onClick={e => { e.stopPropagation(); handleDeleteRecipe(r.id) }}><CloseIcon /></button>
               </div>
             </div>
           </div>
@@ -734,8 +749,8 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           title="Rezept bearbeiten"
           knownTags={knownTags}
           currentImageUrl={editingRecipe?.imageUrl}
-          onImageSelected={(file) => uploadRecipeImage(editingId, file)}
-          onClearImage={() => clearRecipeImage(editingId)}
+          onImageSelected={(file) => uploadRecipeImage(editingId, file).catch(err => showToast(err.message))}
+          onClearImage={() => clearRecipeImage(editingId).catch(err => showToast(err.message))}
         />
       )}
 

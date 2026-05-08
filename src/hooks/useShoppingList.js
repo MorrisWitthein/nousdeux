@@ -44,8 +44,12 @@ export function useShoppingList() {
       headers: authHeaders(),
       body: JSON.stringify({ name, qty }),
     })
-    if (res.ok) { refresh(); refreshHistory() }
-    else handleUnauth(res)
+    if (res.ok) { refresh(); refreshHistory(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const toggleItem = async (id, currentChecked) => {
@@ -54,8 +58,12 @@ export function useShoppingList() {
       headers: authHeaders(),
       body: JSON.stringify({ checked: !currentChecked }),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const deleteItem = async (id) => {
@@ -63,19 +71,25 @@ export function useShoppingList() {
       method: 'DELETE',
       headers: authHeaders(),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const clearChecked = async () => {
     const checked = items.filter(i => i.checked)
-    await Promise.all(checked.map(i =>
+    const results = await Promise.all(checked.map(i =>
       fetch(`${API}/api/shopping?id=${i.id}`, {
         method: 'DELETE',
         headers: authHeaders(),
-      })
+      }).catch(() => null)
     ))
     refresh()
+    const failed = results.filter(r => !r?.ok).length
+    if (failed > 0) throw new Error(`${failed} Einträge konnten nicht gelöscht werden`)
   }
 
   return { items, history, addItem, toggleItem, deleteItem, clearChecked }

@@ -3,6 +3,7 @@ import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
 import Sheet from '../components/Sheet.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 
 function SeriesDetail({ series, onEdit, onClose }) {
   const sub = seriesSubLine(series)
@@ -116,6 +117,7 @@ export default function ListsTab({
   currentUser,
   onNavigateToCalendar,
 }) {
+  const showToast = useToast()
   const [activeList, setActiveList] = useState('series')
   const { items: shopItems, history: shopHistory, addItem: addShopItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
   const [shopInput, setShopInput] = useState('')
@@ -179,17 +181,22 @@ export default function ListsTab({
   const handleAddSeries = async () => {
     setSubmitted(true)
     if (!newSeries.title.trim()) return
-    await addSeries({
-      emoji: newSeries.emoji,
-      title: newSeries.title,
-      sub: newSeries.sub,
-      season: parseInt(newSeries.season, 10) || 0,
-      status: newSeries.status,
-      statusType: newSeries.statusType,
-    })
-    setNewSeries({ ...EMPTY_SERIES })
-    setSubmitted(false)
-    setShowSeriesForm(false)
+    try {
+      await addSeries({
+        emoji: newSeries.emoji,
+        title: newSeries.title,
+        sub: newSeries.sub,
+        season: parseInt(newSeries.season, 10) || 0,
+        status: newSeries.status,
+        statusType: newSeries.statusType,
+      })
+      setNewSeries({ ...EMPTY_SERIES })
+      setSubmitted(false)
+      setShowSeriesForm(false)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
   }
 
   const startEditSeries = (s) => {
@@ -209,12 +216,17 @@ export default function ListsTab({
   const handleUpdateSeries = async () => {
     setSubmitted(true)
     if (!editSeriesFields.title.trim()) return
-    await updateSeries(editingSeries, {
-      ...editSeriesFields,
-      season: parseInt(editSeriesFields.season, 10) || 0,
-    })
-    setSubmitted(false)
-    setEditingSeries(null)
+    try {
+      await updateSeries(editingSeries, {
+        ...editSeriesFields,
+        season: parseInt(editSeriesFields.season, 10) || 0,
+      })
+      setSubmitted(false)
+      setEditingSeries(null)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
   }
 
   const handleSeriesStatusChange = (setFields) => (e) => {
@@ -235,17 +247,22 @@ export default function ListsTab({
   const handleAddMovie = async () => {
     setSubmitted(true)
     if (!newMovie.title.trim()) return
-    await addMovie({
-      emoji: newMovie.emoji,
-      title: newMovie.title,
-      sub: newMovie.sub,
-      genres: newMovie.genres,
-      status: newMovie.status,
-      statusType: newMovie.statusType,
-    })
-    setNewMovie({ ...EMPTY_MOVIE })
-    setSubmitted(false)
-    setShowMovieForm(false)
+    try {
+      await addMovie({
+        emoji: newMovie.emoji,
+        title: newMovie.title,
+        sub: newMovie.sub,
+        genres: newMovie.genres,
+        status: newMovie.status,
+        statusType: newMovie.statusType,
+      })
+      setNewMovie({ ...EMPTY_MOVIE })
+      setSubmitted(false)
+      setShowMovieForm(false)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
   }
 
   const startEditMovie = (m) => {
@@ -265,19 +282,29 @@ export default function ListsTab({
   const handleUpdateMovie = async () => {
     setSubmitted(true)
     if (!editMovieFields.title.trim()) return
-    await updateMovie(editingMovie, editMovieFields)
-    setSubmitted(false)
-    setEditingMovie(null)
+    try {
+      await updateMovie(editingMovie, editMovieFields)
+      setSubmitted(false)
+      setEditingMovie(null)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
   }
 
   // Activity handlers
   const handleAddActivity = async () => {
     setSubmitted(true)
     if (!newAct.title.trim()) return
-    await addActivity({ emoji: newAct.emoji, title: newAct.title, meta: newAct.meta, status: newAct.status })
-    setNewAct({ ...EMPTY_ACTIVITY })
-    setSubmitted(false)
-    setShowActivityForm(false)
+    try {
+      await addActivity({ emoji: newAct.emoji, title: newAct.title, meta: newAct.meta, status: newAct.status })
+      setNewAct({ ...EMPTY_ACTIVITY })
+      setSubmitted(false)
+      setShowActivityForm(false)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
   }
 
   const startEditActivity = (a) => {
@@ -295,9 +322,45 @@ export default function ListsTab({
   const handleUpdateActivity = async () => {
     setSubmitted(true)
     if (!editActivityFields.title.trim()) return
-    await updateActivity(editingActivity, editActivityFields)
-    setSubmitted(false)
-    setEditingActivity(null)
+    try {
+      await updateActivity(editingActivity, editActivityFields)
+      setSubmitted(false)
+      setEditingActivity(null)
+    } catch (err) {
+      showToast(err.message)
+      setSubmitted(false)
+    }
+  }
+
+  const handleDeleteSeries = async (id) => {
+    if (!window.confirm('Serie löschen?')) return
+    try { await deleteSeries(id) } catch (err) { showToast(err.message) }
+  }
+
+  const handleDeleteMovie = async (id) => {
+    if (!window.confirm('Film löschen?')) return
+    try { await deleteMovie(id) } catch (err) { showToast(err.message) }
+  }
+
+  const handleDeleteActivity = async (id) => {
+    if (!window.confirm('Aktivität löschen?')) return
+    try { await deleteActivity(id) } catch (err) { showToast(err.message) }
+  }
+
+  const handleAddShopItem = async (input) => {
+    try { await addShopItem(input) } catch (err) { showToast(err.message) }
+  }
+
+  const handleToggleItem = async (id, checked) => {
+    try { await toggleItem(id, checked) } catch (err) { showToast(err.message) }
+  }
+
+  const handleDeleteItem = async (id) => {
+    try { await deleteItem(id) } catch (err) { showToast(err.message) }
+  }
+
+  const handleClearChecked = async () => {
+    try { await clearChecked() } catch (err) { showToast(err.message) }
   }
 
   const renderSeriesForm = (fields, setFields, onSave, onCancel, title, submitted) => {
@@ -521,7 +584,7 @@ export default function ListsTab({
                 <span className={`badge badge-${s.statusType}`}>{s.status}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Serie löschen?')) deleteSeries(s.id) }}><CloseIcon /></button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
                 </div>
               </div>
             )
@@ -569,7 +632,7 @@ export default function ListsTab({
                       <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
                       <button className="btn-edit" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
                     </div>
-                    <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); if (window.confirm('Aktivität löschen?')) deleteActivity(a.id) }}><CloseIcon /></button>
+                    <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(a.id) }}><CloseIcon /></button>
                   </div>
                 </div>
               </div>
@@ -627,7 +690,7 @@ export default function ListsTab({
                 <span className={`badge badge-${m.statusType}`}>{m.status}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); if (window.confirm('Film löschen?')) deleteMovie(m.id) }}><CloseIcon /></button>
+                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
                 </div>
               </div>
             )
@@ -662,7 +725,7 @@ export default function ListsTab({
                 }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && shopInput.trim()) {
-                    addShopItem(shopInput)
+                    handleAddShopItem(shopInput)
                     setShopInput('')
                     setShopSuggestions([])
                   } else if (e.key === 'Escape') {
@@ -687,7 +750,7 @@ export default function ListsTab({
             <button
               className="shop-add-btn"
               onClick={() => {
-                if (shopInput.trim()) { addShopItem(shopInput); setShopInput(''); setShopSuggestions([]) }
+                if (shopInput.trim()) { handleAddShopItem(shopInput); setShopInput(''); setShopSuggestions([]) }
               }}
             >+</button>
           </div>
@@ -696,14 +759,14 @@ export default function ListsTab({
             <button
               className="btn btn-secondary"
               style={{ width: '100%', marginBottom: 12, fontSize: 13 }}
-              onClick={clearChecked}
+              onClick={handleClearChecked}
             >Erledigte löschen</button>
           )}
 
           <div>
             {shopItems.filter(i => !i.checked).map(item => (
               <div key={item.id} className="shop-item">
-                <button className="shop-check" onClick={() => toggleItem(item.id, item.checked)} aria-label="Abhaken">
+                <button className="shop-check" onClick={() => handleToggleItem(item.id, item.checked)} aria-label="Abhaken">
                   <span className="shop-check-inner" />
                 </button>
                 <span className="shop-item-name">
@@ -715,7 +778,7 @@ export default function ListsTab({
                   style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }}
                   title={item.who}
                 />
-                <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => deleteItem(item.id)}><CloseIcon /></button>
+                <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => handleDeleteItem(item.id)}><CloseIcon /></button>
               </div>
             ))}
             {shopItems.some(i => i.checked) && (
@@ -723,7 +786,7 @@ export default function ListsTab({
                 <div className="shop-divider">Erledigt</div>
                 {shopItems.filter(i => i.checked).map(item => (
                   <div key={item.id} className="shop-item shop-item-checked">
-                    <button className="shop-check shop-check-done" onClick={() => toggleItem(item.id, item.checked)} aria-label="Wiederherstellen">
+                    <button className="shop-check shop-check-done" onClick={() => handleToggleItem(item.id, item.checked)} aria-label="Wiederherstellen">
                       <span className="shop-check-inner shop-check-inner-done">✓</span>
                     </button>
                     <span className="shop-item-name shop-item-name-checked">
@@ -735,7 +798,7 @@ export default function ListsTab({
                       style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)', opacity: 0.4 }}
                       title={item.who}
                     />
-                    <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => deleteItem(item.id)}><CloseIcon /></button>
+                    <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => handleDeleteItem(item.id)}><CloseIcon /></button>
                   </div>
                 ))}
               </>

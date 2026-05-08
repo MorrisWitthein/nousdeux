@@ -23,8 +23,12 @@ export function useMovies() {
       headers: authHeaders(),
       body: JSON.stringify(item),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const updateMovie = async (id, fields) => {
@@ -33,8 +37,12 @@ export function useMovies() {
       headers: authHeaders(),
       body: JSON.stringify(fields),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const deleteMovie = async (id) => {
@@ -42,8 +50,12 @@ export function useMovies() {
       method: 'DELETE',
       headers: authHeaders(),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   return { movies, addMovie, updateMovie, deleteMovie }

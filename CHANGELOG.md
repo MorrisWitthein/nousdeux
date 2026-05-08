@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.3] - 2026-05-08
+
+### Changed
+- Add global error handling for all user interactions
+
+---
+
 ## [0.9.2] - 2026-05-08
 
 ### Changed

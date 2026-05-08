@@ -27,34 +27,30 @@ export function useRecipes() {
       const created = await res.json()
       refresh()
       return created.id
-    } else {
-      handleUnauth(res)
+    }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
     }
   }
 
   const setRecipeImage = async (id, query) => {
-    try {
-      const imgRes = await fetch(
-        `${API}/api/recipes/image?q=${encodeURIComponent(query)}`,
-        { headers: authHeaders() }
-      )
-      if (!imgRes.ok) {
-        const err = await imgRes.json().catch(() => ({}))
-        console.error('[recipes] image fetch failed', imgRes.status, err)
-        return
-      }
-      const { url } = await imgRes.json()
-      const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
-        method: 'PATCH',
-        headers: authHeaders(),
-        body: JSON.stringify({ url }),
-      })
-      if (!patchRes.ok) {
-        console.error('[recipes] image patch failed', patchRes.status)
-      }
-    } catch (e) {
-      console.error('[recipes] image error', e)
+    const imgRes = await fetch(
+      `${API}/api/recipes/image?q=${encodeURIComponent(query)}`,
+      { headers: authHeaders() }
+    )
+    if (!imgRes.ok) {
+      const err = await imgRes.json().catch(() => ({}))
+      throw new Error(err.error || `Bildfehler ${imgRes.status}`)
     }
+    const { url } = await imgRes.json()
+    const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ url }),
+    })
+    if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
   }
 
   const updateRecipe = async (id, fields) => {
@@ -63,8 +59,12 @@ export function useRecipes() {
       headers: authHeaders(),
       body: JSON.stringify(fields),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const deleteRecipe = async (id) => {
@@ -72,33 +72,30 @@ export function useRecipes() {
       method: 'DELETE',
       headers: authHeaders(),
     })
-    if (res.ok) refresh()
-    else handleUnauth(res)
+    if (res.ok) { refresh(); return }
+    handleUnauth(res)
+    if (res.status !== 401) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `Fehler ${res.status}`)
+    }
   }
 
   const uploadRecipeImage = async (id, file) => {
     const form = new FormData()
     form.append('file', file)
-    try {
-      const uploadRes = await fetch(`${API}/api/recipes/${id}/upload-image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: form,
-      })
-      if (!uploadRes.ok) {
-        console.error('[recipes] upload image failed', uploadRes.status)
-        return
-      }
-      const { path } = await uploadRes.json()
-      const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
-        method: 'PATCH',
-        headers: authHeaders(),
-        body: JSON.stringify({ url: `${API}${path}` }),
-      })
-      if (!patchRes.ok) console.error('[recipes] image url patch failed', patchRes.status)
-    } catch (e) {
-      console.error('[recipes] upload image error', e)
-    }
+    const uploadRes = await fetch(`${API}/api/recipes/${id}/upload-image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: form,
+    })
+    if (!uploadRes.ok) throw new Error(`Bild hochladen fehlgeschlagen`)
+    const { path } = await uploadRes.json()
+    const patchRes = await fetch(`${API}/api/recipes/image?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ url: `${API}${path}` }),
+    })
+    if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
   }
 
   const importRecipe = async (payload) => {
@@ -116,14 +113,14 @@ export function useRecipes() {
   }
 
   const clearRecipeImage = async (id) => {
-    try {
-      await fetch(`${API}/api/recipes/image?id=${id}`, {
-        method: 'PATCH',
-        headers: authHeaders(),
-        body: JSON.stringify({ url: '' }),
-      })
-    } catch (e) {
-      console.error('[recipes] clear image error', e)
+    const res = await fetch(`${API}/api/recipes/image?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ url: '' }),
+    })
+    if (!res.ok) {
+      handleUnauth(res)
+      if (res.status !== 401) throw new Error(`Bild entfernen fehlgeschlagen`)
     }
   }
 
