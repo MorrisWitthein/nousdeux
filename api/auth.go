@@ -14,7 +14,10 @@ import (
 
 type contextKey string
 
-const userKey contextKey = "user"
+const (
+	userKey  contextKey = "user"
+	adminKey contextKey = "admin"
+)
 
 // userFromContext returns the authenticated username from the request context.
 func userFromContext(ctx context.Context) string {
@@ -24,9 +27,16 @@ func userFromContext(ctx context.Context) string {
 	return ""
 }
 
+// isAdminFromContext returns true if the authenticated user has the admin claim.
+func isAdminFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(adminKey).(bool)
+	return v
+}
+
 var (
-	jwtSecret []byte
-	users     map[string]string // username → bcrypt hash
+	jwtSecret  []byte
+	users      map[string]string // username → bcrypt hash
+	adminUsers map[string]bool   // usernames with admin privileges
 )
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -52,10 +62,14 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	claims := jwt.MapClaims{
 		"sub": creds.Username,
 		"exp": time.Now().Add(15 * 24 * time.Hour).Unix(),
-	})
+	}
+	if adminUsers[creds.Username] {
+		claims["admin"] = true
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString(jwtSecret)
 	if err != nil {
 		slog.Error("sign JWT", "err", err)
@@ -94,6 +108,9 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
 			if sub, _ := claims["sub"].(string); sub != "" {
 				r = r.WithContext(context.WithValue(r.Context(), userKey, sub))
+			}
+			if admin, _ := claims["admin"].(bool); admin {
+				r = r.WithContext(context.WithValue(r.Context(), adminKey, true))
 			}
 		}
 

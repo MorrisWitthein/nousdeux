@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.4] - 2026-05-08
+
+### Added
+- Secret admin menu in profile modal (visible only to users with the `admin` JWT claim)
+- Gen-Z mode toggle in admin menu — when enabled, replaces the home greeting with gen-z slang for all users regardless of date
+
+---
+
 ## [0.9.3] - 2026-05-08
 
 ### Changed

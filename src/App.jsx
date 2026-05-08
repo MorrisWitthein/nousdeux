@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import styles from './styles/index.js'
-import { getCurrentUser } from './parseJwt.js'
+import { getCurrentUser, isAdmin } from './parseJwt.js'
 import { useEvents } from './hooks/useEvents.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useSeries } from './hooks/useSeries.js'
 import { useActivities } from './hooks/useActivities.js'
 import { useMovies } from './hooks/useMovies.js'
 import { useWeather } from './hooks/useWeather.js'
+import { useSettings } from './hooks/useSettings.js'
 import HomeTab from './tabs/HomeTab.jsx'
 import CalendarTab from './tabs/CalendarTab.jsx'
 import ListsTab from './tabs/ListsTab.jsx'
@@ -45,6 +46,8 @@ export default function App() {
   const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
   const { movies, addMovie, updateMovie, deleteMovie } = useMovies()
   const weatherEmoji = useWeather()
+  const { settings, updateSetting } = useSettings()
+  const userIsAdmin = isAdmin()
 
   const displayName = currentUser
     ? currentUser.charAt(0).toUpperCase() + currentUser.slice(1)
@@ -82,6 +85,7 @@ export default function App() {
               onNavigate={navigateTo}
               currentUser={currentUser}
               weatherEmoji={weatherEmoji}
+              genzMode={settings.genz_mode === true}
             />
           )}
           {activeTab === 'calendar' && (
@@ -150,6 +154,36 @@ export default function App() {
               <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginBottom: 28 }}>
                 {currentUser}@nousdeux
               </p>
+              {userIsAdmin && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    Admin
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 16px', borderRadius: 14, background: 'var(--warm)',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: 'var(--ink)' }}>Gen-Z Modus</span>
+                    <div
+                      style={{
+                        width: 44, height: 26, borderRadius: 13, cursor: 'pointer',
+                        background: settings.genz_mode ? 'var(--accent)' : 'var(--muted)',
+                        position: 'relative', transition: 'background 0.2s',
+                        opacity: settings.genz_mode === undefined ? 0.4 : 1,
+                      }}
+                      onClick={() => updateSetting('genz_mode', !settings.genz_mode)}
+                    >
+                      <div style={{
+                        position: 'absolute', top: 3, left: settings.genz_mode ? 21 : 3,
+                        width: 20, height: 20, borderRadius: '50%', background: 'white',
+                        transition: 'left 0.2s',
+                      }} />
+                    </div>
+                  </div>
+                </div>
+              )}
               <button
                 className="btn btn-secondary"
                 style={{ width: '100%', padding: '14px', borderRadius: 14 }}

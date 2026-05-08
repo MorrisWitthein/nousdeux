@@ -13,3 +13,10 @@ export function getCurrentUser() {
   const payload = parseJwt(token)
   return payload?.sub || null
 }
+
+export function isAdmin() {
+  const token = localStorage.getItem('token')
+  if (!token) return false
+  const payload = parseJwt(token)
+  return payload?.admin === true
+}

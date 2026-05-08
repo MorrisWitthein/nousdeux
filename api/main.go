@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -35,6 +36,10 @@ func main() {
 	} else {
 		slog.Error("USERS env var is required")
 		os.Exit(1)
+	}
+	adminUsers = map[string]bool{}
+	for _, name := range strings.Fields(strings.ReplaceAll(os.Getenv("ADMINS"), ",", " ")) {
+		adminUsers[name] = true
 	}
 
 	// Attachments storage directory.
@@ -95,6 +100,7 @@ func main() {
 	mux.HandleFunc("/api/shopping", cors(requireAuth(handleShoppingList)))
 	mux.HandleFunc("/api/shopping/history", cors(requireAuth(handleShoppingHistory)))
 	mux.HandleFunc("/api/shopping/stream", cors(requireAuth(shoppingBroker.ServeHTTP)))
+	mux.HandleFunc("/api/settings", cors(requireAuth(handleSettings)))
 
 	srv := &http.Server{
 		Addr:        addr,

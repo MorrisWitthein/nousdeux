@@ -75,7 +75,7 @@ function getSpecialDay(now) {
   return null
 }
 
-export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser, weatherEmoji }) {
+export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser, weatherEmoji, genzMode }) {
   const now = new Date()
   const dateStr = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const hour = now.getHours()
@@ -143,7 +143,12 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   const timeEmoji = weatherEmoji ?? rnd(greetings.emojis)
   const timeSub = rnd(greetings.subs)
 
-  const special = getSpecialDay(now)
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+  const genzLabels = ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe']
+  const genzEmojis = ['💀', '🔥', '😭', '✨', '🫡', '✂️', '🦁']
+  const special = genzMode
+    ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
+    : getSpecialDay(now)
 
   const today = now.toISOString().slice(0, 10)
   const thisMonth = today.slice(0, 7) // "YYYY-MM"
