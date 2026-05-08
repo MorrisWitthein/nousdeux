@@ -77,7 +77,7 @@ const calendar = `
   border-radius: 50%;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 0;
+  z-index: -1;
 }
 
 .cal-day.today .cal-day-num::before { background: var(--ink); }
@@ -105,7 +105,7 @@ const calendar = `
   border-radius: 50%;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 0;
+  z-index: -1;
   background: var(--warm);
 }
 .cal-day.empty { opacity: 0; pointer-events: none; }
