@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
-import { PencilIcon, CloseIcon, ImportIcon } from '../components/Icons.jsx'
+import { PencilIcon, CloseIcon, ImportIcon, CartIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
+import { useShoppingList } from '../hooks/useShoppingList.js'
 
 function StarRating({ value, onChange }) {
   return (
@@ -374,7 +375,73 @@ function ImportSheet({ onImport, onClose }) {
   )
 }
 
-function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
+function ShoppingListSheet({ recipe, onClose, addItem }) {
+  const [items, setItems] = useState(() =>
+    parseLines(recipe.ingredients).map(parseIngredient).filter(i => i.name.trim())
+  )
+  const [loading, setLoading] = useState(false)
+
+  const handleConfirm = async () => {
+    const valid = items.filter(i => i.name.trim())
+    if (!valid.length) return
+    setLoading(true)
+    for (const item of valid) {
+      const text = [item.qty, item.name].filter(Boolean).join(' ')
+      await addItem(text)
+    }
+    setLoading(false)
+    onClose()
+  }
+
+  return (
+    <Sheet title="Einkaufsliste" onClose={onClose}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
+        Zutaten aus „{recipe.title}" hinzufügen
+      </p>
+      {items.map((item, i) => (
+        <div key={i} className="ingredient-row">
+          <input
+            className="ingredient-qty"
+            placeholder="Menge"
+            value={item.qty}
+            onChange={e => {
+              const next = [...items]
+              next[i] = { ...next[i], qty: e.target.value }
+              setItems(next)
+            }}
+          />
+          <input
+            style={{ flex: 1, minWidth: 0 }}
+            placeholder="Zutat"
+            value={item.name}
+            onChange={e => {
+              const next = [...items]
+              next[i] = { ...next[i], name: e.target.value }
+              setItems(next)
+            }}
+          />
+          <button className="btn-delete" onClick={() => setItems(items.filter((_, j) => j !== i))}>
+            <CloseIcon />
+          </button>
+        </div>
+      ))}
+      {items.length === 0 && (
+        <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '16px 0' }}>
+          Keine Zutaten vorhanden.
+        </p>
+      )}
+      <div className="btn-row" style={{ marginTop: 16 }}>
+        <button className="btn btn-secondary" onClick={onClose} disabled={loading}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={handleConfirm}
+          disabled={loading || items.every(i => !i.name.trim())}>
+          {loading ? 'Wird hinzugefügt…' : 'Zur Liste hinzufügen'}
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
+function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
   const ingredients = parseLines(recipe.ingredients)
   const steps = parseLines(recipe.steps)
 
@@ -434,16 +501,24 @@ function RecipeDetail({ recipe, onEdit, onClose, currentUser }) {
           <div className="dot" style={{ background: recipe.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
           Von {recipe.who.charAt(0).toUpperCase() + recipe.who.slice(1)}
         </div>
-        <button className="btn btn-primary" style={{ flex: '0 0 auto', padding: '10px 20px' }} onClick={onEdit}>
-          Bearbeiten
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {ingredients.length > 0 && (
+            <button className="btn btn-secondary" style={{ flex: '0 0 auto', padding: '10px 14px' }} onClick={onShopping}>
+              <CartIcon />
+            </button>
+          )}
+          <button className="btn btn-primary" style={{ flex: '0 0 auto', padding: '10px 20px' }} onClick={onEdit}>
+            Bearbeiten
+          </button>
+        </div>
       </div>
     </Sheet>
   )
 }
 
 export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
-  const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import'
+  const { addItem } = useShoppingList()
+  const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import' | 'shopping'
   const [fabOpen, setFabOpen] = useState(false)
   const [viewingId, setViewingId] = useState(null)
   const [editingId, setEditingId] = useState(null)
@@ -489,6 +564,11 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
     setEditingId(r.id)
     setFields(recipeToFields(r))
     setSheet('edit')
+  }
+
+  const openShopping = (r) => {
+    setViewingId(r.id)
+    setSheet('shopping')
   }
 
   const closeSheet = () => {
@@ -623,6 +703,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
                 Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
+                {r.ingredients && <button className="btn-edit" onClick={e => { e.stopPropagation(); openShopping(r) }}><CartIcon /></button>}
                 <button className="btn-edit" onClick={e => { e.stopPropagation(); openEdit(r) }}><PencilIcon /></button>
                 <button className="btn-delete" onClick={e => { e.stopPropagation(); if (window.confirm('Rezept löschen?')) deleteRecipe(r.id) }}><CloseIcon /></button>
               </div>
@@ -663,7 +744,16 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           recipe={viewingRecipe}
           onEdit={() => openEdit(viewingRecipe)}
           onClose={closeSheet}
+          onShopping={() => setSheet('shopping')}
           currentUser={currentUser}
+        />
+      )}
+
+      {sheet === 'shopping' && viewingRecipe && (
+        <ShoppingListSheet
+          recipe={viewingRecipe}
+          onClose={closeSheet}
+          addItem={addItem}
         />
       )}
 

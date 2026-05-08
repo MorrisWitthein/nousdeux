@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-05-08
+
+### Added
+- Recipe to shopping list: cart button on recipe cards and in the detail view opens a sheet pre-filled with the recipe's ingredients; individual items can be edited or removed before adding to the list
+
+---
+
 ## [0.8.3] - 2026-05-08
 
 ### Added

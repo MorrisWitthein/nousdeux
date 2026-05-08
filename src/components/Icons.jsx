@@ -45,3 +45,13 @@ export function CalendarIcon() {
     </svg>
   )
 }
+
+export function CartIcon() {
+  return (
+    <svg {...props}>
+      <path d="M1 1.5h2.5l2 8h7l1.5-5H5" />
+      <circle cx="7" cy="13.5" r="1" />
+      <circle cx="12" cy="13.5" r="1" />
+    </svg>
+  )
+}
