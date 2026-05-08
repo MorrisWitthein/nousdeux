@@ -167,39 +167,93 @@ function parseEventDate(dateStr) {
   return { day, month: idx }
 }
 
-function buildEventDayMap(events, year, month) {
+function buildWeekLaneMap(events, year, month, grid) {
+  const laneMap = new Map()
+  const weekCount = grid.length / 7
+
+  for (let w = 0; w < weekCount; w++) {
+    const weekDays = grid.slice(w * 7, (w + 1) * 7).filter(Boolean)
+    if (!weekDays.length) continue
+    const weekStartISO = toISO(year, month, Math.min(...weekDays))
+    const weekEndISO = toISO(year, month, Math.max(...weekDays))
+
+    const active = events.filter(e => {
+      if (!e.date) return false
+      const end = e.endDate && e.endDate > e.date ? e.endDate : e.date
+      return e.date <= weekEndISO && end >= weekStartISO
+    })
+
+    active.sort((a, b) => {
+      const aM = !!(a.endDate && a.endDate > a.date)
+      const bM = !!(b.endDate && b.endDate > b.date)
+      if (aM !== bM) return aM ? -1 : 1
+      return (a.date ?? '').localeCompare(b.date ?? '')
+    })
+
+    const lanes = []
+    active.forEach(e => {
+      const end = e.endDate && e.endDate > e.date ? e.endDate : e.date
+      const visStart = e.date > weekStartISO ? e.date : weekStartISO
+      const visEnd = end < weekEndISO ? end : weekEndISO
+
+      let lane = 0
+      while (true) {
+        if (!lanes[lane]) lanes[lane] = []
+        if (!lanes[lane].some(([s, en]) => visStart <= en && visEnd >= s)) {
+          lanes[lane].push([visStart, visEnd])
+          break
+        }
+        lane++
+      }
+      laneMap.set(`${e.id}-${w}`, lane)
+    })
+  }
+
+  return laneMap
+}
+
+function buildEventDayMap(events, year, month, grid, laneMap) {
   const map = new Map()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const monthStart = toISO(year, month, 1)
-  const monthEnd = toISO(year, month, daysInMonth)
+  const weekCount = grid.length / 7
 
-  const multiDay = events.filter(e => e.endDate && e.endDate > e.date)
-  const singleDay = events.filter(e => !e.endDate || e.endDate <= e.date)
+  for (let w = 0; w < weekCount; w++) {
+    const weekDays = grid.slice(w * 7, (w + 1) * 7).filter(Boolean)
+    if (!weekDays.length) continue
+    const weekStartISO = toISO(year, month, Math.min(...weekDays))
+    const weekEndISO = toISO(year, month, Math.max(...weekDays))
 
-  multiDay.forEach(e => {
-    if (!e.date) return
-    if (e.endDate < monthStart || e.date > monthEnd) return
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dayISO = toISO(year, month, d)
-      if (dayISO < e.date || dayISO > e.endDate) continue
-      const isStart = dayISO === e.date
-      const isEnd = dayISO === e.endDate
-      const role = isStart ? 'start' : isEnd ? 'end' : 'mid'
-      if (!map.has(d)) map.set(d, { stripes: [], hasSingle: false })
-      map.get(d).stripes.push({ role, eventId: e.id })
-    }
-  })
+    events.forEach(e => {
+      if (!e.date) return
+      const isMultiDay = !!(e.endDate && e.endDate > e.date)
+      const endISO = isMultiDay ? e.endDate : e.date
+      if (e.date > weekEndISO || endISO < weekStartISO) return
 
-  singleDay.forEach(e => {
-    const parsed = parseEventDate(e.date)
-    if (!parsed || parsed.month !== month || (parsed.year !== undefined && parsed.year !== year)) return
-    const d = parsed.day
-    if (map.has(d)) {
-      map.get(d).hasSingle = true
-    } else {
-      map.set(d, { stripes: [], hasSingle: true })
-    }
-  })
+      const visStart = e.date > weekStartISO ? e.date : weekStartISO
+      const visEnd = endISO < weekEndISO ? endISO : weekEndISO
+      const lane = laneMap.get(`${e.id}-${w}`) ?? 0
+
+      for (let d = 0; d < 7; d++) {
+        const day = grid[w * 7 + d]
+        if (!day) continue
+        const dayISO = toISO(year, month, day)
+        if (dayISO < visStart || dayISO > visEnd) continue
+
+        let role
+        if (!isMultiDay || visStart === visEnd) {
+          role = 'single'
+        } else if (dayISO === visStart) {
+          role = e.date === dayISO ? 'start' : 'mid'
+        } else if (dayISO === visEnd) {
+          role = endISO === dayISO ? 'end' : 'mid'
+        } else {
+          role = 'mid'
+        }
+
+        if (!map.has(day)) map.set(day, [])
+        map.get(day).push({ role, who: e.who, eventId: e.id, lane })
+      }
+    })
+  }
 
   return map
 }
@@ -212,10 +266,11 @@ function offsetMonth(year, month, delta) {
   return { year: y, month: m }
 }
 
-function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowMonth, nowDay }) {
+function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowMonth, nowDay, currentUser }) {
   const grid = buildMonthGrid(year, month)
   const todayDay = nowYear === year && nowMonth === month ? nowDay : null
-  const eventDayMap = buildEventDayMap(events, year, month)
+  const laneMap = buildWeekLaneMap(events, year, month, grid)
+  const eventDayMap = buildEventDayMap(events, year, month, grid, laneMap)
 
   return (
     <div className="calendar-grid">
@@ -223,14 +278,14 @@ function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowM
         <div key={d} className="cal-day-name">{d}</div>
       ))}
       {grid.map((day, i) => {
-        const info = day ? eventDayMap.get(day) : undefined
-        const stripes = info?.stripes ?? []
-        const hasSingle = info?.hasSingle ?? false
-        const hasMulti = stripes.length > 0
+        const allBars = day ? (eventDayMap.get(day) ?? []) : []
+        let dotSeen = false
+        const bars = allBars.filter(bar => {
+          if (bar.role !== 'single') return true
+          if (dotSeen) return false
+          return (dotSeen = true)
+        })
         const isSelected = !!onDayClick && day === selectedDay
-        const totalIndicators = stripes.length + (hasMulti && hasSingle ? 1 : 0)
-        const indBase = totalIndicators > 1 ? 2 : 4
-        const indStep = totalIndicators > 1 ? 6 : 7
         return (
           <div
             key={i}
@@ -239,21 +294,30 @@ function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowM
               !day ? 'empty' : '',
               day === todayDay ? 'today' : '',
               isSelected ? 'selected' : '',
-              !hasMulti && hasSingle ? 'has-event' : '',
             ].filter(Boolean).join(' ')}
             onClick={() => onDayClick?.(day)}
           >
-            {day}
-            {stripes.map((seg, idx) => (
-              <span
-                key={seg.eventId}
-                className={['cal-stripe', `cal-stripe-${seg.role}`, isSelected ? 'dimmed' : ''].filter(Boolean).join(' ')}
-                style={{ bottom: `${indBase + idx * indStep}px` }}
-              />
-            ))}
-            {hasMulti && hasSingle && (
-              <span className="cal-dot-extra" style={{ bottom: `${indBase + stripes.length * indStep + 2}px` }} />
-            )}
+            <span className="cal-day-num">{day}</span>
+            <div className="cal-event-lanes">
+              {bars.map((bar, idx) => {
+                const color = bar.who === currentUser ? 'var(--accent2)' : 'var(--accent)'
+                const top = `${bar.lane * 7}px`
+                return bar.role === 'single'
+                  ? (
+                    <span
+                      key={`${bar.eventId}-${idx}`}
+                      className="cal-dot"
+                      style={{ top, background: color }}
+                    />
+                  ) : (
+                    <span
+                      key={`${bar.eventId}-${idx}`}
+                      className={`cal-bar cal-bar-${bar.role}`}
+                      style={{ top, background: color }}
+                    />
+                  )
+              })}
+            </div>
           </div>
         )
       })}
@@ -605,6 +669,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             year={year} month={month} events={events}
             selectedDay={selectedDay} onDayClick={handleDayClick}
             nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+            currentUser={currentUser}
           />
         </div>
       </div>

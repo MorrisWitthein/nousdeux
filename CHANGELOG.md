@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.5] - 2026-05-08
+
+### Changed
+- Redesigned calendar event indicators: multi-day events now show as color-coded spanning bars (teal = Morris, red = Dinah) with consistent lane assignment per week row; single-day events show as a single dot
+- Calendar cells are taller to accommodate a dedicated event lanes area, eliminating bar overlap with day numbers
+
+---
+
 ## [0.9.4] - 2026-05-08
 
 ### Added

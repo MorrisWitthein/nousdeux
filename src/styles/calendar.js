@@ -48,57 +48,58 @@ const calendar = `
 }
 
 .cal-day {
-  aspect-ratio: 1;
+  height: 52px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   border-radius: 10px;
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
   position: relative;
-  gap: 2px;
+}
+
+.cal-day-num {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: inherit;
+}
+
+.cal-event-lanes {
+  height: 22px;
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .cal-day:hover { background: var(--warm); }
 .cal-day.today { background: var(--ink); color: white; font-weight: 600; }
 .cal-day.selected { background: var(--accent3); color: var(--ink); font-weight: 600; }
 .cal-day.today.selected { background: var(--accent3); color: var(--ink); }
-.cal-day.has-event::after {
-  content: '';
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: var(--accent);
-  position: absolute;
-  bottom: 3px;
-}
-.cal-day.today.has-event::after { background: var(--accent3); }
 .cal-day.empty { opacity: 0; pointer-events: none; }
 
-/* Multi-day event stripes — rendered as child spans to support stacking */
-.cal-stripe {
+/* Event bars — one per lane, consistent across cells */
+.cal-bar {
   position: absolute;
-  height: 5px;
-  background: var(--accent3);
-  opacity: 0.7;
-  z-index: 0;
+  height: 4px;
+  opacity: 0.8;
   pointer-events: none;
 }
-.cal-stripe.cal-stripe-start { left: 50%; right: -2px; border-radius: 3px 0 0 3px; }
-.cal-stripe.cal-stripe-mid   { left: -2px; right: -2px; border-radius: 0; }
-.cal-stripe.cal-stripe-end   { left: -2px; right: 50%; border-radius: 0 3px 3px 0; }
-.cal-stripe.dimmed { opacity: 0.4; }
-
-/* Dot for a single-day event coexisting with a multi-day stripe */
-.cal-dot-extra {
+.cal-dot {
   position: absolute;
-  width: 4px; height: 4px;
+  width: 5px; height: 5px;
   border-radius: 50%;
-  background: var(--accent);
-  z-index: 1;
+  left: 50%;
+  transform: translateX(-50%);
   pointer-events: none;
+  opacity: 0.85;
 }
+.cal-day.today .cal-dot, .cal-day.selected .cal-dot { opacity: 1; }
+.cal-bar-start  { left: 50%; right: -2px; border-radius: 2px 0 0 2px; }
+.cal-bar-mid    { left: -2px; right: -2px; }
+.cal-bar-end    { left: -2px; right: 50%; border-radius: 0 2px 2px 0; }
+.cal-day.today .cal-bar, .cal-day.selected .cal-bar { opacity: 1; }
 `
 
 export default calendar
