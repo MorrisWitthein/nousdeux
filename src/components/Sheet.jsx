@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { CloseIcon } from './Icons.jsx'
 
 const CLOSE_THRESHOLD = 80
@@ -8,6 +8,12 @@ export default function Sheet({ title, onClose, children }) {
   const [dragging, setDragging] = useState(false)
   const touchRef = useRef({ startY: 0, locked: null })
   const sheetRef = useRef(null)
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
 
   const onTouchStart = useCallback((e) => {
     touchRef.current = { startY: e.touches[0].clientY, locked: null }
@@ -41,7 +47,12 @@ export default function Sheet({ title, onClose, children }) {
 
   return (
     <>
-      <div className="sheet-backdrop" style={{ opacity }} onClick={onClose} />
+      <div
+        className="sheet-backdrop"
+        style={{ opacity }}
+        onClick={onClose}
+        onTouchMove={e => e.preventDefault()}
+      />
       <div
         ref={sheetRef}
         className="sheet"
@@ -55,7 +66,6 @@ export default function Sheet({ title, onClose, children }) {
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
-          style={{ touchAction: 'none', cursor: 'grab', padding: '8px 0', margin: '4px auto 0', width: 48 }}
         />
         <div
           className="sheet-header"
