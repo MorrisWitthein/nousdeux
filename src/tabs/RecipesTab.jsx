@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
-import { PencilIcon, CloseIcon, ImportIcon, CartIcon } from '../components/Icons.jsx'
+import { PencilIcon, CloseIcon, ImportIcon, CartIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
 
@@ -133,9 +133,9 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
               </button>
             </div>
           )}
-          <button className="btn btn-secondary" style={{ width: '100%' }}
+          <button className="btn btn-ghost" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            {uploading ? 'Lädt hoch…' : (localPreview || currentImageUrl) ? 'Bild ersetzen' : 'Bild hochladen'}
+            <PaperclipIcon />{uploading ? 'Lädt hoch…' : (localPreview || currentImageUrl) ? 'Bild ersetzen' : 'Bild hochladen'}
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
@@ -338,9 +338,9 @@ function ImportSheet({ onImport, onClose }) {
               </button>
             </div>
           ) : (
-            <button className="btn btn-secondary" style={{ width: '100%' }}
+            <button className="btn btn-ghost" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               onClick={() => fileRef.current?.click()}>
-              Bild auswählen
+              <PaperclipIcon />Bild auswählen
             </button>
           )}
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}

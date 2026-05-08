@@ -489,18 +489,43 @@ const forms = `
 .btn {
   flex: 1;
   padding: 12px;
-  border-radius: 12px;
-  border: none;
+  border-radius: 28px;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, color 0.15s;
 }
 
-.btn-primary { background: var(--ink); color: white; }
-.btn-secondary { background: var(--warm); color: var(--muted); }
-.btn:hover { opacity: 0.85; }
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 16px rgba(200,85,61,0.35);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(200,85,61,0.45);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover {
+  background: var(--warm);
+  color: var(--ink);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+}
+.btn-ghost:hover {
+  color: var(--ink);
+}
 
 .btn-delete {
   background: none;

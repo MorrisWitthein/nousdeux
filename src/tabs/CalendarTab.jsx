@@ -57,7 +57,7 @@ function EventDetail({ event, onEdit, onClose, currentUser, formatDate, listAtta
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div className="recipe-detail-section-title" style={{ marginBottom: 0 }}>Anhänge</div>
           <button
-            className="btn btn-secondary"
+            className="btn btn-ghost"
             style={{ padding: '5px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
@@ -507,7 +507,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         <div style={{ marginBottom: 10 }}>
           <label className="form-label">Anhänge (opt.)</label>
           <button
-            className="btn btn-secondary"
+            className="btn btn-ghost"
             style={{ width: '100%', padding: '8px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             onClick={() => fileInputRef.current?.click()}
           >

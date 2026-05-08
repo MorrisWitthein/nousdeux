@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.2] - 2026-05-08
+
+### Changed
+- Save/cancel buttons restyled: pill shape (border-radius 28px), accent glow on Save, outlined ghost on Cancel
+- File upload buttons restyled: ghost text style (no border) with paperclip icon on all upload/file-select buttons
+
+---
+
 ## [0.9.1] - 2026-05-08
 
 ### Fixed
