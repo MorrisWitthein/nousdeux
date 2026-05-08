@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.7] - 2026-05-08
+
+### Fixed
+- Calendar: past events no longer shown in the list below the calendar (only upcoming events are displayed; multi-day events ending today or later are still shown)
+- Calendar: selected-day circle highlight now renders correctly on mobile (fixed `z-index` interaction with `will-change: transform` stacking context; suppressed native tap highlight via `-webkit-tap-highlight-color`)
+- Sheet: swipe-down-to-close gesture on the handle and header; sheet translates with the finger and closes when dragged past 80 px, or snaps back if released early; backdrop fades proportionally
+
+---
+
 ## [0.9.6] - 2026-05-08
 
 ### Changed

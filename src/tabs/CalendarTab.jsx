@@ -627,13 +627,17 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   const selectedDayISO = selectedDay ? toISO(year, month, selectedDay) : null
   const monthStartISO = `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}-01`
+  const todayISO = toISO(nowYear, nowMonth, nowDay)
   const visibleEvents = (selectedDayISO
     ? events.filter(e => {
         const startISO = e.date
         const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
         return startISO && selectedDayISO >= startISO && selectedDayISO <= endISO
       })
-    : events.filter(e => (e.date ?? '') >= monthStartISO)
+    : events.filter(e => {
+        const endISO = e.endDate && e.endDate > e.date ? e.endDate : e.date
+        return (e.date ?? '') >= monthStartISO && (endISO ?? '') >= todayISO
+      })
   ).slice().sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? ''))
   const displayedEvents = visibleEvents.slice(0, eventLimit)
 

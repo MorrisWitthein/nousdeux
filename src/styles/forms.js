@@ -29,8 +29,9 @@ const forms = `
   height: 4px;
   background: var(--border);
   border-radius: 2px;
-  margin: 12px auto 0;
+  margin: 0 auto;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .sheet-header {
