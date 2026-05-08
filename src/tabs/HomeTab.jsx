@@ -144,7 +144,7 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   const timeSub = rnd(greetings.subs)
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
-  const genzLabels = ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe']
+  const genzLabels = ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe', 'Bei schlechtem Wetter eine Option', 'Es ist viel Rasen im Raum']
   const genzEmojis = ['💀', '🔥', '😭', '✨', '🫡', '✂️', '🦁']
   const special = genzMode
     ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
