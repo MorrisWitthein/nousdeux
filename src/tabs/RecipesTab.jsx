@@ -77,6 +77,12 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
   }
 
   useEffect(() => {
+    stepRefs.current.forEach(el => {
+      if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px' }
+    })
+  }, [fields.steps])
+
+  useEffect(() => {
     if (focusIng !== null && ingRefs.current[focusIng]) {
       ingRefs.current[focusIng].focus()
       setFocusIng(null)
@@ -205,7 +211,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
             placeholder={`Schritt ${i + 1}`}
             value={step}
             rows={1}
-            style={{ resize: 'none', overflow: 'auto', minHeight: '38px', maxHeight: '160px' }}
+            style={{ resize: 'none', overflow: 'hidden', minHeight: '44px', maxHeight: '160px' }}
             onChange={e => {
               const el = e.target
               el.style.height = 'auto'

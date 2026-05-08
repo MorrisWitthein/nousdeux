@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.2] - 2026-05-08
+
+### Fixed
+- Recipe edit form: step textareas now auto-resize to fit existing multi-line content when the edit sheet opens
+
+---
+
 ## [0.8.1] - 2026-05-07
 
 ### Fixed
