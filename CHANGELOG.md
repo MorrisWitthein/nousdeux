@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.6] - 2026-05-08
+
+### Changed
+- Calendar day highlights (today, selected, hover) now use a circle around the day number instead of a full-cell background fill
+
+---
+
 ## [0.9.5] - 2026-05-08
 
 ### Changed
