@@ -450,6 +450,8 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
   const [fields, setFields] = useState({ ...EMPTY_FIELDS })
   const [pendingImageFile, setPendingImageFile] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef(null)
 
   const knownTags = useMemo(
     () => [...new Set(recipes.flatMap(r => r.tags || []))].sort(),
@@ -540,12 +542,34 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
       <p className="section-title">Eure <em>Rezepte</em></p>
       <p className="section-sub">{recipes.length} Gerichte gesammelt</p>
 
-      <div className="tag-filter">
+      <div className="tag-filter" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         <input
+          ref={searchRef}
           placeholder="Rezepte suchen…"
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true) }}
+          onFocus={() => setSearchOpen(true)}
+          onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+          style={{ flex: 1, paddingRight: searchQuery ? 28 : undefined }}
         />
+        {searchQuery && (
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); setSearchQuery(''); setSearchOpen(false); searchRef.current?.focus() }}
+            style={{ position: 'absolute', right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, lineHeight: 1, padding: 2 }}
+          >×</button>
+        )}
+        {searchOpen && (() => {
+          const q = searchQuery.toLowerCase()
+          const tagSuggestions = knownTags.filter(t => !q || t.toLowerCase().includes(q))
+          return tagSuggestions.length > 0 ? (
+            <div className="tag-dropdown">
+              {tagSuggestions.map(t => (
+                <div key={t} className="tag-dropdown-item" onMouseDown={() => { setSearchQuery(t); setSearchOpen(false) }}>{t}</div>
+              ))}
+            </div>
+          ) : null
+        })()}
       </div>
 
       {sheet === null && (

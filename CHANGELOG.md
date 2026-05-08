@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.8.3] - 2026-05-08
+
+### Added
+- Recipe search now suggests existing tags in a dropdown as you type
+- Clear button (×) on the recipe search input to reset the query instantly
+
+---
+
 ## [0.8.2] - 2026-05-08
 
 ### Fixed
