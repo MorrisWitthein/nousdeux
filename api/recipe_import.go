@@ -161,7 +161,8 @@ const extractPrompt = `Extract the recipe from the content below and return a JS
 - emoji (single emoji that fits the dish)
 - tags (array of strings, max 4, lowercase)
 - ingredients (newline-separated list, amounts first, e.g. "200g Mehl")
-- steps (newline-separated numbered steps)
+- steps (newline-separated steps)
+- don't numerate the steps, as that will be handled automatically
 - prepTime (integer, total minutes including cooking)
 - servings (integer)
 
