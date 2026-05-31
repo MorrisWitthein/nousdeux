@@ -134,7 +134,9 @@ function buildMonthGrid(year, month) {
   const grid = []
   for (let i = 0; i < offset; i++) grid.push(null)
   for (let d = 1; d <= daysInMonth; d++) grid.push(d)
-  while (grid.length % 7 !== 0) grid.push(null)
+  // Always reserve 6 rows so every month has the same height — keeps the
+  // carousel from jumping vertically when sliding between months.
+  while (grid.length < 42) grid.push(null)
   return grid
 }
 
@@ -341,9 +343,10 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const [sheet, setSheet] = useState(null)
   const [viewingId, setViewingId] = useState(null)
 
-  const [headerOffset, setHeaderOffset] = useState(0)
-  const [swipeX, setSwipeX] = useState(0)
-  const [swiping, setSwiping] = useState(false)
+  const [dragX, setDragX] = useState(0)        // live finger offset during a swipe
+  const [dragging, setDragging] = useState(false)
+  const [anim, setAnim] = useState(0)          // -1 prev / +1 next while the slide animation runs
+  const [transition, setTransition] = useState(true)
   const touchRef = useRef({ startX: 0, startY: 0, locked: null })
   const calendarRef = useRef(null)
 
@@ -383,12 +386,14 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
   const SWIPE_THRESHOLD = 50
 
   const onTouchStart = useCallback((e) => {
+    if (anim !== 0) return  // ignore touches while a slide is committing
     const t = e.touches[0]
     touchRef.current = { startX: t.clientX, startY: t.clientY, locked: null }
-    setSwiping(true)
-  }, [])
+    setDragging(true)
+  }, [anim])
 
   const onTouchMove = useCallback((e) => {
+    if (!dragging) return
     const t = e.touches[0]
     const dx = t.clientX - touchRef.current.startX
     const dy = t.clientY - touchRef.current.startY
@@ -401,31 +406,45 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
     if (touchRef.current.locked === 'x') {
       e.preventDefault()
-      setSwipeX(dx)
-      const w = calendarRef.current?.offsetWidth ?? 1
-      if (Math.abs(dx) > w * 0.25) {
-        setHeaderOffset(dx > 0 ? -1 : 1)
-      } else {
-        setHeaderOffset(0)
-      }
+      setDragX(dx)
     }
-  }, [])
+  }, [dragging])
 
   const onTouchEnd = useCallback(() => {
-    const dx = swipeX
+    if (!dragging) return
+    const dx = dragX
     const w = calendarRef.current?.offsetWidth ?? 1
-    setSwiping(false)
-    setSwipeX(0)
-    setHeaderOffset(0)
+    setDragging(false)
 
     if (touchRef.current.locked === 'x' && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > w * 0.15) {
-      const dir = dx > 0 ? -1 : 1
-      setSelectedDay(null)
-      const next = offsetMonth(year, month, dir)
-      setMonth(next.month)
-      setYear(next.year)
+      // Past the threshold — let the track finish sliding in the swipe
+      // direction; the month state is committed in onTransitionEnd.
+      setAnim(dx > 0 ? -1 : 1)
+    } else {
+      // Not far enough — animate back to centre.
+      setDragX(0)
     }
-  }, [swipeX, year, month])
+  }, [dragging, dragX])
+
+  // After committing a slide we briefly disable the transition to re-centre
+  // the track without a visible jump; re-enable it on the next frame.
+  useEffect(() => {
+    if (transition) return
+    const id = requestAnimationFrame(() => setTransition(true))
+    return () => cancelAnimationFrame(id)
+  }, [transition])
+
+  const handleTrackTransitionEnd = (e) => {
+    if (e.target !== e.currentTarget || e.propertyName !== 'transform') return
+    if (anim === 0) return
+    const next = offsetMonth(year, month, anim)
+    setTransition(false)   // re-centre instantly — neighbour panel already shows this month
+    setMonth(next.month)
+    setYear(next.year)
+    setSelectedDay(null)
+    setDragX(0)
+    setAnim(0)
+  }
 
   useEffect(() => {
     if (showForm || editing) {
@@ -441,10 +460,22 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
 
   useEffect(() => { setEventLimit(PAGE_SIZE) }, [year, month, selectedDay])
 
-  const prevMonth = () => { setSelectedDay(null); const p = offsetMonth(year, month, -1); setMonth(p.month); setYear(p.year) }
-  const nextMonth = () => { setSelectedDay(null); const n = offsetMonth(year, month, 1); setMonth(n.month); setYear(n.year) }
+  // Buttons drive the same animated slide as a swipe.
+  const prevMonth = () => { if (anim === 0) setAnim(-1) }
+  const nextMonth = () => { if (anim === 0) setAnim(1) }
 
-  const headerMonth = offsetMonth(year, month, headerOffset)
+  const prevM = offsetMonth(year, month, -1)
+  const nextM = offsetMonth(year, month, 1)
+
+  // Header label follows the slide: the committing direction, or — mid-drag —
+  // the month we'd land on once past the threshold.
+  let headerDir = anim
+  if (headerDir === 0 && dragging) {
+    const w = calendarRef.current?.offsetWidth ?? 1
+    if (dragX > w * 0.25) headerDir = -1
+    else if (dragX < -w * 0.25) headerDir = 1
+  }
+  const headerMonth = offsetMonth(year, month, headerDir)
 
   const handleDayClick = (day) => {
     if (!day) return
@@ -665,16 +696,44 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         onTouchEnd={onTouchEnd}
         style={{ overflow: 'hidden', touchAction: 'pan-y' }}
       >
-        <div style={{
-          transform: swipeX ? `translateX(${swipeX}px)` : undefined,
-          transition: swiping ? 'none' : 'transform 0.2s ease-out',
-        }}>
-          <MonthGrid
-            year={year} month={month} events={events}
-            selectedDay={selectedDay} onDayClick={handleDayClick}
-            nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
-            currentUser={currentUser}
-          />
+        <div
+          className="cal-track"
+          onTransitionEnd={handleTrackTransitionEnd}
+          style={{
+            transform: dragging
+              ? `translateX(calc(-100% + ${dragX}px))`
+              : anim === 1 ? 'translateX(-200%)'
+              : anim === -1 ? 'translateX(0%)'
+              : 'translateX(-100%)',
+            transition: dragging || !transition
+              ? 'none'
+              : 'transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1)',
+          }}
+        >
+          <div className="cal-panel">
+            <MonthGrid
+              year={prevM.year} month={prevM.month} events={events}
+              selectedDay={null} onDayClick={null}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+              currentUser={currentUser}
+            />
+          </div>
+          <div className="cal-panel">
+            <MonthGrid
+              year={year} month={month} events={events}
+              selectedDay={selectedDay} onDayClick={handleDayClick}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+              currentUser={currentUser}
+            />
+          </div>
+          <div className="cal-panel">
+            <MonthGrid
+              year={nextM.year} month={nextM.month} events={events}
+              selectedDay={null} onDayClick={null}
+              nowYear={nowYear} nowMonth={nowMonth} nowDay={nowDay}
+              currentUser={currentUser}
+            />
+          </div>
         </div>
       </div>
 

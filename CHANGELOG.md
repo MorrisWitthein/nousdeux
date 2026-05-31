@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.8] - 2026-05-31
+
+### Changed
+- Calendar: month navigation is now a real carousel — prev, current and next months render in a sliding track, so a neighbouring month always slides into view during a swipe instead of revealing empty space
+- Calendar: the `‹` / `›` buttons now animate the slide (same transition as a swipe) instead of swapping the grid instantly
+- Calendar: every month reserves a fixed 6-row height so sliding between months no longer jumps vertically
+
+---
+
 ## [0.9.7] - 2026-05-08
 
 ### Fixed

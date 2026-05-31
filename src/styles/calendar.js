@@ -30,13 +30,22 @@ const calendar = `
 
 .nav-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
 
+.cal-track {
+  display: flex;
+  margin-bottom: 20px;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.cal-panel {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  margin-bottom: 20px;
-  will-change: transform;
-  backface-visibility: hidden;
 }
 
 .cal-day-name {
