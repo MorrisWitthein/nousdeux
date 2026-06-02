@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.10] - 2026-06-02
+
+### Changed
+- Calendar: tapping anywhere outside the calendar, cards or buttons now clears the day selection, replacing the old "Alle anzeigen" button
+- Listen: the selected sub-list (Serien / Filme / Aktivitäten / Einkauf) is now remembered when switching to another tab and back
+- Listen: completed items (Serien „Fertig", Filme „Gesehen", Aktivitäten „Gemacht") are now hidden by default in a collapsible "Erledigt" section
+
+---
+
 ## [0.9.9] - 2026-06-02
 
 ### Changed

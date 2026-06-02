@@ -22,6 +22,8 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home')
+  // Lifted out of ListsTab so the chosen sub-list survives switching tabs.
+  const [listsActiveList, setListsActiveList] = useState('series')
   const [calendarTarget, setCalendarTarget] = useState(null)
   const [calendarPrefill, setCalendarPrefill] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
@@ -98,6 +100,8 @@ export default function App() {
               movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie}
               currentUser={currentUser}
               onNavigateToCalendar={navigateToCalendar}
+              activeList={listsActiveList}
+              setActiveList={setListsActiveList}
             />
           )}
           {activeTab === 'recipes' && (

@@ -487,6 +487,21 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
     setShowForm(false)
   }
 
+  // Drop the day selection when tapping any non-interactive area of the page —
+  // clicks on calendar days, buttons, cards, forms, links and the detail sheet
+  // are left alone so they keep doing their own thing.
+  useEffect(() => {
+    if (!selectedDay) return
+    const handler = (e) => {
+      if (e.target.closest(
+        '.cal-day, button, a, input, select, textarea, label, .card, .add-form, .sheet, .sheet-backdrop'
+      )) return
+      setSelectedDay(null)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [selectedDay])
+
   const openDetail = (e) => {
     setViewingId(e.id)
     setSheet('detail')
@@ -756,16 +771,6 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
             submitted
           )}
         </div>
-      )}
-
-      {selectedDay && (
-        <button
-          className="btn btn-secondary"
-          style={{ width: '100%', marginBottom: 12, borderRadius: 14, padding: '10px' }}
-          onClick={() => setSelectedDay(null)}
-        >
-          Alle anzeigen
-        </button>
       )}
 
       {!showForm && !editing && (

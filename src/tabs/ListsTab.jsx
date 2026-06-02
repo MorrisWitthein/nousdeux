@@ -116,9 +116,10 @@ export default function ListsTab({
   movies, addMovie, updateMovie, deleteMovie,
   currentUser,
   onNavigateToCalendar,
+  activeList,
+  setActiveList,
 }) {
   const showToast = useToast()
-  const [activeList, setActiveList] = useState('series')
   const { items: shopItems, history: shopHistory, addItem: addShopItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
   const [shopInput, setShopInput] = useState('')
   const [shopSuggestions, setShopSuggestions] = useState([])
@@ -148,6 +149,10 @@ export default function ListsTab({
   const [viewingId, setViewingId] = useState(null)
 
   const [submitted, setSubmitted] = useState(false)
+
+  // Completed items (watched series/movies, done activities) collapse into an
+  // "Erledigt" section that is hidden by default, per list type.
+  const [showDone, setShowDone] = useState({ series: false, movies: false, activities: false })
 
   const openDetail = (type, id) => { setSheet(type); setViewingId(id) }
   const closeDetail = () => { setSheet(null); setViewingId(null) }
@@ -201,6 +206,7 @@ export default function ListsTab({
 
   const startEditSeries = (s) => {
     setSubmitted(false)
+    if (s.status === 'Fertig') setShowDone(prev => ({ ...prev, series: true }))
     setEditingSeries(s.id)
     setEditSeriesFields({
       title: s.title,
@@ -267,6 +273,7 @@ export default function ListsTab({
 
   const startEditMovie = (m) => {
     setSubmitted(false)
+    if (m.status === 'Gesehen') setShowDone(prev => ({ ...prev, movies: true }))
     setEditingMovie(m.id)
     setEditMovieFields({
       emoji: m.emoji || '🍿',
@@ -309,6 +316,7 @@ export default function ListsTab({
 
   const startEditActivity = (a) => {
     setSubmitted(false)
+    if (a.status === 'Gemacht') setShowDone(prev => ({ ...prev, activities: true }))
     setEditingActivity(a.id)
     setEditActivityFields({
       emoji: a.emoji || '✨',
@@ -528,6 +536,110 @@ export default function ListsTab({
   const viewingMovieItem = movies.find(m => m.id === viewingId)
   const viewingActivityItem = activities.find(a => a.id === viewingId)
 
+  const renderSeriesRow = (s) => (
+    editingSeries === s.id ? (
+      <div key={s.id} ref={formRef}>
+        {renderSeriesForm(
+          editSeriesFields, setEditSeriesFields,
+          handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
+          'Serie bearbeiten', submitted
+        )}
+      </div>
+    ) : (
+      <div key={s.id} className="list-item" onClick={() => openDetail('series', s.id)}>
+        <div className="list-emoji">{s.emoji}</div>
+        <div className="list-info">
+          <div className="list-title">{s.title}</div>
+          <div className="list-sub">{seriesSubLine(s)}</div>
+        </div>
+        <span className={`badge badge-${s.statusType}`}>{s.status}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
+          <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
+        </div>
+      </div>
+    )
+  )
+
+  const renderMovieRow = (m) => (
+    editingMovie === m.id ? (
+      <div key={m.id} ref={formRef}>
+        {renderMovieForm(
+          editMovieFields, setEditMovieFields,
+          handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
+          'Film bearbeiten', submitted
+        )}
+      </div>
+    ) : (
+      <div key={m.id} className="list-item" onClick={() => openDetail('movie', m.id)}>
+        <div className="list-emoji">{m.emoji}</div>
+        <div className="list-info">
+          <div className="list-title">{m.title}</div>
+          <div className="list-sub">{movieSubLine(m)}</div>
+        </div>
+        <span className={`badge badge-${m.statusType}`}>{m.status}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
+          <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
+        </div>
+      </div>
+    )
+  )
+
+  const renderActivityRow = (a) => (
+    editingActivity === a.id ? (
+      <div key={a.id} ref={formRef}>
+        {renderActivityForm(
+          editActivityFields, setEditActivityFields,
+          handleUpdateActivity, () => { setEditingActivity(null); setSubmitted(false) },
+          'Aktivität bearbeiten', submitted
+        )}
+      </div>
+    ) : (
+      <div key={a.id} className="activity-card" onClick={() => openDetail('activity', a.id)}>
+        <div className="activity-icon">{a.emoji}</div>
+        <div style={{ flex: 1 }}>
+          <div className="list-title">{a.title}</div>
+          {a.meta && <div className="list-sub">{a.meta}</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={`badge badge-${activityStatusType(a.status)}`}>{a.status || 'Idee'}</span>
+          <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
+              <button className="btn-edit" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
+            </div>
+            <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(a.id) }}><CloseIcon /></button>
+          </div>
+        </div>
+      </div>
+    )
+  )
+
+  const renderDoneSection = (key, doneItems, renderRow, label = 'Erledigt') => {
+    if (doneItems.length === 0) return null
+    const open = showDone[key]
+    return (
+      <>
+        <button
+          type="button"
+          className="done-toggle"
+          onClick={() => setShowDone(prev => ({ ...prev, [key]: !prev[key] }))}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 7, background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--muted)', fontSize: 13, padding: '14px 0 10px', marginTop: 4,
+          }}
+        >
+          <span style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+          {label} ({doneItems.length})
+        </button>
+        {open && doneItems.map(renderRow)}
+      </>
+    )
+  }
+
   return (
     <div>
       <p className="section-title">Eure <em>Listen</em></p>
@@ -565,30 +677,8 @@ export default function ListsTab({
             >+</button>
           )}
 
-          {series.map(s => (
-            editingSeries === s.id ? (
-              <div key={s.id} ref={formRef}>
-                {renderSeriesForm(
-                  editSeriesFields, setEditSeriesFields,
-                  handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
-                  'Serie bearbeiten', submitted
-                )}
-              </div>
-            ) : (
-              <div key={s.id} className="list-item" onClick={() => openDetail('series', s.id)}>
-                <div className="list-emoji">{s.emoji}</div>
-                <div className="list-info">
-                  <div className="list-title">{s.title}</div>
-                  <div className="list-sub">{seriesSubLine(s)}</div>
-                </div>
-                <span className={`badge badge-${s.statusType}`}>{s.status}</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
-                </div>
-              </div>
-            )
-          ))}
+          {series.filter(s => s.status !== 'Fertig').map(renderSeriesRow)}
+          {renderDoneSection('series', series.filter(s => s.status === 'Fertig'), renderSeriesRow)}
         </>
       )}
 
@@ -608,36 +698,8 @@ export default function ListsTab({
             >+</button>
           )}
 
-          {activities.map(a => (
-            editingActivity === a.id ? (
-              <div key={a.id} ref={formRef}>
-                {renderActivityForm(
-                  editActivityFields, setEditActivityFields,
-                  handleUpdateActivity, () => { setEditingActivity(null); setSubmitted(false) },
-                  'Aktivität bearbeiten', submitted
-                )}
-              </div>
-            ) : (
-              <div key={a.id} className="activity-card" onClick={() => openDetail('activity', a.id)}>
-                <div className="activity-icon">{a.emoji}</div>
-                <div style={{ flex: 1 }}>
-                  <div className="list-title">{a.title}</div>
-                  {a.meta && <div className="list-sub">{a.meta}</div>}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className={`badge badge-${activityStatusType(a.status)}`}>{a.status || 'Idee'}</span>
-                  <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
-                      <button className="btn-edit" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
-                    </div>
-                    <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(a.id) }}><CloseIcon /></button>
-                  </div>
-                </div>
-              </div>
-            )
-          ))}
+          {activities.filter(a => a.status !== 'Gemacht').map(renderActivityRow)}
+          {renderDoneSection('activities', activities.filter(a => a.status === 'Gemacht'), renderActivityRow)}
         </>
       )}
 
@@ -671,30 +733,8 @@ export default function ListsTab({
             >+</button>
           )}
 
-          {displayedMovies.map(m => (
-            editingMovie === m.id ? (
-              <div key={m.id} ref={formRef}>
-                {renderMovieForm(
-                  editMovieFields, setEditMovieFields,
-                  handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
-                  'Film bearbeiten', submitted
-                )}
-              </div>
-            ) : (
-              <div key={m.id} className="list-item" onClick={() => openDetail('movie', m.id)}>
-                <div className="list-emoji">{m.emoji}</div>
-                <div className="list-info">
-                  <div className="list-title">{m.title}</div>
-                  <div className="list-sub">{movieSubLine(m)}</div>
-                </div>
-                <span className={`badge badge-${m.statusType}`}>{m.status}</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
-                </div>
-              </div>
-            )
-          ))}
+          {displayedMovies.filter(m => m.status !== 'Gesehen').map(renderMovieRow)}
+          {renderDoneSection('movies', displayedMovies.filter(m => m.status === 'Gesehen'), renderMovieRow, 'Gesehen')}
         </>
       )}
 
