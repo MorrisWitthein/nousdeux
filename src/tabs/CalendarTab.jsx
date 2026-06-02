@@ -329,6 +329,9 @@ function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowM
 
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 const PAGE_SIZE = 5
+// Whitespace (px) inserted between month panels so the boundary between two
+// months is visible while swiping/holding mid-drag.
+const PANEL_GAP = 24
 
 export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const showToast = useToast()
@@ -700,11 +703,12 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           className="cal-track"
           onTransitionEnd={handleTrackTransitionEnd}
           style={{
+            gap: PANEL_GAP,
             transform: dragging
-              ? `translateX(calc(-100% + ${dragX}px))`
-              : anim === 1 ? 'translateX(-200%)'
+              ? `translateX(calc(-100% - ${PANEL_GAP}px + ${dragX}px))`
+              : anim === 1 ? `translateX(calc(-200% - ${PANEL_GAP * 2}px))`
               : anim === -1 ? 'translateX(0%)'
-              : 'translateX(-100%)',
+              : `translateX(calc(-100% - ${PANEL_GAP}px))`,
             transition: dragging || !transition
               ? 'none'
               : 'transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1)',

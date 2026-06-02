@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.9] - 2026-06-02
+
+### Changed
+- Calendar: added whitespace between month panels so the boundary between two months is clearly visible while swiping (and holding mid-drag)
+
+---
+
 ## [0.9.8] - 2026-05-31
 
 ### Changed
