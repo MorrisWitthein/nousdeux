@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.9.11] - 2026-06-02
+
+### Changed
+- Calendar: the "Heute" button now jumps to the current month without selecting today's date
+
+---
+
 ## [0.9.10] - 2026-06-02
 
 ### Changed

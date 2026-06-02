@@ -701,7 +701,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           <button
             className="nav-btn"
             style={{ fontSize: 11, padding: '4px 14px', letterSpacing: 0.3, borderRadius: 999, width: 'auto', height: 'auto' }}
-            onClick={() => { setYear(nowYear); setMonth(nowMonth); setSelectedDay(nowDay) }}
+            onClick={() => { setYear(nowYear); setMonth(nowMonth); setSelectedDay(null) }}
           >Heute</button>
           <button className="nav-btn" onClick={nextMonth}>›</button>
         </div>
