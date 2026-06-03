@@ -3,6 +3,7 @@ import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
 import Sheet from '../components/Sheet.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 
 function SeriesDetail({ series, onEdit, onClose }) {
@@ -679,6 +680,9 @@ export default function ListsTab({
 
           {series.filter(s => s.status !== 'Fertig').map(renderSeriesRow)}
           {renderDoneSection('series', series.filter(s => s.status === 'Fertig'), renderSeriesRow)}
+          {series.length === 0 && !showSeriesForm && (
+            <EmptyState emoji="🍿" title="Noch keine Serien" hint="Tippe auf +, um eure erste Serie zu eurer Watchlist hinzuzufügen." />
+          )}
         </>
       )}
 
@@ -700,6 +704,9 @@ export default function ListsTab({
 
           {activities.filter(a => a.status !== 'Gemacht').map(renderActivityRow)}
           {renderDoneSection('activities', activities.filter(a => a.status === 'Gemacht'), renderActivityRow)}
+          {activities.length === 0 && !showActivityForm && (
+            <EmptyState emoji="✨" title="Noch keine Aktivitäten" hint="Tippe auf +, um eine gemeinsame Idee festzuhalten." />
+          )}
         </>
       )}
 
@@ -735,6 +742,11 @@ export default function ListsTab({
 
           {displayedMovies.filter(m => m.status !== 'Gesehen').map(renderMovieRow)}
           {renderDoneSection('movies', displayedMovies.filter(m => m.status === 'Gesehen'), renderMovieRow, 'Gesehen')}
+          {displayedMovies.length === 0 && !showMovieForm && (
+            movies.length === 0
+              ? <EmptyState emoji="🎬" title="Noch keine Filme" hint="Tippe auf +, um euren ersten Film zu eurer Watchlist hinzuzufügen." />
+              : <EmptyState emoji="🎬" title="Keine Treffer" hint="Kein Film passt zu den gewählten Genres." />
+          )}
         </>
       )}
 

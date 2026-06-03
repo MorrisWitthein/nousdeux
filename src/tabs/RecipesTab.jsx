@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, ImportIcon, CartIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
 import { useToast } from '../context/ToastContext.jsx'
 
@@ -726,6 +727,12 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
           </div>
         </div>
       ))}
+
+      {displayed.length === 0 && (
+        searchQuery.trim() !== ''
+          ? <EmptyState emoji="🔍" title="Keine Treffer" hint={`Keine Rezepte für „${searchQuery}".`} />
+          : <EmptyState emoji="🍽️" title="Noch keine Rezepte" hint="Tippe auf +, um euer erstes Rezept zu sammeln oder zu importieren." />
+      )}
 
       {sheet === 'add' && (
         <RecipeForm

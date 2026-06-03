@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 
 function formatBytes(bytes) {
@@ -839,6 +840,12 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
           </div>
         )
       })}
+
+      {visibleEvents.length === 0 && !showForm && !editing && (
+        selectedDay
+          ? <EmptyState emoji="🗓️" title="Keine Termine an diesem Tag" hint="Tippe auf den Tag erneut, um wieder alle Termine zu sehen, oder auf +, um etwas einzutragen." />
+          : <EmptyState emoji="🗓️" title="Keine Termine" hint="Für diesen Monat ist nichts geplant. Tippe auf +, um euren ersten Termin einzutragen." />
+      )}
 
       {visibleEvents.length > eventLimit && (
         <button

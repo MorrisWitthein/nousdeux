@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.0] - 2026-06-03
+
+### Added
+- Empty states across all tabs: the calendar (no events for the month, or a tapped day with no events), Serien, Filme and Aktivitäten lists, and Rezepte now show a friendly placeholder instead of a blank screen when there is nothing yet (or no search/filter matches)
+
+---
+
 ## [0.9.11] - 2026-06-02
 
 ### Changed

@@ -163,6 +163,32 @@ const cards = `
   font-size: 20px;
   margin-bottom: 8px;
 }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+}
+
+.empty-state-emoji {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.empty-state-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.empty-state-hint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
 `
 
 export default cards
