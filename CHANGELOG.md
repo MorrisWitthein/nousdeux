@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Loading state on initial fetch: the home screen now shows `–` instead of a confidently wrong `0` for its stat counts while data is still loading, and the empty-state placeholders no longer flash before the first fetch completes
 
 ### Changed
+- Add and edit forms in the calendar and lists tabs now open as a bottom slide-up sheet (with swipe-to-dismiss), matching the recipes tab — replacing the inline form that appeared at the top of the list and auto-scrolled the page to reach it
 - Deleting an event, series, movie, activity or recipe no longer pops a native browser confirm dialog — the item is removed immediately and a "Gelöscht · Rückgängig" toast lets you undo the delete, so an accidental deletion in this shared app is recoverable
 - Author attribution colours (header avatar, profile avatar and every author dot) now run through a single shared helper, so the header/profile avatar follow the same "your items are teal, your partner's are red" scheme used everywhere else instead of a hardcoded colour (no visible change; internal consistency cleanup)
 

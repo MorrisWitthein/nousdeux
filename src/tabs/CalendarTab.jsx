@@ -386,7 +386,6 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
   const pendingFileInputRef = useRef(null)
   const [pendingEditFiles, setPendingEditFiles] = useState([])
   const pendingEditFileInputRef = useRef(null)
-  const formRef = useRef(null)
 
   const SWIPE_THRESHOLD = 50
 
@@ -451,18 +450,6 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     setAnim(0)
   }
 
-  useEffect(() => {
-    if (showForm || editing) {
-      requestAnimationFrame(() => {
-        const el = formRef.current
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        const navHeight = document.querySelector('.bottom-nav')?.offsetHeight ?? 0
-        window.scrollBy({ top: rect.bottom - (window.innerHeight - navHeight), behavior: 'smooth' })
-      })
-    }
-  }, [showForm, editing])
-
   useEffect(() => { setEventLimit(PAGE_SIZE) }, [year, month, selectedDay])
 
   // Buttons drive the same animated slide as a swipe.
@@ -496,7 +483,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     if (!selectedDay) return
     const handler = (e) => {
       if (e.target.closest(
-        '.cal-day, button, a, input, select, textarea, label, .card, .add-form, .sheet, .sheet-backdrop'
+        '.cal-day, button, a, input, select, textarea, label, .card, .sheet, .sheet-backdrop'
       )) return
       setSelectedDay(null)
     }
@@ -591,8 +578,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
     const titleMissing = submitted && !fields.title.trim()
     return (
-      <div className="add-form">
-        <div className="add-form-title">{title}</div>
+      <Sheet title={title} onClose={onCancel}>
         <input
           className={titleMissing ? 'input-error' : ''}
           placeholder="Titel"
@@ -682,7 +668,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
           <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
           <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid}>Speichern</button>
         </div>
-      </div>
+      </Sheet>
     )
   }
 
@@ -770,23 +756,6 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
         </div>
       </div>
 
-      {showForm && (
-        <div ref={formRef}>
-          {renderForm(
-            newEvent,
-            setNewEvent,
-            handleAdd,
-            () => { setShowForm(false); setPendingFiles([]); setFormError(null); setSubmitted(false) },
-            'Neuer Termin',
-            formError,
-            pendingFiles,
-            setPendingFiles,
-            pendingFileInputRef,
-            submitted
-          )}
-        </div>
-      )}
-
       {!showForm && !editing && (
         <button
           className="fab"
@@ -809,22 +778,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
           ? `${formatISOToGerman(e.date)} – ${formatISOToGerman(e.endDate)}`
           : (formatISOToGerman(e.date) || e.date)
 
-        return editing === e.id ? (
-          <div key={e.id} ref={formRef}>
-            {renderForm(
-              editFields,
-              setEditFields,
-              handleUpdate,
-              () => { setEditing(null); setPendingEditFiles([]); setFormError(null); setSubmitted(false) },
-              'Termin bearbeiten',
-              formError,
-              pendingEditFiles,
-              setPendingEditFiles,
-              pendingEditFileInputRef,
-              submitted
-            )}
-          </div>
-        ) : (
+        return (
           <div key={e.id} className="card" onClick={() => openDetail(e)}>
             <div className="card-header">
               <div>
@@ -882,6 +836,32 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
           deleteAttachment={deleteAttachment}
           attachmentUrl={attachmentUrl}
         />
+      )}
+
+      {showForm && renderForm(
+        newEvent,
+        setNewEvent,
+        handleAdd,
+        () => { setShowForm(false); setPendingFiles([]); setFormError(null); setSubmitted(false) },
+        'Neuer Termin',
+        formError,
+        pendingFiles,
+        setPendingFiles,
+        pendingFileInputRef,
+        submitted
+      )}
+
+      {editing && renderForm(
+        editFields,
+        setEditFields,
+        handleUpdate,
+        () => { setEditing(null); setPendingEditFiles([]); setFormError(null); setSubmitted(false) },
+        'Termin bearbeiten',
+        formError,
+        pendingEditFiles,
+        setPendingEditFiles,
+        pendingEditFileInputRef,
+        submitted
       )}
     </div>
   )

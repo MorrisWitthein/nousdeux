@@ -304,7 +304,9 @@ const forms = `
 }
 
 .add-form input[type="date"],
-.add-form input[type="time"] {
+.add-form input[type="time"],
+.sheet-body input[type="date"],
+.sheet-body input[type="time"] {
   -webkit-appearance: none;
   appearance: none;
   height: 46px;

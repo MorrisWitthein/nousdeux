@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
 import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
@@ -170,19 +170,6 @@ export default function ListsTab({
 
   const toggleGenre = (genre) =>
     setActiveGenres(prev => prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre])
-
-  const formRef = useRef(null)
-  useEffect(() => {
-    if (showSeriesForm || editingSeries || showActivityForm || editingActivity || showMovieForm || editingMovie) {
-      requestAnimationFrame(() => {
-        const el = formRef.current
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        const navHeight = document.querySelector('.bottom-nav')?.offsetHeight ?? 0
-        window.scrollBy({ top: rect.bottom - (window.innerHeight - navHeight), behavior: 'smooth' })
-      })
-    }
-  }, [showSeriesForm, editingSeries, showActivityForm, editingActivity, showMovieForm, editingMovie])
 
   // Series handlers
   const handleAddSeries = async () => {
@@ -394,8 +381,7 @@ export default function ListsTab({
   const renderSeriesForm = (fields, setFields, onSave, onCancel, title, submitted) => {
     const titleMissing = submitted && !fields.title.trim()
     return (
-    <div className="add-form">
-      <div className="add-form-title">{title}</div>
+    <Sheet title={title} onClose={onCancel}>
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -448,15 +434,14 @@ export default function ListsTab({
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" onClick={onSave}>Speichern</button>
       </div>
-    </div>
+    </Sheet>
   )
   }
 
   const renderMovieForm = (fields, setFields, onSave, onCancel, title, submitted) => {
     const titleMissing = submitted && !fields.title.trim()
     return (
-    <div className="add-form">
-      <div className="add-form-title">{title}</div>
+    <Sheet title={title} onClose={onCancel}>
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -503,15 +488,14 @@ export default function ListsTab({
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" onClick={onSave}>Speichern</button>
       </div>
-    </div>
+    </Sheet>
   )
   }
 
   const renderActivityForm = (fields, setFields, onSave, onCancel, title, submitted) => {
     const titleMissing = submitted && !fields.title.trim()
     return (
-    <div className="add-form">
-      <div className="add-form-title">{title}</div>
+    <Sheet title={title} onClose={onCancel}>
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -548,7 +532,7 @@ export default function ListsTab({
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" onClick={onSave}>Speichern</button>
       </div>
-    </div>
+    </Sheet>
   )
   }
 
@@ -557,15 +541,6 @@ export default function ListsTab({
   const viewingActivityItem = activities.find(a => a.id === viewingId)
 
   const renderSeriesRow = (s) => (
-    editingSeries === s.id ? (
-      <div key={s.id} ref={formRef}>
-        {renderSeriesForm(
-          editSeriesFields, setEditSeriesFields,
-          handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
-          'Serie bearbeiten', submitted
-        )}
-      </div>
-    ) : (
       <div key={s.id} className="list-item" onClick={() => openDetail('series', s.id)}>
         <div className="list-emoji">{s.emoji}</div>
         <div className="list-info">
@@ -578,19 +553,9 @@ export default function ListsTab({
           <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
         </div>
       </div>
-    )
   )
 
   const renderMovieRow = (m) => (
-    editingMovie === m.id ? (
-      <div key={m.id} ref={formRef}>
-        {renderMovieForm(
-          editMovieFields, setEditMovieFields,
-          handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
-          'Film bearbeiten', submitted
-        )}
-      </div>
-    ) : (
       <div key={m.id} className="list-item" onClick={() => openDetail('movie', m.id)}>
         <div className="list-emoji">{m.emoji}</div>
         <div className="list-info">
@@ -603,19 +568,9 @@ export default function ListsTab({
           <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
         </div>
       </div>
-    )
   )
 
   const renderActivityRow = (a) => (
-    editingActivity === a.id ? (
-      <div key={a.id} ref={formRef}>
-        {renderActivityForm(
-          editActivityFields, setEditActivityFields,
-          handleUpdateActivity, () => { setEditingActivity(null); setSubmitted(false) },
-          'Aktivität bearbeiten', submitted
-        )}
-      </div>
-    ) : (
       <div key={a.id} className="activity-card" onClick={() => openDetail('activity', a.id)}>
         <div className="activity-icon">{a.emoji}</div>
         <div style={{ flex: 1 }}>
@@ -634,7 +589,6 @@ export default function ListsTab({
           </div>
         </div>
       </div>
-    )
   )
 
   const renderDoneSection = (key, doneItems, renderRow, label = 'Erledigt') => {
@@ -683,12 +637,6 @@ export default function ListsTab({
 
       {activeList === 'series' && (
         <>
-          {showSeriesForm && <div ref={formRef}>{renderSeriesForm(
-            newSeries, setNewSeries,
-            handleAddSeries, () => { setShowSeriesForm(false); setSubmitted(false) },
-            'Serie hinzufügen', submitted
-          )}</div>}
-
           {!showSeriesForm && !editingSeries && (
             <button
               className="fab"
@@ -707,12 +655,6 @@ export default function ListsTab({
 
       {activeList === 'activities' && (
         <>
-          {showActivityForm && <div ref={formRef}>{renderActivityForm(
-            newAct, setNewAct,
-            handleAddActivity, () => { setShowActivityForm(false); setSubmitted(false) },
-            'Aktivität hinzufügen', submitted
-          )}</div>}
-
           {!showActivityForm && !editingActivity && (
             <button
               className="fab"
@@ -744,12 +686,6 @@ export default function ListsTab({
               ))}
             </div>
           )}
-
-          {showMovieForm && <div ref={formRef}>{renderMovieForm(
-            newMovie, setNewMovie,
-            handleAddMovie, () => { setShowMovieForm(false); setSubmitted(false) },
-            'Film hinzufügen', submitted
-          )}</div>}
 
           {!showMovieForm && !editingMovie && (
             <button
@@ -904,6 +840,39 @@ export default function ListsTab({
           onClose={closeDetail}
           onNavigateToCalendar={onNavigateToCalendar}
         />
+      )}
+
+      {showSeriesForm && renderSeriesForm(
+        newSeries, setNewSeries,
+        handleAddSeries, () => { setShowSeriesForm(false); setSubmitted(false) },
+        'Serie hinzufügen', submitted
+      )}
+      {editingSeries && renderSeriesForm(
+        editSeriesFields, setEditSeriesFields,
+        handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
+        'Serie bearbeiten', submitted
+      )}
+
+      {showMovieForm && renderMovieForm(
+        newMovie, setNewMovie,
+        handleAddMovie, () => { setShowMovieForm(false); setSubmitted(false) },
+        'Film hinzufügen', submitted
+      )}
+      {editingMovie && renderMovieForm(
+        editMovieFields, setEditMovieFields,
+        handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
+        'Film bearbeiten', submitted
+      )}
+
+      {showActivityForm && renderActivityForm(
+        newAct, setNewAct,
+        handleAddActivity, () => { setShowActivityForm(false); setSubmitted(false) },
+        'Aktivität hinzufügen', submitted
+      )}
+      {editingActivity && renderActivityForm(
+        editActivityFields, setEditActivityFields,
+        handleUpdateActivity, () => { setEditingActivity(null); setSubmitted(false) },
+        'Aktivität bearbeiten', submitted
       )}
     </div>
   )
