@@ -4,6 +4,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/recipes`, { headers: authHeaders() })
@@ -12,7 +13,7 @@ export function useRecipes() {
   }
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/recipes/stream?token=${token}`, refresh)
   }, [])
@@ -124,5 +125,5 @@ export function useRecipes() {
     }
   }
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }
+  return { recipes, loading, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }
 }

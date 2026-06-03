@@ -4,6 +4,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useEvents() {
   const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/events`, { headers: authHeaders() })
@@ -12,7 +13,7 @@ export function useEvents() {
   }
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/events/stream?token=${token}`, refresh)
   }, [])
@@ -100,5 +101,5 @@ export function useEvents() {
     return `${API}/api/attachments/${attachmentId}?token=${token}`
   }
 
-  return { events, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }
+  return { events, loading, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }
 }

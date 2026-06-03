@@ -74,7 +74,7 @@ Findings from a usability review of the four tabs, shared components, and stylin
 ### High Priority
 
 - [x] Add empty states everywhere except the shopping list (which already has one at `ListsTab.jsx:846`). A new couple sees blank tabs with just a floating `+`. Cover: Calendar with no events; tapping a calendar day with no events (currently shows nothing, looks broken — `CalendarTab.jsx:691`); Series / Movies / Activities with no items; Recipes with no items.
-- [ ] Add a loading state on initial fetch — hooks load async but tabs render their empty layout immediately. Home shows `0` Events / `0` Serien during the fetch (`HomeTab.jsx:206-227`), i.e. confidently wrong numbers. Use a skeleton or `–` until first load.
+- [x] Add a loading state on initial fetch — hooks load async but tabs render their empty layout immediately. Home shows `0` Events / `0` Serien during the fetch (`HomeTab.jsx:206-227`), i.e. confidently wrong numbers. Use a skeleton or `–` until first load.
 - [ ] Replace `window.confirm` deletes with an undo toast — every delete uses native `window.confirm` (e.g. `CalendarTab.jsx:835`, `ListsTab.jsx:344`). Breaks the PWA look, and in a shared app a partner's accidental delete is unrecoverable. Use the existing `ToastContext` for a "Gelöscht · Rückgängig" toast.
 - [ ] Explain the author color code — teal = you, red = partner is used consistently (calendar bars, card dots, shopping dots) but never explained. Add a small legend (e.g. on the calendar: `● Max ● Lena`). Also fix the header avatar, hardcoded `avatar-b` (teal) for both users (`App.jsx:69`), which contradicts the scheme everywhere else.
 

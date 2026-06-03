@@ -75,7 +75,7 @@ function getSpecialDay(now) {
   return null
 }
 
-export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser, weatherEmoji, genzMode }) {
+export default function HomeTab({ events, recipes, series, activities, onNavigateToCalendar, onNavigate, currentUser, weatherEmoji, genzMode, loading }) {
   const now = new Date()
   const dateStr = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const hour = now.getHours()
@@ -206,22 +206,22 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       <div className="quick-stats">
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('calendar')}>
           <div className="stat-icon">📅</div>
-          <div className="stat-number">{events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
+          <div className="stat-number">{loading ? '–' : events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
           <div className="stat-label">Events diesen Monat</div>
         </div>
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('lists')}>
           <div className="stat-icon">🍿</div>
-          <div className="stat-number">{runningSeries}</div>
+          <div className="stat-number">{loading ? '–' : runningSeries}</div>
           <div className="stat-label">Serien am Laufen</div>
         </div>
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('recipes')}>
           <div className="stat-icon">🍳</div>
-          <div className="stat-number">{recipes.length}</div>
+          <div className="stat-number">{loading ? '–' : recipes.length}</div>
           <div className="stat-label">Rezepte gesammelt</div>
         </div>
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('lists')}>
           <div className="stat-icon">✨</div>
-          <div className="stat-number">{activities.length}</div>
+          <div className="stat-number">{loading ? '–' : activities.length}</div>
           <div className="stat-label">Aktivitäten geplant</div>
         </div>
       </div>

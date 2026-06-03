@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Empty states across all tabs: the calendar (no events for the month, or a tapped day with no events), Serien, Filme and Aktivitäten lists, and Rezepte now show a friendly placeholder instead of a blank screen when there is nothing yet (or no search/filter matches)
+- Loading state on initial fetch: the home screen now shows `–` instead of a confidently wrong `0` for its stat counts while data is still loading, and the empty-state placeholders no longer flash before the first fetch completes
 
 ---
 

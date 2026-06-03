@@ -42,11 +42,11 @@ export default function App() {
     setShowProfile(false)
   }
 
-  const { events, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl } = useEvents()
-  const { recipes,    addRecipe,   updateRecipe,   deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }   = useRecipes()
-  const { series,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
-  const { activities, addActivity, updateActivity, deleteActivity } = useActivities()
-  const { movies, addMovie, updateMovie, deleteMovie } = useMovies()
+  const { events, loading: eventsLoading, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl } = useEvents()
+  const { recipes, loading: recipesLoading, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }   = useRecipes()
+  const { series,     loading: seriesLoading,     addSeries,   updateSeries,   deleteSeries }   = useSeries()
+  const { activities, loading: activitiesLoading, addActivity, updateActivity, deleteActivity } = useActivities()
+  const { movies, loading: moviesLoading, addMovie, updateMovie, deleteMovie } = useMovies()
   const weatherEmoji = useWeather()
   const { settings, updateSetting } = useSettings()
   const userIsAdmin = isAdmin()
@@ -88,16 +88,17 @@ export default function App() {
               currentUser={currentUser}
               weatherEmoji={weatherEmoji}
               genzMode={settings.genz_mode === true}
+              loading={eventsLoading || seriesLoading || recipesLoading || activitiesLoading}
             />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} listAttachments={listAttachments} uploadAttachment={uploadAttachment} deleteAttachment={deleteAttachment} attachmentUrl={attachmentUrl} />
+            <CalendarTab events={events} loading={eventsLoading} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} listAttachments={listAttachments} uploadAttachment={uploadAttachment} deleteAttachment={deleteAttachment} attachmentUrl={attachmentUrl} />
           )}
           {activeTab === 'lists' && (
             <ListsTab
-              series={series} addSeries={addSeries} updateSeries={updateSeries} deleteSeries={deleteSeries}
-              activities={activities} addActivity={addActivity} updateActivity={updateActivity} deleteActivity={deleteActivity}
-              movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie}
+              series={series} addSeries={addSeries} updateSeries={updateSeries} deleteSeries={deleteSeries} seriesLoading={seriesLoading}
+              activities={activities} addActivity={addActivity} updateActivity={updateActivity} deleteActivity={deleteActivity} activitiesLoading={activitiesLoading}
+              movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie} moviesLoading={moviesLoading}
               currentUser={currentUser}
               onNavigateToCalendar={navigateToCalendar}
               activeList={listsActiveList}
@@ -105,7 +106,7 @@ export default function App() {
             />
           )}
           {activeTab === 'recipes' && (
-            <RecipesTab recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe} setRecipeImage={setRecipeImage} uploadRecipeImage={uploadRecipeImage} clearRecipeImage={clearRecipeImage} importRecipe={importRecipe} currentUser={currentUser} />
+            <RecipesTab recipes={recipes} loading={recipesLoading} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe} setRecipeImage={setRecipeImage} uploadRecipeImage={uploadRecipeImage} clearRecipeImage={clearRecipeImage} importRecipe={importRecipe} currentUser={currentUser} />
           )}
         </div>
 

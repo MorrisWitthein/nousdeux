@@ -16,6 +16,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 export function useShoppingList() {
   const [items, setItems] = useState([])
   const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refreshHistory = useCallback(async () => {
     const res = await fetch(`${API}/api/shopping/history`, { headers: authHeaders() })
@@ -29,7 +30,7 @@ export function useShoppingList() {
   }, [])
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     refreshHistory()
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/shopping/stream?token=${token}`, refresh)
@@ -92,5 +93,5 @@ export function useShoppingList() {
     if (failed > 0) throw new Error(`${failed} Einträge konnten nicht gelöscht werden`)
   }
 
-  return { items, history, addItem, toggleItem, deleteItem, clearChecked }
+  return { items, history, loading, addItem, toggleItem, deleteItem, clearChecked }
 }

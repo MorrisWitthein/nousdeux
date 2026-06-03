@@ -112,16 +112,16 @@ function activityStatusType(status) {
 }
 
 export default function ListsTab({
-  series, addSeries, updateSeries, deleteSeries,
-  activities, addActivity, updateActivity, deleteActivity,
-  movies, addMovie, updateMovie, deleteMovie,
+  series, addSeries, updateSeries, deleteSeries, seriesLoading,
+  activities, addActivity, updateActivity, deleteActivity, activitiesLoading,
+  movies, addMovie, updateMovie, deleteMovie, moviesLoading,
   currentUser,
   onNavigateToCalendar,
   activeList,
   setActiveList,
 }) {
   const showToast = useToast()
-  const { items: shopItems, history: shopHistory, addItem: addShopItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
+  const { items: shopItems, history: shopHistory, loading: shopLoading, addItem: addShopItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
   const [shopInput, setShopInput] = useState('')
   const [shopSuggestions, setShopSuggestions] = useState([])
   const shopInputRef = useRef(null)
@@ -680,7 +680,7 @@ export default function ListsTab({
 
           {series.filter(s => s.status !== 'Fertig').map(renderSeriesRow)}
           {renderDoneSection('series', series.filter(s => s.status === 'Fertig'), renderSeriesRow)}
-          {series.length === 0 && !showSeriesForm && (
+          {series.length === 0 && !showSeriesForm && !seriesLoading && (
             <EmptyState emoji="🍿" title="Noch keine Serien" hint="Tippe auf +, um eure erste Serie zu eurer Watchlist hinzuzufügen." />
           )}
         </>
@@ -704,7 +704,7 @@ export default function ListsTab({
 
           {activities.filter(a => a.status !== 'Gemacht').map(renderActivityRow)}
           {renderDoneSection('activities', activities.filter(a => a.status === 'Gemacht'), renderActivityRow)}
-          {activities.length === 0 && !showActivityForm && (
+          {activities.length === 0 && !showActivityForm && !activitiesLoading && (
             <EmptyState emoji="✨" title="Noch keine Aktivitäten" hint="Tippe auf +, um eine gemeinsame Idee festzuhalten." />
           )}
         </>
@@ -742,7 +742,7 @@ export default function ListsTab({
 
           {displayedMovies.filter(m => m.status !== 'Gesehen').map(renderMovieRow)}
           {renderDoneSection('movies', displayedMovies.filter(m => m.status === 'Gesehen'), renderMovieRow, 'Gesehen')}
-          {displayedMovies.length === 0 && !showMovieForm && (
+          {displayedMovies.length === 0 && !showMovieForm && !moviesLoading && (
             movies.length === 0
               ? <EmptyState emoji="🎬" title="Noch keine Filme" hint="Tippe auf +, um euren ersten Film zu eurer Watchlist hinzuzufügen." />
               : <EmptyState emoji="🎬" title="Keine Treffer" hint="Kein Film passt zu den gewählten Genres." />
@@ -855,7 +855,7 @@ export default function ListsTab({
                 ))}
               </>
             )}
-            {shopItems.length === 0 && (
+            {shopItems.length === 0 && !shopLoading && (
               <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14, padding: '32px 0' }}>
                 Liste ist leer 🛒
               </div>

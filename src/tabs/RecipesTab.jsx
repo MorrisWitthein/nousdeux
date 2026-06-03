@@ -518,7 +518,7 @@ function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
   )
 }
 
-export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
+export default function RecipesTab({ recipes, loading, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe, currentUser }) {
   const showToast = useToast()
   const { addItem } = useShoppingList()
   const [sheet, setSheet] = useState(null) // null | 'add' | 'edit' | 'detail' | 'import' | 'shopping'
@@ -728,7 +728,7 @@ export default function RecipesTab({ recipes, addRecipe, updateRecipe, deleteRec
         </div>
       ))}
 
-      {displayed.length === 0 && (
+      {displayed.length === 0 && !loading && (
         searchQuery.trim() !== ''
           ? <EmptyState emoji="🔍" title="Keine Treffer" hint={`Keine Rezepte für „${searchQuery}".`} />
           : <EmptyState emoji="🍽️" title="Noch keine Rezepte" hint="Tippe auf +, um euer erstes Rezept zu sammeln oder zu importieren." />

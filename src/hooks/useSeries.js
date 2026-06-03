@@ -4,6 +4,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useSeries() {
   const [series, setSeries] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/series`, { headers: authHeaders() })
@@ -12,7 +13,7 @@ export function useSeries() {
   }
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/series/stream?token=${token}`, refresh)
   }, [])
@@ -58,5 +59,5 @@ export function useSeries() {
     }
   }
 
-  return { series, addSeries, updateSeries, deleteSeries }
+  return { series, loading, addSeries, updateSeries, deleteSeries }
 }

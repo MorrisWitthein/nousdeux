@@ -4,6 +4,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useActivities() {
   const [activities, setActivities] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/activities`, { headers: authHeaders() })
@@ -12,7 +13,7 @@ export function useActivities() {
   }
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/activities/stream?token=${token}`, refresh)
   }, [])
@@ -58,5 +59,5 @@ export function useActivities() {
     }
   }
 
-  return { activities, addActivity, updateActivity, deleteActivity }
+  return { activities, loading, addActivity, updateActivity, deleteActivity }
 }

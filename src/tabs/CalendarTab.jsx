@@ -334,7 +334,7 @@ const PAGE_SIZE = 5
 // months is visible while swiping/holding mid-drag.
 const PANEL_GAP = 24
 
-export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
+export default function CalendarTab({ events, loading, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const showToast = useToast()
   const now = new Date()
   const nowYear = now.getFullYear()
@@ -841,7 +841,7 @@ export default function CalendarTab({ events, addEvent, updateEvent, deleteEvent
         )
       })}
 
-      {visibleEvents.length === 0 && !showForm && !editing && (
+      {visibleEvents.length === 0 && !showForm && !editing && !loading && (
         selectedDay
           ? <EmptyState emoji="🗓️" title="Keine Termine an diesem Tag" hint="Tippe auf den Tag erneut, um wieder alle Termine zu sehen, oder auf +, um etwas einzutragen." />
           : <EmptyState emoji="🗓️" title="Keine Termine" hint="Für diesen Monat ist nichts geplant. Tippe auf +, um euren ersten Termin einzutragen." />

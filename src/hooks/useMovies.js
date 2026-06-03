@@ -4,6 +4,7 @@ import { API, authHeaders, handleUnauth } from './api.js'
 
 export function useMovies() {
   const [movies, setMovies] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/movies`, { headers: authHeaders() })
@@ -12,7 +13,7 @@ export function useMovies() {
   }
 
   useEffect(() => {
-    refresh()
+    refresh().finally(() => setLoading(false))
     const token = localStorage.getItem('token')
     return connectStream(`${API}/api/movies/stream?token=${token}`, refresh)
   }, [])
@@ -58,5 +59,5 @@ export function useMovies() {
     }
   }
 
-  return { movies, addMovie, updateMovie, deleteMovie }
+  return { movies, loading, addMovie, updateMovie, deleteMovie }
 }
