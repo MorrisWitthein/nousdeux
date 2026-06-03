@@ -13,6 +13,7 @@ import HomeTab from './tabs/HomeTab.jsx'
 import CalendarTab from './tabs/CalendarTab.jsx'
 import ListsTab from './tabs/ListsTab.jsx'
 import RecipesTab from './tabs/RecipesTab.jsx'
+import Sheet from './components/Sheet.jsx'
 
 const tabs = [
   { id: 'home',     icon: '🏠', label: 'Home' },
@@ -125,90 +126,74 @@ export default function App() {
         </div>
 
         {showProfile && (
-          <div
-            style={{
-              position: 'fixed', inset: 0, zIndex: 200,
-              background: 'rgba(28,26,23,0.4)', backdropFilter: 'blur(4px)',
-              display: 'flex', alignItems: 'flex-end',
-            }}
-            onClick={() => setShowProfile(false)}
-          >
-            <div
-              style={{
-                width: '100%', maxWidth: 390, margin: '0 auto',
-                background: 'var(--cream)', borderRadius: '24px 24px 0 0',
-                padding: '28px 24px 40px', animation: 'fadeUp 0.25s ease',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                <div style={{
-                  width: 72, height: 72, borderRadius: '50%',
-                  background: authorColor(currentUser, currentUser), display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  fontSize: 32, color: 'white', fontWeight: 500,
-                }}>
-                  {currentUser?.charAt(0).toUpperCase()}
-                </div>
-              </div>
-              <p style={{
-                fontFamily: 'Fraunces, serif', fontSize: 24, fontWeight: 300,
-                color: 'var(--ink)', textAlign: 'center', marginBottom: 4,
+          <Sheet title="Profil" onClose={() => setShowProfile(false)}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: authorColor(currentUser, currentUser), display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                fontSize: 32, color: 'white', fontWeight: 500,
               }}>
-                {displayName}
-              </p>
-              <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginBottom: 28 }}>
-                {currentUser}@nousdeux
-              </p>
-              {userIsAdmin && (
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                    Admin
-                  </p>
+                {currentUser?.charAt(0).toUpperCase()}
+              </div>
+            </div>
+            <p style={{
+              fontFamily: 'Fraunces, serif', fontSize: 24, fontWeight: 300,
+              color: 'var(--ink)', textAlign: 'center', marginBottom: 4,
+            }}>
+              {displayName}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginBottom: 28 }}>
+              {currentUser}@nousdeux
+            </p>
+            {userIsAdmin && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                  Admin
+                </p>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 16px', borderRadius: 14, background: 'var(--warm)',
+                  }}
+                >
+                  <span style={{ fontSize: 14, color: 'var(--ink)' }}>Gen-Z Modus</span>
                   <div
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '12px 16px', borderRadius: 14, background: 'var(--warm)',
+                      width: 44, height: 26, borderRadius: 13, cursor: 'pointer',
+                      background: settings.genz_mode ? 'var(--accent)' : 'var(--muted)',
+                      position: 'relative', transition: 'background 0.2s',
+                      opacity: settings.genz_mode === undefined ? 0.4 : 1,
                     }}
+                    onClick={() => updateSetting('genz_mode', !settings.genz_mode)}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--ink)' }}>Gen-Z Modus</span>
-                    <div
-                      style={{
-                        width: 44, height: 26, borderRadius: 13, cursor: 'pointer',
-                        background: settings.genz_mode ? 'var(--accent)' : 'var(--muted)',
-                        position: 'relative', transition: 'background 0.2s',
-                        opacity: settings.genz_mode === undefined ? 0.4 : 1,
-                      }}
-                      onClick={() => updateSetting('genz_mode', !settings.genz_mode)}
-                    >
-                      <div style={{
-                        position: 'absolute', top: 3, left: settings.genz_mode ? 21 : 3,
-                        width: 20, height: 20, borderRadius: '50%', background: 'white',
-                        transition: 'left 0.2s',
-                      }} />
-                    </div>
+                    <div style={{
+                      position: 'absolute', top: 3, left: settings.genz_mode ? 21 : 3,
+                      width: 20, height: 20, borderRadius: '50%', background: 'white',
+                      transition: 'left 0.2s',
+                    }} />
                   </div>
                 </div>
-              )}
-              <button
-                className="btn btn-secondary"
-                style={{ width: '100%', padding: '14px', borderRadius: 14 }}
-                onClick={handleLogout}
+              </div>
+            )}
+            <button
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '14px', borderRadius: 14 }}
+              onClick={handleLogout}
+            >
+              Ausloggen
+            </button>
+            <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginTop: 16, opacity: 0.5 }}>
+              <a
+                href={`https://github.com/MorrisWitthein/nousdeux/releases/tag/v${__APP_VERSION__}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'inherit', textDecoration: 'underline' }}
               >
-                Ausloggen
-              </button>
-              <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginTop: 16, opacity: 0.5 }}>
-                <a
-                  href={`https://github.com/MorrisWitthein/nousdeux/releases/tag/v${__APP_VERSION__}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'inherit', textDecoration: 'underline' }}
-                >
-                  v{__APP_VERSION__}
-                </a>
-              </p>
-            </div>
-          </div>
+                v{__APP_VERSION__}
+              </a>
+            </p>
+          </Sheet>
         )}
       </div>
     </>

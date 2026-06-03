@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.10.1] - 2026-06-03
+
+### Changed
+- The profile screen now opens as the same bottom slide-up sheet used everywhere else (with swipe-to-dismiss and a header), replacing the hand-rolled modal — consistent look and behaviour, no visual content change
+
+---
+
 ## [0.10.0] - 2026-06-03
 
 ### Added
