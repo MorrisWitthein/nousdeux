@@ -5,6 +5,7 @@ import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
 import Sheet from '../components/Sheet.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { authorColor } from '../utils/authorColor.js'
 
 function SeriesDetail({ series, onEdit, onClose }) {
   const sub = seriesSubLine(series)
@@ -623,7 +624,7 @@ export default function ListsTab({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className={`badge badge-${activityStatusType(a.status)}`}>{a.status || 'Idee'}</span>
-          <div className="dot" style={{ background: a.who === currentUser ? 'var(--accent2)' : 'var(--accent)', width: 10, height: 10 }} />
+          <div className="dot" style={{ background: authorColor(a.who, currentUser), width: 10, height: 10 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
@@ -845,7 +846,7 @@ export default function ListsTab({
                 </span>
                 <span
                   className="shop-author-dot"
-                  style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }}
+                  style={{ background: authorColor(item.who, currentUser) }}
                   title={item.who}
                 />
                 <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => handleDeleteItem(item.id)}><CloseIcon /></button>
@@ -865,7 +866,7 @@ export default function ListsTab({
                     </span>
                     <span
                       className="shop-author-dot"
-                      style={{ background: item.who === currentUser ? 'var(--accent2)' : 'var(--accent)', opacity: 0.4 }}
+                      style={{ background: authorColor(item.who, currentUser), opacity: 0.4 }}
                       title={item.who}
                     />
                     <button className="btn-delete" style={{ width: 32, height: 32 }} onClick={() => handleDeleteItem(item.id)}><CloseIcon /></button>

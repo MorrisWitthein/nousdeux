@@ -3,6 +3,7 @@ import { PencilIcon, CloseIcon, PaperclipIcon } from '../components/Icons.jsx'
 import Sheet from '../components/Sheet.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { authorColor } from '../utils/authorColor.js'
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`
@@ -109,7 +110,7 @@ function EventDetail({ event, onEdit, onClose, currentUser, formatDate, listAtta
         marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
-          <div className="dot" style={{ background: event.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+          <div className="dot" style={{ background: authorColor(event.who, currentUser) }} />
           Von {event.who.charAt(0).toUpperCase() + event.who.slice(1)}
         </div>
         <button className="btn btn-primary" style={{ flex: '0 0 auto', padding: '10px 20px' }} onClick={onEdit}>
@@ -303,7 +304,7 @@ function MonthGrid({ year, month, events, selectedDay, onDayClick, nowYear, nowM
             <span className="cal-day-num">{day}</span>
             <div className="cal-event-lanes">
               {bars.map((bar, idx) => {
-                const color = bar.who === currentUser ? 'var(--accent2)' : 'var(--accent)'
+                const color = authorColor(bar.who, currentUser)
                 const top = `${bar.lane * 7}px`
                 return bar.role === 'single'
                   ? (
@@ -834,7 +835,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
             </div>
             <div className="card-footer">
               <div className="who-added">
-                <div className="dot" style={{ background: e.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+                <div className="dot" style={{ background: authorColor(e.who, currentUser) }} />
                 Von {e.who.charAt(0).toUpperCase() + e.who.slice(1)} hinzugefügt
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

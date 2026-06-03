@@ -5,6 +5,7 @@ import Sheet from '../components/Sheet.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
 import { useToast } from '../context/ToastContext.jsx'
+import { authorColor } from '../utils/authorColor.js'
 
 function StarRating({ value, onChange }) {
   return (
@@ -500,7 +501,7 @@ function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
         marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
-          <div className="dot" style={{ background: recipe.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+          <div className="dot" style={{ background: authorColor(recipe.who, currentUser) }} />
           Von {recipe.who.charAt(0).toUpperCase() + recipe.who.slice(1)}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -721,7 +722,7 @@ export default function RecipesTab({ recipes, loading, addRecipe, updateRecipe, 
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div className="dot" style={{ background: r.who === currentUser ? 'var(--accent2)' : 'var(--accent)' }} />
+                <div className="dot" style={{ background: authorColor(r.who, currentUser) }} />
                 Von {r.who.charAt(0).toUpperCase() + r.who.slice(1)}
               </div>
               <div style={{ display: 'flex', gap: 4 }}>

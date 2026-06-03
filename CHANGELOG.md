@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Deleting an event, series, movie, activity or recipe no longer pops a native browser confirm dialog — the item is removed immediately and a "Gelöscht · Rückgängig" toast lets you undo the delete, so an accidental deletion in this shared app is recoverable
+- Author attribution colours (header avatar, profile avatar and every author dot) now run through a single shared helper, so the header/profile avatar follow the same "your items are teal, your partner's are red" scheme used everywhere else instead of a hardcoded colour (no visible change; internal consistency cleanup)
 
 ---
 

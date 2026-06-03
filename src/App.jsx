@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import styles from './styles/index.js'
 import { getCurrentUser, isAdmin } from './parseJwt.js'
+import { authorColor } from './utils/authorColor.js'
 import { useEvents } from './hooks/useEvents.js'
 import { useRecipes } from './hooks/useRecipes.js'
 import { useSeries } from './hooks/useSeries.js'
@@ -66,8 +67,8 @@ export default function App() {
             <div className="logo">nous<span>deux</span></div>
             {currentUser && (
               <div
-                className="avatar avatar-b"
-                style={{ cursor: 'pointer' }}
+                className="avatar"
+                style={{ background: authorColor(currentUser, currentUser), cursor: 'pointer' }}
                 onClick={() => setShowProfile(true)}
               >
                 {currentUser.charAt(0).toUpperCase()}
@@ -143,7 +144,7 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
                 <div style={{
                   width: 72, height: 72, borderRadius: '50%',
-                  background: 'var(--accent2)', display: 'flex',
+                  background: authorColor(currentUser, currentUser), display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
                   fontSize: 32, color: 'white', fontWeight: 500,
                 }}>

@@ -46,9 +46,6 @@ const layout = `
   border: 2px solid var(--cream);
 }
 
-.avatar-a { background: var(--accent); margin-right: -8px; }
-.avatar-b { background: var(--accent2); }
-
 /* TABS */
 .tabs {
   display: flex;
