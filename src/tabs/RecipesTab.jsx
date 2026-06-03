@@ -626,8 +626,14 @@ export default function RecipesTab({ recipes, loading, addRecipe, updateRecipe, 
   }
 
   const handleDeleteRecipe = async (id) => {
-    if (!window.confirm('Rezept löschen?')) return
-    try { await deleteRecipe(id) } catch (err) { showToast(err.message) }
+    const item = recipes.find(r => r.id === id)
+    try {
+      await deleteRecipe(id)
+      showToast('Rezept gelöscht', 'info', {
+        label: 'Rückgängig',
+        onClick: () => addRecipe(item).catch(err => showToast(err.message)),
+      })
+    } catch (err) { showToast(err.message) }
   }
 
   const viewingRecipe = recipes.find(r => r.id === viewingId)

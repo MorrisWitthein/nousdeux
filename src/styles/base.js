@@ -88,6 +88,24 @@ const base = `
   box-shadow: 0 4px 20px rgba(0,0,0,0.18);
 }
 .toast-error { background: var(--accent); color: #fff; }
+.toast-info { background: var(--ink); color: #fff; }
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.toast-action {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  white-space: nowrap;
+}
 .toast-close {
   background: none;
   border: none;

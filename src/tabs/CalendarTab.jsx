@@ -547,6 +547,18 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     setShowForm(false)
   }
 
+  const handleDelete = async (e) => {
+    try {
+      await deleteEvent(e.id)
+      showToast('Termin gelöscht', 'info', {
+        label: 'Rückgängig',
+        onClick: () => addEvent(e).catch(err => showToast(err.message)),
+      })
+    } catch (err) {
+      showToast(err.message)
+    }
+  }
+
   const handleUpdate = async () => {
     setSubmitted(true)
     if (!editFields.title.trim()) return
@@ -833,7 +845,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
                 )}
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button className="btn-edit" onClick={(ev) => { ev.stopPropagation(); startEdit(e) }}><PencilIcon /></button>
-                  <button className="btn-delete" onClick={async (ev) => { ev.stopPropagation(); if (window.confirm('Termin löschen?')) try { await deleteEvent(e.id) } catch (err) { showToast(err.message) } }}><CloseIcon /></button>
+                  <button className="btn-delete" onClick={(ev) => { ev.stopPropagation(); handleDelete(e) }}><CloseIcon /></button>
                 </div>
               </div>
             </div>

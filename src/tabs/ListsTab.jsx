@@ -342,18 +342,36 @@ export default function ListsTab({
   }
 
   const handleDeleteSeries = async (id) => {
-    if (!window.confirm('Serie löschen?')) return
-    try { await deleteSeries(id) } catch (err) { showToast(err.message) }
+    const item = series.find(s => s.id === id)
+    try {
+      await deleteSeries(id)
+      showToast('Serie gelöscht', 'info', {
+        label: 'Rückgängig',
+        onClick: () => addSeries(item).catch(err => showToast(err.message)),
+      })
+    } catch (err) { showToast(err.message) }
   }
 
   const handleDeleteMovie = async (id) => {
-    if (!window.confirm('Film löschen?')) return
-    try { await deleteMovie(id) } catch (err) { showToast(err.message) }
+    const item = movies.find(m => m.id === id)
+    try {
+      await deleteMovie(id)
+      showToast('Film gelöscht', 'info', {
+        label: 'Rückgängig',
+        onClick: () => addMovie(item).catch(err => showToast(err.message)),
+      })
+    } catch (err) { showToast(err.message) }
   }
 
   const handleDeleteActivity = async (id) => {
-    if (!window.confirm('Aktivität löschen?')) return
-    try { await deleteActivity(id) } catch (err) { showToast(err.message) }
+    const item = activities.find(a => a.id === id)
+    try {
+      await deleteActivity(id)
+      showToast('Aktivität gelöscht', 'info', {
+        label: 'Rückgängig',
+        onClick: () => addActivity(item).catch(err => showToast(err.message)),
+      })
+    } catch (err) { showToast(err.message) }
   }
 
   const handleAddShopItem = async (input) => {
