@@ -72,6 +72,12 @@ func main() {
 	}
 	slog.Info("database ready")
 
+	// Seed env-configured users into the DB (no-op once they exist).
+	if err := seedUsers(context.Background()); err != nil {
+		slog.Error("seed users failed", "err", err)
+		os.Exit(1)
+	}
+
 	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())
 	defer cleanupCancel()
 	startCleanupWorker(cleanupCtx)
@@ -80,6 +86,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handleHealth)
 	mux.HandleFunc("/api/login", cors(handleLogin))
+	mux.HandleFunc("/api/me/password", cors(requireAuth(handleChangePassword)))
 	mux.HandleFunc("/api/events", cors(requireAuth(handleEvents)))
 	mux.HandleFunc("/api/recipes", cors(requireAuth(handleRecipes)))
 	mux.HandleFunc("/api/recipes/import", cors(requireAuth(handleRecipeImport)))

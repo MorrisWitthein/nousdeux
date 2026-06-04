@@ -56,8 +56,14 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, ok := users[creds.Username]
-	if !ok || bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password)) != nil {
+	var (
+		hash    string
+		isAdmin bool
+	)
+	err := pool.QueryRow(r.Context(),
+		`SELECT password, is_admin FROM users WHERE username = $1`, creds.Username).
+		Scan(&hash, &isAdmin)
+	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password)) != nil {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
@@ -66,7 +72,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		"sub": creds.Username,
 		"exp": time.Now().Add(15 * 24 * time.Hour).Unix(),
 	}
-	if adminUsers[creds.Username] {
+	if isAdmin {
 		claims["admin"] = true
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -116,4 +122,78 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
+}
+
+// seedUsers upserts the env-configured users (and their admin flag) into the
+// users table. Existing rows are never overwritten (ON CONFLICT DO NOTHING),
+// so a password changed at runtime survives restarts and the env value is only
+// ever used to bootstrap a missing account.
+func seedUsers(ctx context.Context) error {
+	for username, hash := range users {
+		if _, err := pool.Exec(ctx,
+			`INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)
+			 ON CONFLICT (username) DO NOTHING`,
+			username, hash, adminUsers[username],
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// handleChangePassword lets any authenticated user change their own password
+// after re-supplying the current one.
+func handleChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", "POST, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	username := userFromContext(r.Context())
+	if username == "" {
+		writeError(w, http.StatusUnauthorized, "missing token")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	var body struct {
+		OldPassword string `json:"old_password"`
+		NewPassword string `json:"new_password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	if len(body.NewPassword) < 8 {
+		writeError(w, http.StatusBadRequest, "new password must be at least 8 characters")
+		return
+	}
+
+	var hash string
+	if err := pool.QueryRow(r.Context(),
+		`SELECT password FROM users WHERE username = $1`, username).Scan(&hash); err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(body.OldPassword)) != nil {
+		writeError(w, http.StatusUnauthorized, "current password incorrect")
+		return
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("hash password", "err", err)
+		writeError(w, http.StatusInternalServerError, "hash error")
+		return
+	}
+	if _, err := pool.Exec(r.Context(),
+		`UPDATE users SET password = $1 WHERE username = $2`, string(newHash), username,
+	); err != nil {
+		writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+		return
+	}
+
+	slog.Info("password changed", "user", username)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

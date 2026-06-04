@@ -14,6 +14,7 @@ import CalendarTab from './tabs/CalendarTab.jsx'
 import ListsTab from './tabs/ListsTab.jsx'
 import RecipesTab from './tabs/RecipesTab.jsx'
 import Sheet from './components/Sheet.jsx'
+import PasswordChange from './components/PasswordChange.jsx'
 
 const tabs = [
   { id: 'home',     icon: '🏠', label: 'Home' },
@@ -176,6 +177,7 @@ export default function App() {
                 </div>
               </div>
             )}
+            <PasswordChange />
             <button
               className="btn btn-secondary"
               style={{ width: '100%', padding: '14px', borderRadius: 14 }}

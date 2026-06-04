@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.12.0] - 2026-06-04
+
+### Added
+- "Passwort ändern" in the profile sheet: every user can change their own password (re-entering the current one), backed by user accounts that now live in the database instead of only the environment
+
+---
+
 ## [0.11.0] - 2026-06-04
 
 ### Added
