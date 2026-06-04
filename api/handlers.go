@@ -256,7 +256,8 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
 			        COALESCE(progress,0), COALESCE(season,0),
-			        COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
+			        COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'),
+			        COALESCE(who,''), created_at
 			 FROM series ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -284,12 +285,13 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		s.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO series (emoji, title, sub, progress, season, status, status_type)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7)
+			`INSERT INTO series (emoji, title, sub, progress, season, status, status_type, who)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
 			nullIfEmpty(s.Emoji), s.Title, nullIfEmpty(s.Sub), s.Progress, s.Season,
-			nullIfEmpty(s.Status), nullIfEmpty(s.StatusType),
+			nullIfEmpty(s.Status), nullIfEmpty(s.StatusType), s.Who,
 		).Scan(&s.ID, &s.Status, &s.StatusType, &s.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())
@@ -480,7 +482,8 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
-			        COALESCE(genres,'{}'), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at
+			        COALESCE(genres,'{}'), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'),
+			        COALESCE(who,''), created_at
 			 FROM movies ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -512,12 +515,13 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 		if genres == nil {
 			genres = []string{}
 		}
+		m.Who = userFromContext(ctx)
 		err := pool.QueryRow(ctx,
-			`INSERT INTO movies (emoji, title, sub, genres, status, status_type)
-			 VALUES ($1,$2,$3,$4,$5,$6)
+			`INSERT INTO movies (emoji, title, sub, genres, status, status_type, who)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7)
 			 RETURNING id, COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'), created_at`,
 			nullIfEmpty(m.Emoji), m.Title, nullIfEmpty(m.Sub), genres,
-			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType),
+			nullIfEmpty(m.Status), nullIfEmpty(m.StatusType), m.Who,
 		).Scan(&m.ID, &m.Status, &m.StatusType, &m.CreatedAt)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "insert: "+err.Error())

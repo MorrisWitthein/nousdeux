@@ -136,31 +136,6 @@ const nav = `
 }
 
 .nav-item.active .nav-label { color: var(--ink); font-weight: 600; }
-
-/* ACTIVITY CARDS */
-.activity-card {
-  border-radius: 16px;
-  padding: 18px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  cursor: pointer;
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  transition: transform 0.15s;
-}
-
-.activity-card:hover { transform: translateY(-1px); }
-
-.activity-icon {
-  font-size: 32px;
-  width: 52px; height: 52px;
-  border-radius: 14px;
-  background: var(--warm);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
 `
 
 export default nav

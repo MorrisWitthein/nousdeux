@@ -63,7 +63,7 @@ const base = `
 
 .toast-container {
   position: fixed;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;

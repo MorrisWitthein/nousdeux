@@ -387,12 +387,18 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
   const [pendingEditFiles, setPendingEditFiles] = useState([])
   const pendingEditFileInputRef = useRef(null)
 
-  const SWIPE_THRESHOLD = 50
+  // A flick is a fast release (px per ms); a held drag has to expose more than
+  // half the neighbour panel before it commits. IDLE_MS treats a finger that
+  // paused before lifting as velocity 0, so "hold then release" never flicks.
+  const FLICK_VELOCITY = 0.5
+  const FLICK_MIN_DX = 10
+  const IDLE_MS = 100
 
   const onTouchStart = useCallback((e) => {
     if (anim !== 0) return  // ignore touches while a slide is committing
     const t = e.touches[0]
-    touchRef.current = { startX: t.clientX, startY: t.clientY, locked: null }
+    const now = performance.now()
+    touchRef.current = { startX: t.clientX, startY: t.clientY, locked: null, lastX: t.clientX, lastT: now, vx: 0 }
     setDragging(true)
   }, [anim])
 
@@ -410,6 +416,14 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
 
     if (touchRef.current.locked === 'x') {
       e.preventDefault()
+      const now = performance.now()
+      const dt = now - touchRef.current.lastT
+      if (dt > 0) {
+        const instV = (t.clientX - touchRef.current.lastX) / dt
+        touchRef.current.vx = touchRef.current.vx * 0.7 + instV * 0.3  // smoothed
+      }
+      touchRef.current.lastX = t.clientX
+      touchRef.current.lastT = now
       setDragX(dx)
     }
   }, [dragging])
@@ -420,12 +434,20 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     const w = calendarRef.current?.offsetWidth ?? 1
     setDragging(false)
 
-    if (touchRef.current.locked === 'x' && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > w * 0.15) {
-      // Past the threshold — let the track finish sliding in the swipe
-      // direction; the month state is committed in onTransitionEnd.
-      setAnim(dx > 0 ? -1 : 1)
+    // Finger paused before lifting → not a flick.
+    const idle = performance.now() - touchRef.current.lastT
+    const vx = idle > IDLE_MS ? 0 : touchRef.current.vx
+
+    const dominant = Math.abs(dx) > w * 0.5                              // new month now fills most of the view
+    const flicked = Math.abs(vx) > FLICK_VELOCITY && Math.abs(dx) > FLICK_MIN_DX
+
+    if (touchRef.current.locked === 'x' && (dominant || flicked)) {
+      // Commit: a flick follows its own direction, a slow drag follows the
+      // finger. The month state is committed in onTransitionEnd.
+      const dir = flicked ? (vx > 0 ? -1 : 1) : (dx > 0 ? -1 : 1)
+      setAnim(dir)
     } else {
-      // Not far enough — animate back to centre.
+      // Current month still dominant and no flick — animate back to centre.
       setDragX(0)
     }
   }, [dragging, dragX])
@@ -460,12 +482,13 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
   const nextM = offsetMonth(year, month, 1)
 
   // Header label follows the slide: the committing direction, or — mid-drag —
-  // the month we'd land on once past the threshold.
+  // the neighbour month only once it becomes the dominant one on screen (past
+  // 50%), so it doesn't flip while the current month is still mostly visible.
   let headerDir = anim
   if (headerDir === 0 && dragging) {
     const w = calendarRef.current?.offsetWidth ?? 1
-    if (dragX > w * 0.25) headerDir = -1
-    else if (dragX < -w * 0.25) headerDir = 1
+    if (dragX > w * 0.5) headerDir = -1
+    else if (dragX < -w * 0.5) headerDir = 1
   }
   const headerMonth = offsetMonth(year, month, headerDir)
 

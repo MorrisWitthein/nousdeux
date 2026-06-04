@@ -7,7 +7,21 @@ import EmptyState from '../components/EmptyState.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { authorColor } from '../utils/authorColor.js'
 
-function SeriesDetail({ series, onEdit, onClose }) {
+function DetailFooter({ who, currentUser, children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+      {who
+        ? <div className="who-added">
+            <div className="dot" style={{ background: authorColor(who, currentUser) }} />
+            Von {cap(who)} hinzugefügt
+          </div>
+        : <span />}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{children}</div>
+    </div>
+  )
+}
+
+function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   const sub = seriesSubLine(series)
   return (
     <Sheet title="" onClose={onClose}>
@@ -22,14 +36,14 @@ function SeriesDetail({ series, onEdit, onClose }) {
           <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
         </div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+      <DetailFooter who={series.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
-      </div>
+      </DetailFooter>
     </Sheet>
   )
 }
 
-function MovieDetail({ movie, onEdit, onClose }) {
+function MovieDetail({ movie, onEdit, onClose, currentUser }) {
   const sub = movieSubLine(movie)
   return (
     <Sheet title="" onClose={onClose}>
@@ -44,14 +58,14 @@ function MovieDetail({ movie, onEdit, onClose }) {
           <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
         </div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+      <DetailFooter who={movie.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
-      </div>
+      </DetailFooter>
     </Sheet>
   )
 }
 
-function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar }) {
+function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar, currentUser }) {
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -65,13 +79,13 @@ function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar }) {
           <div style={{ fontSize: 14, color: 'var(--ink)' }}>{activity.meta}</div>
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+      <DetailFooter who={activity.who} currentUser={currentUser}>
         <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           onClick={() => { onClose(); onNavigateToCalendar(null, { title: `${activity.emoji} ${activity.title}` }) }}>
           <CalendarIcon /> Als Termin
         </button>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
-      </div>
+      </DetailFooter>
     </Sheet>
   )
 }
@@ -106,6 +120,18 @@ function movieSubLine(m) {
   const genres = (m.genres || []).join(', ')
   return [genres, m.sub].filter(Boolean).join(' · ')
 }
+
+// Card meta rendered as individual chips (season/platform, genres/platform)
+// rather than a single muted line — matches the recipe & event card style.
+function seriesTags(s) {
+  return [s.season > 0 ? `Staffel ${s.season}` : '', s.sub].filter(Boolean)
+}
+
+function movieTags(m) {
+  return [...(m.genres || []), m.sub].filter(Boolean)
+}
+
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 function activityStatusType(status) {
   const map = { Idee: 'yellow', Geplant: 'green', Gemacht: 'gray' }
@@ -540,52 +566,85 @@ export default function ListsTab({
   const viewingMovieItem = movies.find(m => m.id === viewingId)
   const viewingActivityItem = activities.find(a => a.id === viewingId)
 
-  const renderSeriesRow = (s) => (
-      <div key={s.id} className="list-item" onClick={() => openDetail('series', s.id)}>
-        <div className="list-emoji">{s.emoji}</div>
-        <div className="list-info">
-          <div className="list-title">{s.title}</div>
-          <div className="list-sub">{seriesSubLine(s)}</div>
+  const renderAuthor = (who) => (
+    who
+      ? <div className="who-added">
+          <div className="dot" style={{ background: authorColor(who, currentUser) }} />
+          Von {cap(who)} hinzugefügt
         </div>
-        <span className={`badge badge-${s.statusType}`}>{s.status}</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
-          <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
-        </div>
-      </div>
+      : <span />
   )
 
-  const renderMovieRow = (m) => (
-      <div key={m.id} className="list-item" onClick={() => openDetail('movie', m.id)}>
-        <div className="list-emoji">{m.emoji}</div>
-        <div className="list-info">
-          <div className="list-title">{m.title}</div>
-          <div className="list-sub">{movieSubLine(m)}</div>
+  const renderSeriesRow = (s) => {
+    const tags = seriesTags(s)
+    return (
+      <div key={s.id} className="card" onClick={() => openDetail('series', s.id)}>
+        <div className="list-card-head">
+          <div className="list-emoji">{s.emoji}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="card-title">{s.title}</div>
+            {tags.length > 0 && (
+              <div className="recipe-tags">
+                {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+              </div>
+            )}
+          </div>
+          <span className={`badge badge-${s.statusType}`}>{s.status}</span>
         </div>
-        <span className={`badge badge-${m.statusType}`}>{m.status}</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
-          <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
+        <div className="card-footer">
+          {renderAuthor(s.who)}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
+            <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
+          </div>
         </div>
       </div>
-  )
+    )
+  }
+
+  const renderMovieRow = (m) => {
+    const tags = movieTags(m)
+    return (
+      <div key={m.id} className="card" onClick={() => openDetail('movie', m.id)}>
+        <div className="list-card-head">
+          <div className="list-emoji">{m.emoji}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="card-title">{m.title}</div>
+            {tags.length > 0 && (
+              <div className="recipe-tags">
+                {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+              </div>
+            )}
+          </div>
+          <span className={`badge badge-${m.statusType}`}>{m.status}</span>
+        </div>
+        <div className="card-footer">
+          {renderAuthor(m.who)}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
+            <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const renderActivityRow = (a) => (
-      <div key={a.id} className="activity-card" onClick={() => openDetail('activity', a.id)}>
-        <div className="activity-icon">{a.emoji}</div>
-        <div style={{ flex: 1 }}>
-          <div className="list-title">{a.title}</div>
-          {a.meta && <div className="list-sub">{a.meta}</div>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div key={a.id} className="card" onClick={() => openDetail('activity', a.id)}>
+        <div className="list-card-head">
+          <div className="list-emoji">{a.emoji}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="card-title">{a.title}</div>
+            {a.meta && <div className="card-meta">{a.meta}</div>}
+          </div>
           <span className={`badge badge-${activityStatusType(a.status)}`}>{a.status || 'Idee'}</span>
-          <div className="dot" style={{ background: authorColor(a.who, currentUser), width: 10, height: 10 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <button className="btn-edit" style={{ width: 28, height: 28 }} title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
-              <button className="btn-edit" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
-            </div>
-            <button className="btn-delete" style={{ width: 28, height: 28 }} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(a.id) }}><CloseIcon /></button>
+        </div>
+        <div className="card-footer">
+          {renderAuthor(a.who)}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className="btn-edit" title="Als Termin eintragen" onClick={(e) => { e.stopPropagation(); onNavigateToCalendar(null, { title: `${a.emoji} ${a.title}` }) }}><CalendarIcon /></button>
+            <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditActivity(a) }}><PencilIcon /></button>
+            <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteActivity(a.id) }}><CloseIcon /></button>
           </div>
         </div>
       </div>
@@ -824,6 +883,7 @@ export default function ListsTab({
           series={viewingSeriesItem}
           onEdit={() => { closeDetail(); startEditSeries(viewingSeriesItem) }}
           onClose={closeDetail}
+          currentUser={currentUser}
         />
       )}
       {sheet === 'movie' && viewingMovieItem && (
@@ -831,6 +891,7 @@ export default function ListsTab({
           movie={viewingMovieItem}
           onEdit={() => { closeDetail(); startEditMovie(viewingMovieItem) }}
           onClose={closeDetail}
+          currentUser={currentUser}
         />
       )}
       {sheet === 'activity' && viewingActivityItem && (
@@ -839,6 +900,7 @@ export default function ListsTab({
           onEdit={() => { closeDetail(); startEditActivity(viewingActivityItem) }}
           onClose={closeDetail}
           onNavigateToCalendar={onNavigateToCalendar}
+          currentUser={currentUser}
         />
       )}
 

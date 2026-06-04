@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.11.0] - 2026-06-04
+
+### Added
+- Serien, Filme and Aktivitäten cards now show who added them ("Von … hinzugefügt"), matching the Termine and Rezepte cards — visible both on the list card and in the detail sheet
+
+### Changed
+- Reworked the Serien / Filme / Aktivitäten list items into the same card layout used for Termine and Rezepte: a header (emoji, title, status) with the edit/delete actions laid out in a horizontal footer row instead of cramped vertical buttons
+- Card info is cleaner: season & platform (Serien) and genres & platform (Filme) now render as tag chips instead of a single muted line
+
+### Fixed
+- The undo banner shown after deleting a record is no longer hidden behind the iOS status bar / notch / Dynamic Island — the toast now respects the top safe-area inset so its "Rückgängig" button stays tappable on iPhones
+- Calendar month swipe feels natural: the month header no longer changes until the neighbouring month is actually the dominant one on screen, and a slow drag snaps back to the current month unless you pull past halfway — while a quick flick still pages through even on a short swipe
+
+---
+
 ## [0.10.1] - 2026-06-03
 
 ### Changed

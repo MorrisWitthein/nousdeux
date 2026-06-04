@@ -44,6 +44,7 @@ type Series struct {
 	Season     int       `json:"season"`
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
+	Who        string    `json:"who"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -56,6 +57,7 @@ type Movie struct {
 	Genres     []string  `json:"genres,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
+	Who        string    `json:"who"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
