@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.13.0] - 2026-06-09
+
+### Added
+- Filme and Serien now show poster thumbnails, auto-fetched from The Movie Database (TMDB) when added — shown on the list card and enlarged in the detail sheet, falling back to the emoji when no poster is found. The edit sheet lets you refresh or remove a poster.
+
+---
+
 ## [0.12.0] - 2026-06-04
 
 ### Added

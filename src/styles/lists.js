@@ -71,6 +71,27 @@ const lists = `
   flex-shrink: 0;
 }
 
+/* Poster thumbnail (movies/series) — portrait 2:3, replaces .list-emoji */
+.list-poster {
+  width: 44px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--warm);
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Poster in the detail sheet — centered, larger portrait */
+.detail-poster {
+  width: 120px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 0 auto 12px;
+  display: block;
+}
+
 /* SHOPPING LIST */
 .shopping-input-row {
   display: flex;

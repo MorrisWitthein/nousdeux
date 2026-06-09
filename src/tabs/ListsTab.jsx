@@ -26,7 +26,9 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 48, marginBottom: 8 }}>{series.emoji}</div>
+        {series.imageUrl
+          ? <img src={series.imageUrl} alt={series.title} className="detail-poster" />
+          : <div style={{ fontSize: 48, marginBottom: 8 }}>{series.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{series.title}</div>
         <span className={`badge badge-${series.statusType}`}>{series.status}</span>
       </div>
@@ -48,7 +50,9 @@ function MovieDetail({ movie, onEdit, onClose, currentUser }) {
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>
+        {movie.imageUrl
+          ? <img src={movie.imageUrl} alt={movie.title} className="detail-poster" />
+          : <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{movie.title}</div>
         <span className={`badge badge-${movie.statusType}`}>{movie.status}</span>
       </div>
@@ -139,9 +143,9 @@ function activityStatusType(status) {
 }
 
 export default function ListsTab({
-  series, addSeries, updateSeries, deleteSeries, seriesLoading,
+  series, addSeries, updateSeries, deleteSeries, seriesLoading, setSeriesImage, clearSeriesImage,
   activities, addActivity, updateActivity, deleteActivity, activitiesLoading,
-  movies, addMovie, updateMovie, deleteMovie, moviesLoading,
+  movies, addMovie, updateMovie, deleteMovie, moviesLoading, setMovieImage, clearMovieImage,
   currentUser,
   onNavigateToCalendar,
   activeList,
@@ -177,6 +181,7 @@ export default function ListsTab({
   const [viewingId, setViewingId] = useState(null)
 
   const [submitted, setSubmitted] = useState(false)
+  const [posterBusy, setPosterBusy] = useState(false)
 
   // Completed items (watched series/movies, done activities) collapse into an
   // "Erledigt" section that is hidden by default, per list type.
@@ -202,7 +207,7 @@ export default function ListsTab({
     setSubmitted(true)
     if (!newSeries.title.trim()) return
     try {
-      await addSeries({
+      const id = await addSeries({
         emoji: newSeries.emoji,
         title: newSeries.title,
         sub: newSeries.sub,
@@ -210,6 +215,8 @@ export default function ListsTab({
         status: newSeries.status,
         statusType: newSeries.statusType,
       })
+      const title = newSeries.title
+      if (id) setSeriesImage(id, title).catch(() => {})
       setNewSeries({ ...EMPTY_SERIES })
       setSubmitted(false)
       setShowSeriesForm(false)
@@ -269,7 +276,7 @@ export default function ListsTab({
     setSubmitted(true)
     if (!newMovie.title.trim()) return
     try {
-      await addMovie({
+      const id = await addMovie({
         emoji: newMovie.emoji,
         title: newMovie.title,
         sub: newMovie.sub,
@@ -277,6 +284,8 @@ export default function ListsTab({
         status: newMovie.status,
         statusType: newMovie.statusType,
       })
+      const title = newMovie.title
+      if (id) setMovieImage(id, title).catch(() => {})
       setNewMovie({ ...EMPTY_MOVIE })
       setSubmitted(false)
       setShowMovieForm(false)
@@ -404,10 +413,11 @@ export default function ListsTab({
     try { await clearChecked() } catch (err) { showToast(err.message) }
   }
 
-  const renderSeriesForm = (fields, setFields, onSave, onCancel, title, submitted) => {
+  const renderSeriesForm = (fields, setFields, onSave, onCancel, title, submitted, imageBlock) => {
     const titleMissing = submitted && !fields.title.trim()
     return (
     <Sheet title={title} onClose={onCancel}>
+      {imageBlock}
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -464,10 +474,11 @@ export default function ListsTab({
   )
   }
 
-  const renderMovieForm = (fields, setFields, onSave, onCancel, title, submitted) => {
+  const renderMovieForm = (fields, setFields, onSave, onCancel, title, submitted, imageBlock) => {
     const titleMissing = submitted && !fields.title.trim()
     return (
     <Sheet title={title} onClose={onCancel}>
+      {imageBlock}
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -566,6 +577,34 @@ export default function ListsTab({
   const viewingMovieItem = movies.find(m => m.id === viewingId)
   const viewingActivityItem = activities.find(a => a.id === viewingId)
 
+  // Poster controls shown inside the edit forms. `item` is the live row (so the
+  // preview reflects stream updates); refetch/clear persist immediately via the
+  // dedicated image endpoint, independent of the Save button.
+  const renderPosterControls = (item, onRefetch, onClear) => {
+    if (!item) return null
+    const run = (fn) => async () => {
+      setPosterBusy(true)
+      try { await fn() } catch (e) { showToast(e.message) } finally { setPosterBusy(false) }
+    }
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <label className="form-label">Poster</label>
+        {item.imageUrl && (
+          <img src={item.imageUrl} alt=""
+            style={{ width: 96, height: 144, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: 8 }} />
+        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" disabled={posterBusy} onClick={run(onRefetch)}>
+            {posterBusy ? 'Suche…' : item.imageUrl ? 'Poster aktualisieren' : 'Poster suchen'}
+          </button>
+          {item.imageUrl && (
+            <button className="btn btn-ghost" disabled={posterBusy} onClick={run(onClear)}>Entfernen</button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const renderAuthor = (who) => (
     who
       ? <div className="who-added">
@@ -580,7 +619,9 @@ export default function ListsTab({
     return (
       <div key={s.id} className="card" onClick={() => openDetail('series', s.id)}>
         <div className="list-card-head">
-          <div className="list-emoji">{s.emoji}</div>
+          {s.imageUrl
+            ? <img className="list-poster" src={s.imageUrl} alt="" loading="lazy" />
+            : <div className="list-emoji">{s.emoji}</div>}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="card-title">{s.title}</div>
             {tags.length > 0 && (
@@ -607,7 +648,9 @@ export default function ListsTab({
     return (
       <div key={m.id} className="card" onClick={() => openDetail('movie', m.id)}>
         <div className="list-card-head">
-          <div className="list-emoji">{m.emoji}</div>
+          {m.imageUrl
+            ? <img className="list-poster" src={m.imageUrl} alt="" loading="lazy" />
+            : <div className="list-emoji">{m.emoji}</div>}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="card-title">{m.title}</div>
             {tags.length > 0 && (
@@ -912,7 +955,12 @@ export default function ListsTab({
       {editingSeries && renderSeriesForm(
         editSeriesFields, setEditSeriesFields,
         handleUpdateSeries, () => { setEditingSeries(null); setSubmitted(false) },
-        'Serie bearbeiten', submitted
+        'Serie bearbeiten', submitted,
+        renderPosterControls(
+          series.find(s => s.id === editingSeries),
+          () => setSeriesImage(editingSeries, editSeriesFields.title),
+          () => clearSeriesImage(editingSeries),
+        )
       )}
 
       {showMovieForm && renderMovieForm(
@@ -923,7 +971,12 @@ export default function ListsTab({
       {editingMovie && renderMovieForm(
         editMovieFields, setEditMovieFields,
         handleUpdateMovie, () => { setEditingMovie(null); setSubmitted(false) },
-        'Film bearbeiten', submitted
+        'Film bearbeiten', submitted,
+        renderPosterControls(
+          movies.find(m => m.id === editingMovie),
+          () => setMovieImage(editingMovie, editMovieFields.title),
+          () => clearMovieImage(editingMovie),
+        )
       )}
 
       {showActivityForm && renderActivityForm(

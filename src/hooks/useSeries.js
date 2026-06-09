@@ -24,11 +24,45 @@ export function useSeries() {
       headers: authHeaders(),
       body: JSON.stringify(item),
     })
-    if (res.ok) { refresh(); return }
+    if (res.ok) {
+      const created = await res.json()
+      refresh()
+      return created.id
+    }
     handleUnauth(res)
     if (res.status !== 401) {
       const body = await res.json().catch(() => ({}))
       throw new Error(body.error || `Fehler ${res.status}`)
+    }
+  }
+
+  const setSeriesImage = async (id, query) => {
+    const imgRes = await fetch(
+      `${API}/api/series/image?q=${encodeURIComponent(query)}`,
+      { headers: authHeaders() }
+    )
+    if (!imgRes.ok) {
+      const err = await imgRes.json().catch(() => ({}))
+      throw new Error(err.error || `Bildfehler ${imgRes.status}`)
+    }
+    const { url } = await imgRes.json()
+    const patchRes = await fetch(`${API}/api/series/image?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ url }),
+    })
+    if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
+  }
+
+  const clearSeriesImage = async (id) => {
+    const res = await fetch(`${API}/api/series/image?id=${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ url: '' }),
+    })
+    if (!res.ok) {
+      handleUnauth(res)
+      if (res.status !== 401) throw new Error(`Bild entfernen fehlgeschlagen`)
     }
   }
 
@@ -59,5 +93,5 @@ export function useSeries() {
     }
   }
 
-  return { series, loading, addSeries, updateSeries, deleteSeries }
+  return { series, loading, addSeries, updateSeries, deleteSeries, setSeriesImage, clearSeriesImage }
 }

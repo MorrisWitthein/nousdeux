@@ -257,7 +257,7 @@ func handleSeries(w http.ResponseWriter, r *http.Request) {
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
 			        COALESCE(progress,0), COALESCE(season,0),
 			        COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'),
-			        COALESCE(who,''), created_at
+			        COALESCE(who,''), COALESCE(image_url,''), created_at
 			 FROM series ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
@@ -483,7 +483,7 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 		rows, err := pool.Query(ctx,
 			`SELECT id, COALESCE(emoji,''), title, COALESCE(sub,''),
 			        COALESCE(genres,'{}'), COALESCE(status,'Geplant'), COALESCE(status_type,'yellow'),
-			        COALESCE(who,''), created_at
+			        COALESCE(who,''), COALESCE(image_url,''), created_at
 			 FROM movies ORDER BY created_at DESC`)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())

@@ -45,6 +45,7 @@ type Series struct {
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
 	Who        string    `json:"who"`
+	ImageURL   string    `json:"imageUrl,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -58,6 +59,7 @@ type Movie struct {
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
 	Who        string    `json:"who"`
+	ImageURL   string    `json:"imageUrl,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
