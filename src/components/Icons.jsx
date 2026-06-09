@@ -55,3 +55,15 @@ export function CartIcon() {
     </svg>
   )
 }
+
+// Streaming/TV glyph — a screen with a play triangle. Accepts size overrides
+// (e.g. <TvIcon width={13} height={13} />) for use inside compact chips.
+export function TvIcon(p) {
+  return (
+    <svg {...props} {...p}>
+      <rect x="1.5" y="3" width="13" height="8.5" rx="1.5" />
+      <line x1="5" y1="14" x2="11" y2="14" />
+      <path d="M7 6.2 L9.8 8 L7 9.8 Z" />
+    </svg>
+  )
+}

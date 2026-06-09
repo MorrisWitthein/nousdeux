@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react'
 import TagInput from '../components/TagInput.jsx'
-import { PencilIcon, CloseIcon, CalendarIcon } from '../components/Icons.jsx'
+import { PencilIcon, CloseIcon, CalendarIcon, TvIcon } from '../components/Icons.jsx'
 import { useShoppingList, parseQty } from '../hooks/useShoppingList.js'
 import Sheet from '../components/Sheet.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -21,8 +21,20 @@ function DetailFooter({ who, currentUser, children }) {
   )
 }
 
+// Shared color-coded chips for detail sheets: platform first, then neutral
+// genre/season chips. Mirrors the in-card meta row but without the spinner.
+function MediaChips({ platform, neutral }) {
+  if (!platform && neutral.length === 0) return null
+  return (
+    <div className="media-meta" style={{ justifyContent: 'center', marginBottom: 4 }}>
+      {platform && <span className="chip-platform"><TvIcon width={13} height={13} />{platform}</span>}
+      {neutral.map((t, i) => <span key={i} className="chip-genre">{t}</span>)}
+    </div>
+  )
+}
+
 function SeriesDetail({ series, onEdit, onClose, currentUser }) {
-  const sub = seriesSubLine(series)
+  const neutral = series.season > 0 ? [`Staffel ${series.season}`] : []
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -30,14 +42,9 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
           ? <img src={series.imageUrl} alt={series.title} className="detail-poster" />
           : <div style={{ fontSize: 48, marginBottom: 8 }}>{series.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{series.title}</div>
-        <span className={`badge badge-${series.statusType}`}>{series.status}</span>
+        <span className={`badge badge-${series.statusType}`} style={{ marginBottom: 12, display: 'inline-block' }}>{series.status}</span>
+        <MediaChips platform={series.sub} neutral={neutral} />
       </div>
-      {sub && (
-        <div className="recipe-detail-section">
-          <div className="recipe-detail-section-title">Details</div>
-          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
-        </div>
-      )}
       <DetailFooter who={series.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
@@ -46,7 +53,6 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
 }
 
 function MovieDetail({ movie, onEdit, onClose, currentUser }) {
-  const sub = movieSubLine(movie)
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -54,14 +60,9 @@ function MovieDetail({ movie, onEdit, onClose, currentUser }) {
           ? <img src={movie.imageUrl} alt={movie.title} className="detail-poster" />
           : <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{movie.title}</div>
-        <span className={`badge badge-${movie.statusType}`}>{movie.status}</span>
+        <span className={`badge badge-${movie.statusType}`} style={{ marginBottom: 12, display: 'inline-block' }}>{movie.status}</span>
+        <MediaChips platform={movie.sub} neutral={movie.genres || []} />
       </div>
-      {sub && (
-        <div className="recipe-detail-section">
-          <div className="recipe-detail-section-title">Details</div>
-          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{sub}</div>
-        </div>
-      )}
       <DetailFooter who={movie.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
@@ -115,26 +116,6 @@ const EMPTY_SERIES   = { title: '', sub: '', emoji: '🎬', season: '', status: 
 const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', status: 'Idee', statusType: 'yellow' }
 const EMPTY_MOVIE    = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow' }
 
-function seriesSubLine(s) {
-  const ep = s.season > 0 ? `Staffel ${s.season}` : ''
-  return [ep, s.sub].filter(Boolean).join(' · ')
-}
-
-function movieSubLine(m) {
-  const genres = (m.genres || []).join(', ')
-  return [genres, m.sub].filter(Boolean).join(' · ')
-}
-
-// Card meta rendered as individual chips (season/platform, genres/platform)
-// rather than a single muted line — matches the recipe & event card style.
-function seriesTags(s) {
-  return [s.season > 0 ? `Staffel ${s.season}` : '', s.sub].filter(Boolean)
-}
-
-function movieTags(m) {
-  return [...(m.genres || []), m.sub].filter(Boolean)
-}
-
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 function activityStatusType(status) {
@@ -143,9 +124,9 @@ function activityStatusType(status) {
 }
 
 export default function ListsTab({
-  series, addSeries, updateSeries, deleteSeries, seriesLoading, setSeriesImage, clearSeriesImage,
+  series, addSeries, updateSeries, deleteSeries, seriesLoading, setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage,
   activities, addActivity, updateActivity, deleteActivity, activitiesLoading,
-  movies, addMovie, updateMovie, deleteMovie, moviesLoading, setMovieImage, clearMovieImage,
+  movies, addMovie, updateMovie, deleteMovie, moviesLoading, setMovieImage, clearMovieImage, fetchMovieMeta, patchMovieImage,
   currentUser,
   onNavigateToCalendar,
   activeList,
@@ -183,6 +164,40 @@ export default function ListsTab({
   const [submitted, setSubmitted] = useState(false)
   const [posterBusy, setPosterBusy] = useState(false)
 
+  // Ids of newly-added movies/series currently being enriched with TMDB
+  // metadata (genre/platform). Drives the inline "Lädt…" spinner on the card.
+  const [enrichingIds, setEnrichingIds] = useState(() => new Set())
+  const markEnriching = (id) => setEnrichingIds(s => new Set(s).add(id))
+  const unmarkEnriching = (id) => setEnrichingIds(s => { const n = new Set(s); n.delete(id); return n })
+
+  // After creating a movie/series, fetch TMDB metadata and fill the poster plus
+  // any fields the user left blank (genre/platform). Never overwrites manual
+  // input. The row PATCH is a full replace, so we merge into the original
+  // payload. Runs in the background; failures are silent (poster stays default).
+  const enrichMovie = async (id, base) => {
+    markEnriching(id)
+    try {
+      const meta = await fetchMovieMeta(base.title)
+      const patch = { ...base }
+      let changed = false
+      if (!(base.genres || []).length && meta.genres?.length) { patch.genres = meta.genres; changed = true }
+      if (!(base.sub || '').trim() && meta.platform) { patch.sub = meta.platform; changed = true }
+      if (changed) await updateMovie(id, patch)
+      if (meta.url) await patchMovieImage(id, meta.url)
+    } catch { /* keep default poster/fields */ }
+    finally { unmarkEnriching(id) }
+  }
+
+  const enrichSeries = async (id, base) => {
+    markEnriching(id)
+    try {
+      const meta = await fetchSeriesMeta(base.title)
+      if (!(base.sub || '').trim() && meta.platform) await updateSeries(id, { ...base, sub: meta.platform })
+      if (meta.url) await patchSeriesImage(id, meta.url)
+    } catch { /* keep default poster/fields */ }
+    finally { unmarkEnriching(id) }
+  }
+
   // Completed items (watched series/movies, done activities) collapse into an
   // "Erledigt" section that is hidden by default, per list type.
   const [showDone, setShowDone] = useState({ series: false, movies: false, activities: false })
@@ -207,16 +222,16 @@ export default function ListsTab({
     setSubmitted(true)
     if (!newSeries.title.trim()) return
     try {
-      const id = await addSeries({
+      const payload = {
         emoji: newSeries.emoji,
         title: newSeries.title,
         sub: newSeries.sub,
         season: parseInt(newSeries.season, 10) || 0,
         status: newSeries.status,
         statusType: newSeries.statusType,
-      })
-      const title = newSeries.title
-      if (id) setSeriesImage(id, title).catch(() => {})
+      }
+      const id = await addSeries(payload)
+      if (id) enrichSeries(id, payload)
       setNewSeries({ ...EMPTY_SERIES })
       setSubmitted(false)
       setShowSeriesForm(false)
@@ -276,16 +291,16 @@ export default function ListsTab({
     setSubmitted(true)
     if (!newMovie.title.trim()) return
     try {
-      const id = await addMovie({
+      const payload = {
         emoji: newMovie.emoji,
         title: newMovie.title,
         sub: newMovie.sub,
         genres: newMovie.genres,
         status: newMovie.status,
         statusType: newMovie.statusType,
-      })
-      const title = newMovie.title
-      if (id) setMovieImage(id, title).catch(() => {})
+      }
+      const id = await addMovie(payload)
+      if (id) enrichMovie(id, payload)
       setNewMovie({ ...EMPTY_MOVIE })
       setSubmitted(false)
       setShowMovieForm(false)
@@ -418,29 +433,20 @@ export default function ListsTab({
     return (
     <Sheet title={title} onClose={onCancel}>
       {imageBlock}
-      <div className="form-row">
-        <div style={{ flex: '0 0 70px' }}>
-          <label className="form-label">Emoji</label>
-          <input
-            value={fields.emoji}
-            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label className="form-label">Titel</label>
-          <input
-            className={titleMissing ? 'input-error' : ''}
-            placeholder="Titel"
-            value={fields.title}
-            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
-          />
-          {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
-        </div>
+      <div>
+        <label className="form-label">Titel</label>
+        <input
+          className={titleMissing ? 'input-error' : ''}
+          placeholder="Titel"
+          value={fields.title}
+          onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+        />
+        {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
       </div>
       <div>
         <label className="form-label">Plattform</label>
         <input
-          placeholder="Plattform (Netflix, HBO, …)"
+          placeholder="Wird automatisch erkannt – oder manuell eingeben"
           value={fields.sub}
           onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
         />
@@ -479,37 +485,28 @@ export default function ListsTab({
     return (
     <Sheet title={title} onClose={onCancel}>
       {imageBlock}
-      <div className="form-row">
-        <div style={{ flex: '0 0 70px' }}>
-          <label className="form-label">Emoji</label>
-          <input
-            value={fields.emoji}
-            onChange={e => setFields(f => ({ ...f, emoji: e.target.value }))}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label className="form-label">Titel</label>
-          <input
-            className={titleMissing ? 'input-error' : ''}
-            placeholder="Titel"
-            value={fields.title}
-            onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
-          />
-          {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
-        </div>
+      <div>
+        <label className="form-label">Titel</label>
+        <input
+          className={titleMissing ? 'input-error' : ''}
+          placeholder="Titel"
+          value={fields.title}
+          onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+        />
+        {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
       </div>
       <label className="form-label">Genre</label>
       <TagInput
         value={fields.genres}
         onChange={genres => setFields(f => ({ ...f, genres }))}
         suggestions={knownGenres}
-        placeholder="Komödie, Thriller, … (Enter)"
+        placeholder="Wird automatisch erkannt (Enter)"
       />
       <div className="form-row">
         <div style={{ flex: 1 }}>
           <label className="form-label">Plattform</label>
           <input
-            placeholder="Netflix, Kino, …"
+            placeholder="Automatisch erkannt"
             value={fields.sub}
             onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
           />
@@ -614,8 +611,25 @@ export default function ListsTab({
       : <span />
   )
 
+  // Color-coded meta row for media cards: a teal platform chip (where to watch)
+  // first, then neutral genre/season chips. While the row is being enriched with
+  // TMDB data, a small spinner chip is shown alongside whatever is already there.
+  const renderMediaMeta = (id, platform, neutralChips) => {
+    const enriching = enrichingIds.has(id)
+    if (!platform && neutralChips.length === 0 && !enriching) return null
+    return (
+      <div className="media-meta">
+        {platform && (
+          <span className="chip-platform"><TvIcon width={13} height={13} />{platform}</span>
+        )}
+        {neutralChips.map((t, i) => <span key={i} className="chip-genre">{t}</span>)}
+        {enriching && <span className="chip-loading"><span className="spinner-sm" />Lädt…</span>}
+      </div>
+    )
+  }
+
   const renderSeriesRow = (s) => {
-    const tags = seriesTags(s)
+    const neutral = s.season > 0 ? [`Staffel ${s.season}`] : []
     return (
       <div key={s.id} className="media-card" onClick={() => openDetail('series', s.id)}>
         {s.imageUrl
@@ -626,11 +640,7 @@ export default function ListsTab({
             <div className="card-title">{s.title}</div>
             <span className={`badge badge-${s.statusType}`}>{s.status}</span>
           </div>
-          {tags.length > 0 && (
-            <div className="recipe-tags">
-              {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
-            </div>
-          )}
+          {renderMediaMeta(s.id, s.sub, neutral)}
           <div className="media-footer">
             {renderAuthor(s.who)}
             <div style={{ display: 'flex', gap: 4 }}>
@@ -644,7 +654,6 @@ export default function ListsTab({
   }
 
   const renderMovieRow = (m) => {
-    const tags = movieTags(m)
     return (
       <div key={m.id} className="media-card" onClick={() => openDetail('movie', m.id)}>
         {m.imageUrl
@@ -655,11 +664,7 @@ export default function ListsTab({
             <div className="card-title">{m.title}</div>
             <span className={`badge badge-${m.statusType}`}>{m.status}</span>
           </div>
-          {tags.length > 0 && (
-            <div className="recipe-tags">
-              {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
-            </div>
-          )}
+          {renderMediaMeta(m.id, m.sub, m.genres || [])}
           <div className="media-footer">
             {renderAuthor(m.who)}
             <div style={{ display: 'flex', gap: 4 }}>

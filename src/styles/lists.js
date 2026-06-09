@@ -124,6 +124,63 @@ const lists = `
   gap: 10px;
 }
 
+/* Meta area for media cards — platform first (where to watch), then
+   genre/season chips (what it is). Color-coded so the two read distinctly. */
+.media-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Platform — prominent teal "where to watch" chip with a streaming glyph. */
+.chip-platform {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px 3px 7px;
+  border-radius: 100px;
+  background: #E3F0EE;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+.chip-platform svg { opacity: 0.85; }
+
+/* Genre / season — lighter neutral chips. */
+.chip-genre {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: var(--warm);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Loading chip shown while TMDB metadata is being fetched after create. */
+.chip-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--warm);
+  color: var(--muted);
+}
+
+.spinner-sm {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--accent2);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
 .media-footer {
   margin-top: auto;
   display: flex;

@@ -36,7 +36,8 @@ export function useSeries() {
     }
   }
 
-  const setSeriesImage = async (id, query) => {
+  // Fetches poster + metadata (genres, platform) from TMDB without persisting.
+  const fetchSeriesMeta = async (query) => {
     const imgRes = await fetch(
       `${API}/api/series/image?q=${encodeURIComponent(query)}`,
       { headers: authHeaders() }
@@ -45,13 +46,21 @@ export function useSeries() {
       const err = await imgRes.json().catch(() => ({}))
       throw new Error(err.error || `Bildfehler ${imgRes.status}`)
     }
-    const { url } = await imgRes.json()
+    return imgRes.json() // { url, genres, platform }
+  }
+
+  const patchSeriesImage = async (id, url) => {
     const patchRes = await fetch(`${API}/api/series/image?id=${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ url }),
     })
     if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
+  }
+
+  const setSeriesImage = async (id, query) => {
+    const { url } = await fetchSeriesMeta(query)
+    await patchSeriesImage(id, url)
   }
 
   const clearSeriesImage = async (id) => {
@@ -93,5 +102,5 @@ export function useSeries() {
     }
   }
 
-  return { series, loading, addSeries, updateSeries, deleteSeries, setSeriesImage, clearSeriesImage }
+  return { series, loading, addSeries, updateSeries, deleteSeries, setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage }
 }

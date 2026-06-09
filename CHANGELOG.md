@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.14.0] - 2026-06-09
+
+### Added
+- Filme und Serien holen beim Hinzufügen jetzt automatisch Genre und verfügbare Streaming-Plattform(en) von TMDB (Region Deutschland) — ein kleiner Lade-Spinner auf der Karte zeigt, während die Infos abgerufen werden. Manuell eingetragene Werte werden nicht überschrieben.
+
+### Changed
+- Karten in Filme/Serien neu gestaltet: Plattform als hervorgehobener Chip mit Streaming-Symbol, Genre/Staffel als dezente Chips — visuell klar unterscheidbar.
+
+### Removed
+- Emoji-Eingabefeld in den Film- und Serien-Formularen entfernt; ein fester Standard dient als Rückfallbild, wenn kein Poster gefunden wird.
+
+---
+
 ## [0.13.1] - 2026-06-09
 
 ### Changed

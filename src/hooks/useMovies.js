@@ -36,7 +36,8 @@ export function useMovies() {
     }
   }
 
-  const setMovieImage = async (id, query) => {
+  // Fetches poster + metadata (genres, platform) from TMDB without persisting.
+  const fetchMovieMeta = async (query) => {
     const imgRes = await fetch(
       `${API}/api/movies/image?q=${encodeURIComponent(query)}`,
       { headers: authHeaders() }
@@ -45,13 +46,21 @@ export function useMovies() {
       const err = await imgRes.json().catch(() => ({}))
       throw new Error(err.error || `Bildfehler ${imgRes.status}`)
     }
-    const { url } = await imgRes.json()
+    return imgRes.json() // { url, genres, platform }
+  }
+
+  const patchMovieImage = async (id, url) => {
     const patchRes = await fetch(`${API}/api/movies/image?id=${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ url }),
     })
     if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
+  }
+
+  const setMovieImage = async (id, query) => {
+    const { url } = await fetchMovieMeta(query)
+    await patchMovieImage(id, url)
   }
 
   const clearMovieImage = async (id) => {
@@ -93,5 +102,5 @@ export function useMovies() {
     }
   }
 
-  return { movies, loading, addMovie, updateMovie, deleteMovie, setMovieImage, clearMovieImage }
+  return { movies, loading, addMovie, updateMovie, deleteMovie, setMovieImage, clearMovieImage, fetchMovieMeta, patchMovieImage }
 }
