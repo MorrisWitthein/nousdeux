@@ -617,26 +617,26 @@ export default function ListsTab({
   const renderSeriesRow = (s) => {
     const tags = seriesTags(s)
     return (
-      <div key={s.id} className="card" onClick={() => openDetail('series', s.id)}>
-        <div className="list-card-head">
-          {s.imageUrl
-            ? <img className="list-poster" src={s.imageUrl} alt="" loading="lazy" />
-            : <div className="list-emoji">{s.emoji}</div>}
-          <div style={{ flex: 1, minWidth: 0 }}>
+      <div key={s.id} className="media-card" onClick={() => openDetail('series', s.id)}>
+        {s.imageUrl
+          ? <img className="media-poster" src={s.imageUrl} alt="" loading="lazy" />
+          : <div className="media-poster media-poster-fallback">{s.emoji}</div>}
+        <div className="media-body">
+          <div className="media-body-top">
             <div className="card-title">{s.title}</div>
-            {tags.length > 0 && (
-              <div className="recipe-tags">
-                {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
-              </div>
-            )}
+            <span className={`badge badge-${s.statusType}`}>{s.status}</span>
           </div>
-          <span className={`badge badge-${s.statusType}`}>{s.status}</span>
-        </div>
-        <div className="card-footer">
-          {renderAuthor(s.who)}
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
-            <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
+          {tags.length > 0 && (
+            <div className="recipe-tags">
+              {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+            </div>
+          )}
+          <div className="media-footer">
+            {renderAuthor(s.who)}
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditSeries(s) }}><PencilIcon /></button>
+              <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteSeries(s.id) }}><CloseIcon /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -646,26 +646,26 @@ export default function ListsTab({
   const renderMovieRow = (m) => {
     const tags = movieTags(m)
     return (
-      <div key={m.id} className="card" onClick={() => openDetail('movie', m.id)}>
-        <div className="list-card-head">
-          {m.imageUrl
-            ? <img className="list-poster" src={m.imageUrl} alt="" loading="lazy" />
-            : <div className="list-emoji">{m.emoji}</div>}
-          <div style={{ flex: 1, minWidth: 0 }}>
+      <div key={m.id} className="media-card" onClick={() => openDetail('movie', m.id)}>
+        {m.imageUrl
+          ? <img className="media-poster" src={m.imageUrl} alt="" loading="lazy" />
+          : <div className="media-poster media-poster-fallback">{m.emoji}</div>}
+        <div className="media-body">
+          <div className="media-body-top">
             <div className="card-title">{m.title}</div>
-            {tags.length > 0 && (
-              <div className="recipe-tags">
-                {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
-              </div>
-            )}
+            <span className={`badge badge-${m.statusType}`}>{m.status}</span>
           </div>
-          <span className={`badge badge-${m.statusType}`}>{m.status}</span>
-        </div>
-        <div className="card-footer">
-          {renderAuthor(m.who)}
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
-            <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
+          {tags.length > 0 && (
+            <div className="recipe-tags">
+              {tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+            </div>
+          )}
+          <div className="media-footer">
+            {renderAuthor(m.who)}
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button className="btn-edit" onClick={(e) => { e.stopPropagation(); startEditMovie(m) }}><PencilIcon /></button>
+              <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDeleteMovie(m.id) }}><CloseIcon /></button>
+            </div>
           </div>
         </div>
       </div>

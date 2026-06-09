@@ -71,15 +71,65 @@ const lists = `
   flex-shrink: 0;
 }
 
-/* Poster thumbnail (movies/series) — portrait 2:3, replaces .list-emoji */
-.list-poster {
-  width: 44px;
-  height: 66px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: var(--warm);
+/* Media card (movies/series) — full-height portrait poster on the left,
+   content column on the right. Poster is flush to the card edge and clipped
+   by the card's rounded corners. */
+.media-card {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  min-height: 150px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.media-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.media-poster {
+  width: 100px;
   flex-shrink: 0;
+  align-self: stretch;
+  object-fit: cover;
+  background: var(--warm);
   display: block;
+}
+
+/* Emoji fallback occupies the same poster slot when no image is set. */
+.media-poster-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+}
+
+.media-body {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media-body-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.media-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 /* Poster in the detail sheet — centered, larger portrait */

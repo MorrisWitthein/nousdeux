@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.13.1] - 2026-06-09
+
+### Changed
+- Redesigned the Filme and Serien cards: the poster now spans the full height of the card on the left, with title, status, tags and author in a content column on the right — a larger, more modern poster-forward layout.
+
+---
+
 ## [0.13.0] - 2026-06-09
 
 ### Added
