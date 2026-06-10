@@ -1,92 +1,64 @@
-# TODO — Refactoring & Quality
+# Plan — Refactoring, Quality & Roadmap
 
-## Dead Code Removal
+Single working plan. Replaces the former `Roadmap.md` and `refactoring.md`.
+Work top to bottom; one PR per phase (Phase 1 may be two).
 
-- [ ] Delete `src/tabs/ActivitiesTab.jsx` — unused, activities lives in ListsTab
-- [ ] Delete `src/mock/db.js` — nothing imports it
-- [ ] Delete `src/data.js` — nothing imports it (mock layer is dead)
+## Phase 0 — Housekeeping
 
-## Frontend Refactoring
+- [x] Update README.md project structure tree (missing many API files, hooks, styles split)
+- [x] Update README.md API endpoint table (missing shopping-list, weather, recipe-import, attachments)
+- [x] Fix README.md docker-compose description (frontend service is commented out)
 
-### High Priority
+## Phase 1 — Frontend refactoring
 
-- [ ] Extract `authHeaders()`, `handleUnauth()`, `API` constant to `src/hooks/api.js` — duplicated across all 6 hooks (~70 lines of copy-paste)
-- [ ] Extract `Sheet` component to `src/components/Sheet.jsx` — defined identically in CalendarTab, RecipesTab, ListsTab
-- [ ] Split `ListsTab.jsx` (781 lines) into per-sub-tab components: `SeriesSubTab`, `MoviesSubTab`, `ActivitiesSubTab`, `ShoppingSubTab`
-- [ ] Split `CalendarTab.jsx` (790 lines) — extract `<EventForm />` and `useSwipeMonth` hook
-
-### Medium Priority
-
-- [ ] Normalize hook error handling — `useEvents` throws on failure, all others silently swallow. Pick one approach.
+- [ ] Split `ListsTab.jsx` (999 lines) into `SeriesSubTab` / `MoviesSubTab` / `ActivitiesSubTab` / `ShoppingSubTab`
+- [ ] Split `CalendarTab.jsx` (891 lines): extract `<EventForm />` and `useSwipeMonth` hook
+- [ ] Move `formatISOToGerman` to `src/utils/date.js`
+- [ ] Extract `ProfileModal` from `App.jsx` inline JSX
 - [ ] Wrap `useShoppingList` `history` computation in `useMemo`
-- [ ] Extract `ProfileModal` from `App.jsx` inline JSX (55 lines)
-- [ ] Extract shared `formatISOToGerman` to `src/utils/date.js` (duplicated in CalendarTab + ActivitiesTab)
+- [ ] Keyboard & a11y — make interactive `<div onClick>` cards real `<button>`s (stat cards, list items, date chip, calendar days)
+- [ ] Disable Save buttons while title is empty (match calendar endDate behaviour)
 
-## API Refactoring
+## Phase 2 — API refactoring
 
-### High Priority
-
-- [ ] Split `handlers.go` (787 lines) into per-resource files or extract shared CRUD helpers to reduce boilerplate
-- [ ] Fix `handleWeather` to use `writeError()`/`writeJSON()` instead of `http.Error()` + manual JSON encoding
-- [ ] Fix `sanitizeFilename("")` returning `"."` — should reject empty filenames (`attachments.go:202`)
-
-### Medium Priority
-
-- [ ] Colocate all recipe-image logic (currently split between `handlers.go:598-682` and `recipe_images.go`)
-- [ ] Rename/split `middleware.go` — contains response helpers (`writeJSON`, `writeError`) that aren't middleware
+- [ ] Split `handlers.go` (817 lines) into per-resource files / shared CRUD helpers
+- [ ] Move response helpers (`writeJSON`, `writeError`) out of `middleware.go`
 - [ ] Separate DB pool from SSE brokers in `store.go`
+- [ ] Colocate recipe-image logic (split between `handlers.go` and `recipe_images.go`)
+- [ ] Optional: wrap global state (`pool`, brokers, `jwtSecret`) in an `App` struct for DI
 
-### Low Priority (Testability)
+## Phase 3 — Tests
 
-- [ ] Wrap global state (`pool`, brokers, `jwtSecret`) in an `App` struct for dependency injection
-
-## Missing Tests
-
-### API — Critical
-
-- [ ] `auth.go` — login (valid/invalid creds), token validation, expired tokens, `requireAuth` middleware
+### API — critical
+- [ ] `auth.go` — login (valid/invalid creds), token validation, expired tokens, `requireAuth`
 - [ ] `validateMovie` — only Event/Series/Activity/Recipe have validation tests
-- [ ] Handler happy paths — existing tests only verify 400 on bad input, never test successful CRUD
+- [ ] Handler happy paths — existing tests only cover 400s, never successful CRUD
 
-### API — Medium
-
-- [ ] `recipe_import.go` — `htmlToText`, `stripMarkdownFences` (pure functions, easy to test)
+### API — medium
+- [ ] `recipe_import.go` — `htmlToText`, `stripMarkdownFences`
 - [ ] `recipe_images.go` — upload, serve, delete
 - [ ] `sse/broker.go` — notify, serve, shutdown
 - [ ] `cleanup.go` — cleanup logic
 
 ### Frontend
+- [ ] Set up Vitest
+- [ ] Unit tests for hooks (mock fetch + SSE)
+- [ ] Smoke tests for tab components
 
-- [ ] Set up test framework (Vitest) — no test infrastructure exists
-- [ ] Add smoke tests for tab components
-- [ ] Add unit tests for hooks (mocking fetch + SSE)
+## Phase 4 — Features (former roadmap)
 
-## Documentation
+In order:
 
-- [ ] Update README.md project structure tree (missing many API files, hooks, styles split)
-- [ ] Update README.md API endpoint table (missing shopping-list, weather, recipe-import, attachments)
-- [ ] Fix README.md docker-compose description (frontend service is commented out)
+- [ ] **Calendar view refactor** — incorporate the event list into the calendar view; clicking a day switches to a single-day view of that day's events; keep an option to see the next upcoming events. (Builds on the Phase 1 CalendarTab split.)
+- [ ] **Visual distinction of tags vs. metadata** — distinguish tags from other metadata visually across all resource types, mirroring today's movie behaviour (platform highlighted differently from genre).
+- [ ] **Report a bug** — button in the profile modal opening a prefilled GitHub issue.
+- [ ] **Dark mode** — dark palette via CSS variables + toggle in the profile, persisted via settings.
+- [ ] **Statistics detail view** — detail view from the home-screen stat cards with in-depth per-resource stats, historic data and visualizations.
+- [ ] **Event suggestions** — suggest events that appear as notifications for the other user, accept/decline. Needs DB migration, API endpoints, SSE notification, UI.
 
-## Frontend Usability
+## Done (from the old refactoring list)
 
-Findings from a usability review of the four tabs, shared components, and styling.
-
-### High Priority
-
-- [x] Add empty states everywhere except the shopping list (which already has one at `ListsTab.jsx:846`). A new couple sees blank tabs with just a floating `+`. Cover: Calendar with no events; tapping a calendar day with no events (currently shows nothing, looks broken — `CalendarTab.jsx:691`); Series / Movies / Activities with no items; Recipes with no items.
-- [x] Add a loading state on initial fetch — hooks load async but tabs render their empty layout immediately. Home shows `0` Events / `0` Serien during the fetch (`HomeTab.jsx:206-227`), i.e. confidently wrong numbers. Use a skeleton or `–` until first load.
-- [x] Replace `window.confirm` deletes with an undo toast — every delete uses native `window.confirm` (e.g. `CalendarTab.jsx:835`, `ListsTab.jsx:344`). Breaks the PWA look, and in a shared app a partner's accidental delete is unrecoverable. Use the existing `ToastContext` for a "Gelöscht · Rückgängig" toast. (Record deletes — events, series, movies, activities, recipes — now delete immediately with a "Rückgängig" undo toast. Attachment delete keeps its confirm since the file blob can't be restored.)
-- [x] Fix the header avatar, hardcoded `avatar-b` (teal) for both users (`App.jsx:69`), which contradicts the scheme everywhere else. (Resolved as a no-op under the chosen *relative* scheme — the current user is teal everywhere, so the header was already visually correct. Instead unified the duplicated `who === currentUser ? --accent2 : --accent` logic into a shared `authorColor()` helper (`src/utils/authorColor.js`) used by the header avatar, profile avatar and all author dots; removed the now-dead `.avatar-a`/`.avatar-b` CSS.)
-
-### Medium Priority
-
-- [x] Standardize the add/edit pattern across tabs — Recipes uses a slide-up `Sheet`; Calendar and Lists render an inline `.add-form` at the top while the FAB is bottom-right, compensating with `window.scrollBy` (`CalendarTab.jsx:452`, `ListsTab.jsx:173`). Standardize on the bottom `Sheet` (also gets swipe-to-dismiss for free). (Calendar and Lists add/edit forms now render inside the shared `Sheet`; removed both `window.scrollBy` effects and the inline `.add-form` rendering. The `.add-form` CSS stays for `AuthGate`'s login form. Date/time input appearance normalization extended to `.sheet-body`.)
-- [x] Make the profile modal reuse `Sheet` — hand-rolled with inline styles and its own backdrop (`App.jsx:125-210`), losing swipe-to-dismiss and duplicating ~80 lines of styling. (Overlaps with the "Extract `ProfileModal`" refactoring item above.) (Profile now renders inside the shared `Sheet` with a "Profil" title, gaining swipe-to-dismiss and body scroll-lock; removed the bespoke backdrop/container inline styles. Content layout unchanged.)
-
-### Low Priority / Polish
-
-- [ ] Keyboard & a11y — interactive cards are `<div onClick>` (stat cards, list items, date chip, calendar days), with no focus ring, `role`, or keyboard activation. Better as `<button>`.
-- [ ] Calendar day-tap discoverability — tapping a day filters the list below with no visual cue that scope changed or how to clear it (clear-on-tap-empty handled at `CalendarTab.jsx:493` but invisible).
-- [ ] Save buttons stay enabled while title is empty (validation fires only on submit) — inconsistent with the calendar's endDate, which disables Save.
-
-**Suggested starting point:** empty states and the undo-on-delete toast — self-contained, high-value, and the biggest improvements to day-one and shared use.
+Dead code removal (ActivitiesTab, mock db, data.js) · `hooks/api.js` extraction ·
+`Sheet` component · `authorColor` helper · empty states · loading states ·
+undo-toast deletes · `sanitizeFilename` fix · `handleWeather` response helpers ·
+normalized hook error handling.
