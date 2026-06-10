@@ -266,6 +266,11 @@ const lists = `
 }
 
 .shop-suggestion-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
   padding: 11px 14px;
   font-size: 14px;
   font-family: 'DM Sans', sans-serif;

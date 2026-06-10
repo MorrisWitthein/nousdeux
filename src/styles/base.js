@@ -118,6 +118,13 @@ const base = `
   flex-shrink: 0;
 }
 .toast-close:hover { opacity: 1; }
+
+[role="button"] { cursor: pointer; }
+[role="button"]:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent3);
+  outline-offset: 2px;
+}
 `
 
 export default base

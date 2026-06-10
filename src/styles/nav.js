@@ -117,6 +117,10 @@ const nav = `
   cursor: pointer;
   padding: 4px 0;
   transition: opacity 0.15s;
+  background: none;
+  border: none;
+  font-family: inherit;
+  color: inherit;
 }
 
 .nav-item:hover { opacity: 0.7; }

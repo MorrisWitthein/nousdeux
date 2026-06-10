@@ -66,6 +66,10 @@ const calendar = `
   cursor: pointer;
   position: relative;
   -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
 }
 
 .cal-day-num {
