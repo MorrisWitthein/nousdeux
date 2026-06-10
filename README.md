@@ -18,17 +18,27 @@ A shared planning PWA for two users to manage events, recipes, TV series, and ac
 
 ## Quick start (Docker Compose)
 
-The fastest way to run the full stack locally:
+Docker Compose runs the **backend** (Postgres + API); the frontend service is
+currently commented out in `docker-compose.yml` — run it via `npm run dev`
+(see below).
 
 ```bash
 # Generate a bcrypt hash for a test password
 htpasswd -nbBC 12 "" test | cut -d: -f2
 
-# Start everything (Postgres + API + frontend)
-USERS='{"max":"<paste-hash>","lena":"<paste-hash>"}' docker compose up --build
+# Create .env with the required variables
+cat > .env <<'EOF'
+POSTGRES_USER=nousdeux
+POSTGRES_PASSWORD=nousdeux
+POSTGRES_DB=nousdeux
+JWT_SECRET=dev-secret
+USERS={"max":"<paste-hash>","lena":"<paste-hash>"}
+EOF
+
+# Start Postgres + API
+docker compose up --build
 ```
 
-- Frontend: http://localhost:8081
 - API: http://localhost:8080
 - Postgres: localhost:5432
 
@@ -81,12 +91,17 @@ The API listens on `http://localhost:8080`. Schema migrations run automatically 
 
 ### API environment variables
 
-| Variable     | Required | Description                                         |
-| ------------ | -------- | --------------------------------------------------- |
-| `DB_DSN`     | Yes      | Postgres connection string                          |
-| `API_ADDR`   | No       | Listen address (default `:8080`)                    |
-| `JWT_SECRET` | Yes      | Secret key for signing JWTs                         |
-| `USERS`      | Yes      | JSON map of `username` to bcrypt hash               |
+| Variable              | Required | Description                                                        |
+| --------------------- | -------- | ------------------------------------------------------------------ |
+| `DB_DSN`              | Yes      | Postgres connection string                                          |
+| `API_ADDR`            | No       | Listen address (default `:8080`)                                    |
+| `JWT_SECRET`          | Yes      | Secret key for signing JWTs                                         |
+| `USERS`               | Yes      | JSON map of `username` to bcrypt hash (seeded into DB on startup)   |
+| `ADMINS`              | No       | Comma/space-separated usernames with admin rights                   |
+| `ATTACHMENTS_DIR`     | No       | Event attachment storage dir (default `/data/attachments`)          |
+| `UNSPLASH_ACCESS_KEY` | No       | Recipe image auto-fetch; skipped when unset                         |
+| `TMDB_API_KEY`        | No       | Movie/series poster auto-fetch; skipped when unset                  |
+| `ANTHROPIC_API_KEY`   | No       | AI recipe import (`/api/recipes/import`); 503 when unset            |
 
 ### Schema migrations
 
@@ -94,22 +109,32 @@ SQL migrations live in `api/db/migrations/` as numbered files. They are embedded
 
 ### API endpoints
 
-| Method | Path                    | Auth     | Description             |
-| ------ | ----------------------- | -------- | ----------------------- |
-| POST   | `/api/login`            | No       | Returns signed JWT      |
-| GET    | `/api/events`           | Bearer   | List all events         |
-| POST   | `/api/events`           | Bearer   | Create event            |
-| GET    | `/api/events/stream`    | `?token` | SSE stream for events   |
-| GET    | `/api/recipes`          | Bearer   | List all recipes        |
-| POST   | `/api/recipes`          | Bearer   | Create recipe           |
-| GET    | `/api/recipes/stream`   | `?token` | SSE stream for recipes  |
-| GET    | `/api/series`           | Bearer   | List all series         |
-| POST   | `/api/series`           | Bearer   | Create series           |
-| GET    | `/api/series/stream`    | `?token` | SSE stream for series   |
-| GET    | `/api/activities`       | Bearer   | List all activities     |
-| POST   | `/api/activities`       | Bearer   | Create activity         |
-| GET    | `/api/activities/stream`| `?token` | SSE stream for activities|
-| GET    | `/health`               | No       | Health check            |
+All routes except `/health` and `/api/login` require a Bearer token (or
+`?token=` query parameter, used by EventSource for the SSE streams).
+
+| Method               | Path                              | Description                                        |
+| -------------------- | --------------------------------- | -------------------------------------------------- |
+| POST                 | `/api/login`                      | Returns signed JWT                                  |
+| POST                 | `/api/me/password`                | Change own password                                 |
+| GET/POST/PATCH/DELETE | `/api/events`                    | CRUD for events                                     |
+| GET/POST/PATCH/DELETE | `/api/recipes`                   | CRUD for recipes                                    |
+| GET/POST/PATCH/DELETE | `/api/series`                    | CRUD for series                                     |
+| GET/POST/PATCH/DELETE | `/api/movies`                    | CRUD for movies                                     |
+| GET/POST/PATCH/DELETE | `/api/activities`                | CRUD for activities                                 |
+| GET                  | `/api/{resource}/stream`          | SSE stream (events, recipes, series, movies, activities, shopping) |
+| GET/POST/PATCH/DELETE | `/api/shopping`                  | Shopping list items                                 |
+| GET                  | `/api/shopping/history`           | Previously used item names (autocomplete)           |
+| POST                 | `/api/recipes/import`             | AI recipe import from a URL (Anthropic API)         |
+| GET/PATCH            | `/api/recipes/image`              | Search/set recipe image (Unsplash)                  |
+| POST                 | `/api/recipes/{id}/upload-image`  | Upload a recipe image                               |
+| GET                  | `/api/recipes/{id}/image-file`    | Serve uploaded recipe image (no auth)               |
+| GET/PATCH            | `/api/series/image`               | Search/set series poster (TMDB)                     |
+| GET/PATCH            | `/api/movies/image`               | Search/set movie poster (TMDB)                      |
+| GET/POST             | `/api/events/{id}/attachments`    | List/upload event attachments                       |
+| GET/DELETE           | `/api/attachments/{id}`           | Download/delete an attachment                       |
+| GET                  | `/api/weather`                    | Weather forecast proxy                              |
+| GET/PATCH            | `/api/settings`                   | App settings (PATCH is admin-only)                  |
+| GET                  | `/health`                         | Health check (no auth)                              |
 
 ## Production deployment
 
@@ -132,37 +157,45 @@ Access via `http://<pi-tailscale-ip>:30080`.
 ```
 nousdeux/
 ├── api/
-│   ├── main.go          # server setup, routes, shutdown
-│   ├── auth.go          # login handler, JWT middleware
-│   ├── handlers.go      # CRUD handlers for all 4 tables
-│   ├── handlers_test.go
-│   ├── middleware.go    # CORS, JSON response helpers
-│   ├── models.go        # Event, Recipe, Series, Activity structs
-│   ├── store.go         # DB pool + SSE brokers
-│   ├── validate.go      # input validation helpers
-│   ├── validate_test.go
+│   ├── main.go            # server setup, routes, shutdown
+│   ├── auth.go            # login, password change, JWT middleware, user seeding
+│   ├── handlers.go        # CRUD handlers for events/recipes/series/movies/activities + shopping
+│   ├── attachments.go     # event attachment upload/download/delete
+│   ├── recipe_import.go   # AI recipe import (Anthropic API)
+│   ├── recipe_images.go   # recipe image upload + serving
+│   ├── list_images.go     # TMDB poster search for series/movies
+│   ├── weather.go         # weather forecast proxy
+│   ├── settings.go        # app settings (admin-gated writes)
+│   ├── cleanup.go         # background cleanup worker
+│   ├── middleware.go      # CORS, JSON response helpers
+│   ├── models.go          # Event, Recipe, Series, Movie, Activity structs
+│   ├── store.go           # DB pool + SSE brokers
+│   ├── validate.go        # input validation helpers
+│   ├── *_test.go          # handler, validation, weather, attachment tests
+│   ├── VERSION            # API semver (Docker image tag source)
 │   ├── db/
-│   │   ├── connect.go   # pgx connection pool
-│   │   ├── migrate.go   # auto-apply numbered SQL migrations
-│   │   └── migrations/  # 001_initial … 004_event_end_date
+│   │   ├── connect.go     # pgx connection pool
+│   │   ├── migrate.go     # auto-apply numbered SQL migrations
+│   │   └── migrations/    # 001_initial … 018_list_image_url
 │   └── sse/
-│       └── broker.go    # SSE fan-out broker
+│       └── broker.go      # SSE fan-out broker
 ├── src/
-│   ├── hooks/           # useEvents, useRecipes, useSeries, useActivities
-│   ├── mock/
-│   │   └── db.js        # in-memory pub/sub mock database
-│   ├── tabs/            # HomeTab, CalendarTab, ListsTab, RecipesTab, ActivitiesTab
-│   │   └── connectStream.js  # shared SSE connection helper
-│   ├── App.jsx          # tab routing, data wiring
-│   ├── AuthGate.jsx     # login screen, JWT storage
-│   ├── parseJwt.js      # decode JWT claims client-side
-│   ├── styles.js        # full design system as CSS template string
-│   ├── data.js          # seed data + calendar grid
-│   └── main.jsx         # entry point
-├── docker-compose.yml   # full local stack (Postgres + API + frontend)
-├── nginx.conf           # nginx config for frontend container
-├── Dockerfile           # frontend (node build → nginx)
-├── Dockerfile.api       # API (go build → scratch)
-├── CHANGELOG.md         # frontend release history
-└── PLAN.md              # development roadmap
+│   ├── hooks/             # data hooks (events, recipes, series, movies, activities,
+│   │                      #   shopping list, settings, weather) + api.js + connectStream.js
+│   ├── tabs/              # HomeTab, CalendarTab, ListsTab, RecipesTab
+│   ├── components/        # Sheet, EmptyState, Icons, TagInput, PasswordChange
+│   ├── context/           # ToastContext (undo toasts)
+│   ├── styles/            # design system as CSS template strings, split by area
+│   ├── utils/             # authorColor and other helpers
+│   ├── App.jsx            # tab routing, data wiring, profile modal
+│   ├── AuthGate.jsx       # login screen, JWT storage
+│   ├── parseJwt.js        # decode JWT claims client-side
+│   └── main.jsx           # entry point
+├── docs/                  # feature design notes
+├── docker-compose.yml     # local backend stack (Postgres + API; frontend commented out)
+├── nginx.conf             # nginx config for frontend container
+├── Dockerfile             # frontend (node build → nginx)
+├── Dockerfile.api         # API (go build → scratch)
+├── CHANGELOG.md           # frontend release history
+└── TODO.md                # working plan (refactoring, tests, features)
 ```
