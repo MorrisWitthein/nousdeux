@@ -354,6 +354,9 @@ const forms = `
   cursor: pointer;
   transition: transform 0.1s;
   user-select: none;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .star-rating .star:hover { transform: scale(1.2); }

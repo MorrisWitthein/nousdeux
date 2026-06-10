@@ -11,13 +11,13 @@ Work top to bottom; one PR per phase (Phase 1 may be two).
 
 ## Phase 1 — Frontend refactoring
 
-- [ ] Split `ListsTab.jsx` (999 lines) into `SeriesSubTab` / `MoviesSubTab` / `ActivitiesSubTab` / `ShoppingSubTab`
-- [ ] Split `CalendarTab.jsx` (891 lines): extract `<EventForm />` and `useSwipeMonth` hook
-- [ ] Move `formatISOToGerman` to `src/utils/date.js`
-- [ ] Extract `ProfileModal` from `App.jsx` inline JSX
-- [ ] Wrap `useShoppingList` `history` computation in `useMemo`
-- [ ] Keyboard & a11y — make interactive `<div onClick>` cards real `<button>`s (stat cards, list items, date chip, calendar days)
-- [ ] Disable Save buttons while title is empty (match calendar endDate behaviour)
+- [x] Split `ListsTab.jsx` (999 lines) into `SeriesSubTab` / `MoviesSubTab` / `ActivitiesSubTab` / `ShoppingSubTab`
+- [x] Split `CalendarTab.jsx` (891 lines): extract `<EventForm />` and `useSwipeMonth` hook
+- [x] Move `formatISOToGerman` to `src/utils/date.js`
+- [x] Extract `ProfileModal` from `App.jsx` inline JSX
+- [x] ~~Wrap `useShoppingList` `history` computation in `useMemo`~~ — obsolete: `history` is fetched from `/api/shopping/history`, nothing is computed client-side
+- [x] Keyboard & a11y — make interactive `<div onClick>` cards real `<button>`s (stat cards, list items, date chip, calendar days)
+- [x] Disable Save buttons while title is empty (match calendar endDate behaviour)
 
 ## Phase 2 — API refactoring
 

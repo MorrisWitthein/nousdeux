@@ -183,16 +183,18 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
           <em>{name ? timeSub : 'ihr zwei'}</em> {timeEmoji}
         </p>
       )}
-      <div
+      <button
+        type="button"
         className="date-chip"
         style={{ cursor: 'pointer' }}
         onClick={() => onNavigateToCalendar?.()}
       >
         📅 {dateStr}
-      </div>
+      </button>
 
       {nextEvent && (
-        <div
+        <button
+          type="button"
           className="next-up"
           style={{ cursor: 'pointer' }}
           onClick={() => onNavigateToCalendar?.(nextEvent.date)}
@@ -200,30 +202,30 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
           <div className="next-up-label">Als nächstes</div>
           <div className="next-up-title">{nextEvent.title}</div>
           <div className="next-up-time">{formatEventDate(nextEvent.date)}{nextEvent.time ? ` · ${nextEvent.time}` : ''}</div>
-        </div>
+        </button>
       )}
 
       <div className="quick-stats">
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('calendar')}>
+        <button type="button" className="stat-card" onClick={() => onNavigate?.('calendar')}>
           <div className="stat-icon">📅</div>
           <div className="stat-number">{loading ? '–' : events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
           <div className="stat-label">Events diesen Monat</div>
-        </div>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('lists')}>
+        </button>
+        <button type="button" className="stat-card" onClick={() => onNavigate?.('lists')}>
           <div className="stat-icon">🍿</div>
           <div className="stat-number">{loading ? '–' : runningSeries}</div>
           <div className="stat-label">Serien am Laufen</div>
-        </div>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('recipes')}>
+        </button>
+        <button type="button" className="stat-card" onClick={() => onNavigate?.('recipes')}>
           <div className="stat-icon">🍳</div>
           <div className="stat-number">{loading ? '–' : recipes.length}</div>
           <div className="stat-label">Rezepte gesammelt</div>
-        </div>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate?.('lists')}>
+        </button>
+        <button type="button" className="stat-card" onClick={() => onNavigate?.('lists')}>
           <div className="stat-icon">✨</div>
           <div className="stat-number">{loading ? '–' : activities.length}</div>
           <div className="stat-label">Aktivitäten geplant</div>
-        </div>
+        </button>
       </div>
     </div>
   )

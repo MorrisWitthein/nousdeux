@@ -89,16 +89,23 @@ const cards = `
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 24px;
+  border: none;
+  font-family: inherit;
 }
 
 .next-up {
+  display: block;
+  width: 100%;
+  text-align: left;
   background: var(--ink);
+  border: none;
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
   color: white;
   position: relative;
   overflow: hidden;
+  font-family: inherit;
 }
 
 .next-up::before {
@@ -143,6 +150,9 @@ const cards = `
   border-radius: 16px;
   padding: 16px;
   border: 1px solid var(--border);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .stat-number {

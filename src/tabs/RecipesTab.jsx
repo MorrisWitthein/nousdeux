@@ -6,13 +6,15 @@ import EmptyState from '../components/EmptyState.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { authorColor } from '../utils/authorColor.js'
+import { pressable } from '../utils/pressable.js'
 
 function StarRating({ value, onChange }) {
   return (
     <div className="star-rating">
       {[1,2,3,4,5].map(n => (
-        <span key={n} className={`star ${n <= value ? 'active' : 'inactive'}`}
-          onClick={() => onChange(n === value ? 0 : n)}>★</span>
+        <button key={n} type="button" className={`star ${n <= value ? 'active' : 'inactive'}`}
+          aria-label={`${n} Sterne`}
+          onClick={() => onChange(n === value ? 0 : n)}>★</button>
       ))}
     </div>
   )
@@ -258,7 +260,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
 
       <div className="btn-row" style={{ marginTop: 8 }}>
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn btn-primary" onClick={() => { setSubmitted(true); if (fields.title.trim()) onSave() }}>Speichern</button>
+        <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={() => { setSubmitted(true); if (fields.title.trim()) onSave() }}>Speichern</button>
       </div>
     </Sheet>
   )
@@ -701,7 +703,7 @@ export default function RecipesTab({ recipes, loading, addRecipe, updateRecipe, 
       )}
 
       {displayed.map(r => (
-        <div key={r.id} className="recipe-card" onClick={() => openDetail(r)}>
+        <div key={r.id} className="recipe-card" {...pressable(() => openDetail(r))}>
           <div className="recipe-img">
             {r.imageUrl
               ? <img src={r.imageUrl} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

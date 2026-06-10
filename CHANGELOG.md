@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.14.1] - 2026-06-10
+
+### Changed
+- Großer interner Umbau: Listen-Tab in vier eigenständige Unter-Tabs (Serien, Filme, Aktivitäten, Einkauf) und Kalender-Tab in Einzelteile (Monatsraster, Termin-Formular, Termin-Detail, Swipe-Logik) aufgeteilt. Keine sichtbaren Funktionsänderungen.
+- Speichern-Buttons sind jetzt deaktiviert, solange kein Titel eingegeben wurde (einheitlich in allen Formularen).
+
+### Fixed
+- Tastatur-Bedienbarkeit: Karten, Statistik-Kacheln, Kalendertage, Sterne-Bewertung, Navigations-Tabs und das Datum auf dem Home-Screen sind jetzt per Tab-Taste erreichbar und mit Enter/Leertaste aktivierbar; ein sichtbarer Fokusring wurde ergänzt.
+
+---
+
 ## [0.14.0] - 2026-06-09
 
 ### Added
