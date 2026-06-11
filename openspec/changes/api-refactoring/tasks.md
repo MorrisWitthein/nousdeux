@@ -51,4 +51,4 @@
 ## 8. Release
 
 - [x] 8.1 Bump `api/VERSION` (patch)
-- [ ] 8.2 Commit on the feature branch and open a PR to `main` via `gh` (no direct push to main)
+- [x] 8.2 Commit on the feature branch and open a PR to `main` via `gh` (no direct push to main)
