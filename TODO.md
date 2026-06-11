@@ -35,7 +35,7 @@ Work top to bottom; one PR per phase (Phase 1 may be two).
 - [x] Handler happy paths — existing tests only cover 400s, never successful CRUD
 
 ### API — medium
-- [ ] `recipe_import.go` — `htmlToText`, `stripMarkdownFences`
+- [x] `recipe_import.go` — `htmlToText`, `stripMarkdownFences`
 - [ ] `recipe_images.go` — upload, serve, delete
 - [ ] `sse/broker.go` — notify, serve, shutdown
 - [ ] `cleanup.go` — cleanup logic
