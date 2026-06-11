@@ -102,7 +102,7 @@ const nav = `
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   display: flex;
-  padding: 10px 0 24px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   z-index: 20;
 }
 

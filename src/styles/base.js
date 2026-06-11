@@ -7,9 +7,14 @@ html, body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
-  position: fixed;
-  width: 100%;
 }
+
+body {
+  position: fixed;
+  inset: 0;
+}
+
+#root { height: 100%; }
 
 :root {
   --cream: #F5F0E8;
@@ -26,7 +31,7 @@ html, body {
 .app {
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  height: 100dvh;
+  height: 100%;
   max-width: 390px;
   margin: 0 auto;
   position: relative;

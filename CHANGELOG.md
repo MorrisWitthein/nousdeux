@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.1] - 2026-06-11
+
+### Fixed
+- Navigationsleiste sitzt jetzt korrekt am unteren Bildschirmrand – kein Leerraum darunter mehr und sie verdeckt keine Inhalte mehr. Der Abstand zur iOS-Home-Anzeige passt sich automatisch an.
+
+---
+
 ## [0.16.0] - 2026-06-11
 
 ### Changed
