@@ -3,12 +3,32 @@ import { authorColor } from '../../utils/authorColor.js'
 
 export const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
+// The major streaming services we support for movies/series. Auto-detection
+// (api/list_images.go canonicalPlatform) maps TMDB providers onto these exact
+// labels, and the manual Plattform dropdown offers the same set.
+export const PLATFORMS = ['Netflix', 'Prime', 'Disney+', 'HBO', 'WOW']
+
 export function activityStatusType(status) {
   const map = { Idee: 'yellow', Geplant: 'green', Gemacht: 'gray' }
   return map[status] || 'yellow'
 }
 
 export { pressable } from '../../utils/pressable.js'
+
+// Dropdown for the manual Plattform field, limited to the supported services.
+// If the row already holds a value outside the allowlist (e.g. legacy
+// comma-separated data), it is shown as an extra option so editing the rest of
+// the form never silently drops it.
+export function PlatformSelect({ value, onChange }) {
+  const legacy = value && !PLATFORMS.includes(value)
+  return (
+    <select value={value || ''} onChange={e => onChange(e.target.value)}>
+      <option value="">– Automatisch erkannt –</option>
+      {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+      {legacy && <option value={value}>{value}</option>}
+    </select>
+  )
+}
 
 export function AuthorLine({ who, currentUser }) {
   if (!who) return <span />

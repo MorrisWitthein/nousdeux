@@ -120,10 +120,37 @@ func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) htt
 	}
 }
 
-// fetchTMDBDetail pulls genres (German) and the DE flatrate streaming providers
-// for a TMDB title. It is best-effort: any error returns empty values so the
-// caller can still serve the poster. genres are returned as []string (always
-// non-nil so JSON encodes [] rather than null); platform is a ", "-joined list.
+// canonicalPlatform maps a TMDB provider name to one of the major streaming
+// services we support, or "" if it is not one of them. This deliberately
+// excludes Amazon Channels (e.g. "Paramount+ Amazon Channel") and other
+// long-tail providers, collapsing rebrands/variants onto a single label.
+func canonicalPlatform(name string) string {
+	n := strings.ToLower(name)
+	// Amazon Channels are sold through Prime but are separate services; never
+	// surface them, even though their names may contain other brand keywords.
+	if strings.Contains(n, "channel") {
+		return ""
+	}
+	switch {
+	case strings.Contains(n, "netflix"):
+		return "Netflix"
+	case strings.Contains(n, "amazon prime video"), n == "prime video":
+		return "Prime"
+	case strings.Contains(n, "disney"):
+		return "Disney+"
+	case strings.Contains(n, "hbo"), n == "max":
+		return "HBO"
+	case strings.Contains(n, "wow"):
+		return "WOW"
+	}
+	return ""
+}
+
+// fetchTMDBDetail pulls genres (German) and the single best DE flatrate
+// streaming provider for a TMDB title. It is best-effort: any error returns
+// empty values so the caller can still serve the poster. genres are returned as
+// []string (always non-nil so JSON encodes [] rather than null); platform is a
+// single supported service name (see canonicalPlatform) or "".
 func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]string, string) {
 	genres := []string{}
 	if id == 0 {
@@ -167,17 +194,15 @@ func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]stri
 			genres = append(genres, g.Name)
 		}
 	}
+	// Pick the first flatrate provider that maps to a supported service. TMDB
+	// orders providers by display priority, so the first match is the most
+	// relevant one.
 	platform := ""
-	seen := map[string]bool{}
-	var providers []string
 	for _, p := range detail.WatchProviders.Results["DE"].Flatrate {
-		if p.ProviderName != "" && !seen[p.ProviderName] {
-			seen[p.ProviderName] = true
-			providers = append(providers, p.ProviderName)
+		if c := canonicalPlatform(p.ProviderName); c != "" {
+			platform = c
+			break
 		}
-	}
-	if len(providers) > 0 {
-		platform = strings.Join(providers, ", ")
 	}
 	return genres, platform
 }

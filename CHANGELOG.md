@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.15.0] - 2026-06-11
+
+### Changed
+- Plattform-Feld bei Filmen und Serien ist jetzt eine Auswahlliste mit den großen Streaming-Diensten (Netflix, Prime, Disney+, HBO, WOW) statt eines Freitextfelds.
+- Automatische Plattform-Erkennung liefert nur noch einen einzelnen dieser Dienste – Amazon Channels und Nischenanbieter werden nicht mehr angezeigt.
+
+---
+
 ## [0.14.1] - 2026-06-10
 
 ### Changed

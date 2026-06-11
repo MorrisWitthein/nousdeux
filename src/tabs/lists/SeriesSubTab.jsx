@@ -3,7 +3,7 @@ import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PosterControls, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterControls, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -53,10 +53,9 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, ima
       </div>
       <div>
         <label className="form-label">Plattform</label>
-        <input
-          placeholder="Wird automatisch erkannt – oder manuell eingeben"
+        <PlatformSelect
           value={fields.sub}
-          onChange={e => setFields(f => ({ ...f, sub: e.target.value }))}
+          onChange={sub => setFields(f => ({ ...f, sub }))}
         />
       </div>
       <div className="form-row">
