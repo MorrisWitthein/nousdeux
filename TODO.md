@@ -21,18 +21,18 @@ Work top to bottom; one PR per phase (Phase 1 may be two).
 
 ## Phase 2 — API refactoring
 
-- [ ] Split `handlers.go` (817 lines) into per-resource files / shared CRUD helpers
-- [ ] Move response helpers (`writeJSON`, `writeError`) out of `middleware.go`
-- [ ] Separate DB pool from SSE brokers in `store.go`
-- [ ] Colocate recipe-image logic (split between `handlers.go` and `recipe_images.go`)
-- [ ] Optional: wrap global state (`pool`, brokers, `jwtSecret`) in an `App` struct for DI
+- [x] Split `handlers.go` (817 lines) into per-resource files / shared CRUD helpers
+- [x] Move response helpers (`writeJSON`, `writeError`) out of `middleware.go` (now in `respond.go`)
+- [x] Separate DB pool from SSE brokers in `store.go` (now in `app.go` / `crud.go`)
+- [x] Colocate recipe-image logic (split between `handlers.go` and `recipe_images.go`)
+- [x] Optional: wrap global state (`pool`, brokers, `jwtSecret`) in an `App` struct for DI
 
 ## Phase 3 — Tests
 
 ### API — critical
-- [ ] `auth.go` — login (valid/invalid creds), token validation, expired tokens, `requireAuth`
-- [ ] `validateMovie` — only Event/Series/Activity/Recipe have validation tests
-- [ ] Handler happy paths — existing tests only cover 400s, never successful CRUD
+- [x] `auth.go` — login (valid/invalid creds), token validation, expired tokens, `requireAuth`
+- [x] `validateMovie` — only Event/Series/Activity/Recipe have validation tests
+- [x] Handler happy paths — existing tests only cover 400s, never successful CRUD
 
 ### API — medium
 - [ ] `recipe_import.go` — `htmlToText`, `stripMarkdownFences`

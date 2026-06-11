@@ -167,3 +167,38 @@ func TestValidateRecipe(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateMovie(t *testing.T) {
+	long := strings.Repeat("a", 256)
+
+	cases := []struct {
+		name    string
+		m       Movie
+		wantErr string
+	}{
+		{"valid minimal", Movie{Title: "Dune"}, ""},
+		{"valid full", Movie{Title: "Dune", StatusType: "green"}, ""},
+		{"valid statusType yellow", Movie{Title: "x", StatusType: "yellow"}, ""},
+		{"valid statusType red", Movie{Title: "x", StatusType: "red"}, ""},
+		{"title too long", Movie{Title: long}, "title exceeds"},
+		{"bad statusType", Movie{Title: "x", StatusType: "blue"}, "statusType must be one of"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateMovie(tc.m)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
+				}
+			}
+		})
+	}
+}
