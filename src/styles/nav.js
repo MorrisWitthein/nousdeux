@@ -94,12 +94,10 @@ const nav = `
 
 /* BOTTOM NAV */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  flex-shrink: 0;
   width: 100%;
   max-width: 390px;
+  margin: 0 auto;
   background: rgba(245,240,232,0.92);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);

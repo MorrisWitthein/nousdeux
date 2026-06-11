@@ -3,6 +3,14 @@ const base = `
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+}
+
 :root {
   --cream: #F5F0E8;
   --warm: #EDE5D5;
@@ -18,11 +26,13 @@ const base = `
 .app {
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  min-height: 100vh;
+  height: 100dvh;
   max-width: 390px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .grain {

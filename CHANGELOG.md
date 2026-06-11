@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.0] - 2026-06-11
+
+### Changed
+- App hat jetzt ein festes Layout: Der Bildschirm bleibt fixiert und das störende „Mitziehen"/Zurückschnappen beim Wischen auf iOS ist weg. Nur lange Listen scrollen noch – innerhalb des Inhaltsbereichs.
+
+---
+
 ## [0.15.0] - 2026-06-11
 
 ### Changed
