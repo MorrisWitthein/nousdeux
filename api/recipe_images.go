@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -9,13 +10,102 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/image/draw"
 )
 
 const maxDimension = 800 // resize to fit within 800×800
+
+// handleRecipeImage proxies image search to Unsplash (GET) and stores the result (PATCH).
+func (app *App) handleRecipeImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	switch r.Method {
+	case http.MethodGet:
+		q := r.URL.Query().Get("q")
+		if q == "" {
+			writeError(w, http.StatusBadRequest, "q is required")
+			return
+		}
+		key := os.Getenv("UNSPLASH_ACCESS_KEY")
+		if key == "" {
+			writeError(w, http.StatusServiceUnavailable, "image search not configured")
+			return
+		}
+		apiURL := "https://api.unsplash.com/search/photos?query=" + url.QueryEscape(q+" food") +
+			"&per_page=1&orientation=squarish&content_filter=high"
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "build request: "+err.Error())
+			return
+		}
+		req.Header.Set("Authorization", "Client-ID "+key)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			slog.Error("unsplash fetch failed", "query", q, "err", err)
+			writeError(w, http.StatusBadGateway, "upstream: "+err.Error())
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("unsplash returned error", "query", q, "status", resp.StatusCode)
+			writeError(w, http.StatusBadGateway, "upstream status: "+resp.Status)
+			return
+		}
+		var result struct {
+			Results []struct {
+				Urls struct {
+					Small string `json:"small"`
+				} `json:"urls"`
+			} `json:"results"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || len(result.Results) == 0 {
+			slog.Warn("unsplash no results", "query", q)
+			writeError(w, http.StatusNotFound, "no image found")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"url": result.Results[0].Urls.Small})
+
+	case http.MethodPatch:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 32*1024)
+		var body struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+			return
+		}
+		// Remove an old uploaded file unless the new URL points to it
+		// (upload flow: store file first, then PATCH with the new URL).
+		if !strings.Contains(body.URL, "/api/recipes/"+id+"/image-file") {
+			removeRecipeImageFile(id)
+		}
+		tag, err := app.pool.Exec(ctx, `UPDATE recipes SET image_url=$1 WHERE id=$2`, nullIfEmpty(body.URL), id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "update: "+err.Error())
+			return
+		}
+		if tag.RowsAffected() == 0 {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		slog.Info("recipe image set", "id", id)
+		app.recipesBroker.Notify()
+		writeJSON(w, http.StatusOK, map[string]string{"updated": id})
+
+	default:
+		w.Header().Set("Allow", "GET, PATCH, OPTIONS")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
 
 // removeRecipeImageFile deletes an uploaded recipe image from disk, ignoring
 // errors if the file never existed (e.g. the image was an external URL).
@@ -29,7 +119,7 @@ func removeRecipeImageFile(id string) {
 // handleRecipeUploadImage accepts a multipart image, stores it to disk, and
 // returns the serving path. The client is responsible for PATCHing image_url
 // with the full URL constructed from its API base.
-func handleRecipeUploadImage(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleRecipeUploadImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -43,7 +133,7 @@ func handleRecipeUploadImage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var exists bool
-	if err := pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM recipes WHERE id=$1)`, id).Scan(&exists); err != nil || !exists {
+	if err := app.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM recipes WHERE id=$1)`, id).Scan(&exists); err != nil || !exists {
 		writeError(w, http.StatusNotFound, "recipe not found")
 		return
 	}

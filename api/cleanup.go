@@ -10,15 +10,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func startCleanupWorker(ctx context.Context) {
+func (app *App) startCleanupWorker(ctx context.Context) {
 	go func() {
-		runCleanup(ctx)
+		app.runCleanup(ctx)
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ticker.C:
-				runCleanup(ctx)
+				app.runCleanup(ctx)
 			case <-ctx.Done():
 				return
 			}
@@ -26,10 +26,10 @@ func startCleanupWorker(ctx context.Context) {
 	}()
 }
 
-func runCleanup(ctx context.Context) {
+func (app *App) runCleanup(ctx context.Context) {
 	cutoff := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
 
-	rows, err := pool.Query(ctx, `
+	rows, err := app.pool.Query(ctx, `
 		SELECT ea.id, ea.event_id, ea.filename
 		FROM event_attachments ea
 		JOIN events e ON e.id = ea.event_id
@@ -65,7 +65,7 @@ func runCleanup(ctx context.Context) {
 		eventDirs[a.EventID] = struct{}{}
 	}
 
-	_, err = pool.Exec(ctx, `DELETE FROM event_attachments WHERE id = ANY($1)`, ids)
+	_, err = app.pool.Exec(ctx, `DELETE FROM event_attachments WHERE id = ANY($1)`, ids)
 	if err != nil {
 		slog.Error("cleanup: db delete failed", "err", err)
 		return

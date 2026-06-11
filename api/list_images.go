@@ -17,7 +17,7 @@ import (
 // (PATCH) for a movies/series row. It mirrors handleRecipeImage but targets
 // TMDB instead of Unsplash, parameterized by table ("movies"/"series"),
 // TMDB media type ("movie"/"tv"), and the broker to notify on store.
-func handleListImage(table, mediaType string, broker *sse.Broker) http.HandlerFunc {
+func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		switch r.Method {
@@ -100,7 +100,7 @@ func handleListImage(table, mediaType string, broker *sse.Broker) http.HandlerFu
 				writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 				return
 			}
-			tag, err := pool.Exec(ctx, `UPDATE `+table+` SET image_url=$1 WHERE id=$2`, nullIfEmpty(body.URL), id)
+			tag, err := app.pool.Exec(ctx, `UPDATE `+table+` SET image_url=$1 WHERE id=$2`, nullIfEmpty(body.URL), id)
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, "update: "+err.Error())
 				return
