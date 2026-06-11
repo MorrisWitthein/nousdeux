@@ -4,7 +4,8 @@ const base = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -26,11 +27,10 @@ html, body {
 .app {
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  position: fixed;
-  inset: 0;
-  width: 100%;
+  height: 100%;
   max-width: 390px;
   margin: 0 auto;
+  position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;

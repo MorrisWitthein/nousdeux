@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.3] - 2026-06-11
+
+### Fixed
+- Cremefarbener Streifen am unteren Rand in der installierten Homescreen-App ist weg. Die App-Höhe wird jetzt über `100dvh` (volle Bildschirmhöhe inkl. Safe-Area) statt über prozentuale Höhen gesteuert, die in iOS-Standalone-PWAs unterhalb der sicheren Zone enden.
+
+---
+
 ## [0.16.2] - 2026-06-11
 
 ### Fixed
