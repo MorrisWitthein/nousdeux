@@ -9,7 +9,14 @@
       "Bash(kubectl delete *)",
       "Bash(go version *)",
       "Bash(go build *)",
-      "Bash(go test *)"
+      "Bash(go test *)",
+      "Bash(sed -n '38,50p' api/recipe_import.go)",
+      "Bash(sed -n '15,40p' api/attachments.go)",
+      "Bash(sed -n '33,60p' api/settings.go)",
+      "Bash(sed -n '786,800p' api/handlers.go)",
+      "Bash(awk *)",
+      "Bash(openspec --version)",
+      "Bash(openspec instructions *)"
     ]
   }
 }
