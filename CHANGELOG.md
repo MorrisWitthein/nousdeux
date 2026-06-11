@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.2] - 2026-06-11
+
+### Fixed
+- Navigationsleiste klebt jetzt zuverlässig am unteren Bildschirmrand – auch in der als App installierten Variante (Homescreen-PWA). Der App-Rahmen wird fix am Viewport verankert statt über prozentuale Höhen, die in iOS-Standalone-PWAs unzuverlässig sind.
+
+---
+
 ## [0.16.1] - 2026-06-11
 
 ### Fixed

@@ -9,11 +9,6 @@ html, body {
   overscroll-behavior: none;
 }
 
-body {
-  position: fixed;
-  inset: 0;
-}
-
 #root { height: 100%; }
 
 :root {
@@ -31,10 +26,11 @@ body {
 .app {
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  height: 100%;
+  position: fixed;
+  inset: 0;
+  width: 100%;
   max-width: 390px;
   margin: 0 auto;
-  position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
