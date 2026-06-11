@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func loadSettings(ctx context.Context) (map[string]any, error) {
-	rows, err := pool.Query(ctx, `SELECT key, value FROM settings`)
+func (app *App) loadSettings(ctx context.Context) (map[string]any, error) {
+	rows, err := app.pool.Query(ctx, `SELECT key, value FROM settings`)
 	if err != nil {
 		return nil, err
 	}
@@ -30,11 +30,11 @@ func loadSettings(ctx context.Context) (map[string]any, error) {
 	return out, nil
 }
 
-func handleSettings(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
-		s, err := loadSettings(ctx)
+		s, err := app.loadSettings(ctx)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
 			return
@@ -65,7 +65,7 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusBadRequest, "unsupported value type for key: "+k)
 				return
 			}
-			if _, err := pool.Exec(ctx,
+			if _, err := app.pool.Exec(ctx,
 				`INSERT INTO settings (key, value) VALUES ($1, $2)
 				 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
 				k, val,
@@ -74,7 +74,7 @@ func handleSettings(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		s, err := loadSettings(ctx)
+		s, err := app.loadSettings(ctx)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "query: "+err.Error())
 			return

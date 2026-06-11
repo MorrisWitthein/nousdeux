@@ -34,12 +34,11 @@ func isAdminFromContext(ctx context.Context) bool {
 }
 
 var (
-	jwtSecret  []byte
 	users      map[string]string // username → bcrypt hash
 	adminUsers map[string]bool   // usernames with admin privileges
 )
 
-func handleLogin(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -60,7 +59,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		hash    string
 		isAdmin bool
 	)
-	err := pool.QueryRow(r.Context(),
+	err := app.pool.QueryRow(r.Context(),
 		`SELECT password, is_admin FROM users WHERE username = $1`, creds.Username).
 		Scan(&hash, &isAdmin)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password)) != nil {
@@ -76,7 +75,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		claims["admin"] = true
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := token.SignedString(jwtSecret)
+	signed, err := token.SignedString(app.jwtSecret)
 	if err != nil {
 		slog.Error("sign JWT", "err", err)
 		writeError(w, http.StatusInternalServerError, "token error")
@@ -89,7 +88,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 // requireAuth extracts and validates a JWT from the Authorization header
 // or from a "token" query parameter (used by EventSource/SSE).
-func requireAuth(next http.HandlerFunc) http.HandlerFunc {
+func (app *App) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := ""
 		if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
@@ -104,7 +103,7 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		tok, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
-			return jwtSecret, nil
+			return app.jwtSecret, nil
 		}, jwt.WithValidMethods([]string{"HS256"}))
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
@@ -128,9 +127,9 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 // users table. Existing rows are never overwritten (ON CONFLICT DO NOTHING),
 // so a password changed at runtime survives restarts and the env value is only
 // ever used to bootstrap a missing account.
-func seedUsers(ctx context.Context) error {
+func (app *App) seedUsers(ctx context.Context) error {
 	for username, hash := range users {
-		if _, err := pool.Exec(ctx,
+		if _, err := app.pool.Exec(ctx,
 			`INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3)
 			 ON CONFLICT (username) DO NOTHING`,
 			username, hash, adminUsers[username],
@@ -143,7 +142,7 @@ func seedUsers(ctx context.Context) error {
 
 // handleChangePassword lets any authenticated user change their own password
 // after re-supplying the current one.
-func handleChangePassword(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST, OPTIONS")
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -171,7 +170,7 @@ func handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hash string
-	if err := pool.QueryRow(r.Context(),
+	if err := app.pool.QueryRow(r.Context(),
 		`SELECT password FROM users WHERE username = $1`, username).Scan(&hash); err != nil {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
@@ -187,7 +186,7 @@ func handleChangePassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "hash error")
 		return
 	}
-	if _, err := pool.Exec(r.Context(),
+	if _, err := app.pool.Exec(r.Context(),
 		`UPDATE users SET password = $1 WHERE username = $2`, string(newHash), username,
 	); err != nil {
 		writeError(w, http.StatusInternalServerError, "update: "+err.Error())

@@ -14,7 +14,7 @@ const maxUploadSize = 30 << 20 // 30 MB — raw iPhone photos can exceed 20 MB
 var attachmentsDir string
 
 // handleEventAttachments handles GET and POST on /api/events/{id}/attachments.
-func handleEventAttachments(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleEventAttachments(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("id")
 	if eventID == "" {
 		writeError(w, http.StatusBadRequest, "event id required")
@@ -23,16 +23,16 @@ func handleEventAttachments(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		listAttachments(w, r, eventID)
+		app.listAttachments(w, r, eventID)
 	case http.MethodPost:
-		uploadAttachment(w, r, eventID)
+		app.uploadAttachment(w, r, eventID)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
 // handleAttachment handles GET and DELETE on /api/attachments/{id}.
-func handleAttachment(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleAttachment(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, "attachment id required")
@@ -41,17 +41,17 @@ func handleAttachment(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		serveAttachment(w, r, id)
+		app.serveAttachment(w, r, id)
 	case http.MethodDelete:
-		deleteAttachment(w, r, id)
+		app.deleteAttachment(w, r, id)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
-func listAttachments(w http.ResponseWriter, r *http.Request, eventID string) {
+func (app *App) listAttachments(w http.ResponseWriter, r *http.Request, eventID string) {
 	ctx := r.Context()
-	rows, err := pool.Query(ctx,
+	rows, err := app.pool.Query(ctx,
 		`SELECT id, event_id, filename, content_type, size, uploaded_by, created_at
 		 FROM event_attachments WHERE event_id = $1 ORDER BY created_at ASC`, eventID)
 	if err != nil {
@@ -69,7 +69,7 @@ func listAttachments(w http.ResponseWriter, r *http.Request, eventID string) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-func uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
+func (app *App) uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
 	ctx := r.Context()
 	user := userFromContext(ctx)
 
@@ -98,14 +98,14 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
 
 	// Verify event exists.
 	var exists bool
-	if err := pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM events WHERE id=$1)`, eventID).Scan(&exists); err != nil || !exists {
+	if err := app.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM events WHERE id=$1)`, eventID).Scan(&exists); err != nil || !exists {
 		writeError(w, http.StatusNotFound, "event not found")
 		return
 	}
 
 	// Insert metadata first to get the UUID.
 	var id string
-	err = pool.QueryRow(ctx,
+	err = app.pool.QueryRow(ctx,
 		`INSERT INTO event_attachments (event_id, filename, content_type, size, uploaded_by)
 		 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
 		eventID, header.Filename, contentType, header.Size, user,
@@ -119,7 +119,7 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
 	dir := filepath.Join(attachmentsDir, eventID)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		// Roll back DB row.
-		pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
+		app.pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
 		writeError(w, http.StatusInternalServerError, "mkdir: "+err.Error())
 		return
 	}
@@ -127,21 +127,21 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
 	dest := filepath.Join(dir, id+"_"+sanitizeFilename(header.Filename))
 	f, err := os.Create(dest)
 	if err != nil {
-		pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
+		app.pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
 		writeError(w, http.StatusInternalServerError, "create file: "+err.Error())
 		return
 	}
 	defer f.Close()
 
 	if _, err := io.Copy(f, file); err != nil {
-		pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
+		app.pool.Exec(ctx, `DELETE FROM event_attachments WHERE id=$1`, id)
 		os.Remove(dest)
 		writeError(w, http.StatusInternalServerError, "write file: "+err.Error())
 		return
 	}
 
 	var a Attachment
-	err = pool.QueryRow(ctx,
+	err = app.pool.QueryRow(ctx,
 		`SELECT id, event_id, filename, content_type, size, uploaded_by, created_at
 		 FROM event_attachments WHERE id=$1`, id).
 		Scan(&a.ID, &a.EventID, &a.Filename, &a.ContentType, &a.Size, &a.UploadedBy, &a.CreatedAt)
@@ -152,11 +152,11 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, eventID string) {
 	writeJSON(w, http.StatusCreated, a)
 }
 
-func serveAttachment(w http.ResponseWriter, r *http.Request, id string) {
+func (app *App) serveAttachment(w http.ResponseWriter, r *http.Request, id string) {
 	ctx := r.Context()
 
 	var a Attachment
-	err := pool.QueryRow(ctx,
+	err := app.pool.QueryRow(ctx,
 		`SELECT id, event_id, filename, content_type, size, uploaded_by, created_at
 		 FROM event_attachments WHERE id=$1`, id).
 		Scan(&a.ID, &a.EventID, &a.Filename, &a.ContentType, &a.Size, &a.UploadedBy, &a.CreatedAt)
@@ -179,11 +179,11 @@ func serveAttachment(w http.ResponseWriter, r *http.Request, id string) {
 	io.Copy(w, f)
 }
 
-func deleteAttachment(w http.ResponseWriter, r *http.Request, id string) {
+func (app *App) deleteAttachment(w http.ResponseWriter, r *http.Request, id string) {
 	ctx := r.Context()
 
 	var a Attachment
-	err := pool.QueryRow(ctx,
+	err := app.pool.QueryRow(ctx,
 		`DELETE FROM event_attachments WHERE id=$1
 		 RETURNING id, event_id, filename, content_type, size, uploaded_by, created_at`, id).
 		Scan(&a.ID, &a.EventID, &a.Filename, &a.ContentType, &a.Size, &a.UploadedBy, &a.CreatedAt)

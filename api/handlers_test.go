@@ -8,11 +8,15 @@ import (
 	"testing"
 )
 
+// testApp is an App with no DB pool, sufficient for handler paths that reject
+// the request (validation/guards) before any database access.
+var testApp = &App{}
+
 func postEvents(body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(http.MethodPost, "/api/events", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
-	handleEvents(rr, req)
+	testApp.handleEvents(rr, req)
 	return rr
 }
 
@@ -20,7 +24,7 @@ func patchEvents(id, body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(http.MethodPatch, "/api/events?id="+id, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
-	handleEvents(rr, req)
+	testApp.handleEvents(rr, req)
 	return rr
 }
 
