@@ -3,8 +3,7 @@ const layout = `
 .header {
   padding: 52px 24px 10px;
   background: var(--cream);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -80,7 +79,14 @@ const layout = `
 
 /* CONTENT */
 .content {
-  padding: 8px 24px 160px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* Bottom padding clears the fixed bottom nav (~67px) plus the home-indicator
+     safe area, so the last items never hide behind it. */
+  padding: 8px 24px calc(84px + env(safe-area-inset-bottom));
   animation: fadeUp 0.3s ease;
 }
 

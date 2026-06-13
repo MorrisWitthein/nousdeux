@@ -5,6 +5,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.5] - 2026-06-13
+
+### Fixed
+- Navigationsleiste sitzt in der installierten Homescreen-PWA (iOS) jetzt bündig am unteren Bildschirmrand. Die Leiste lief vorher im normalen Layoutfluss mit und endete oberhalb des echten Bildschirmrands, weil `100dvh` in iOS-Standalone-PWAs nicht bis zur Home-Indicator-Zone reicht. Sie ist jetzt fix am Viewport-Boden verankert (mit Safe-Area-Abstand für die Beschriftungen), und der Inhaltsbereich hat unten entsprechend Platz, damit nichts hinter der Leiste verschwindet.
+
+---
+
+## [0.16.4] - 2026-06-13
+
+### Fixed
+- Weißer/leerer Streifen am unteren Rand der als App installierten Homescreen-PWA (iOS) ist weg. Der App-Rahmen nutzte intern noch eine prozentuale Höhe (`height: 100%`), die in iOS-Standalone-PWAs unzuverlässig ist und die Navigationsleiste oberhalb des echten Bildschirmrands enden ließ. Er wird jetzt direkt über `100dvh` gesteuert, und der Seitenhintergrund ist cremefarben hinterlegt, damit unterhalb der sicheren Zone nie Weiß durchscheint.
+
+---
+
+## [0.16.3] - 2026-06-11
+
+### Fixed
+- Cremefarbener Streifen am unteren Rand in der installierten Homescreen-App ist weg. Die App-Höhe wird jetzt über `100dvh` (volle Bildschirmhöhe inkl. Safe-Area) statt über prozentuale Höhen gesteuert, die in iOS-Standalone-PWAs unterhalb der sicheren Zone enden.
+
+---
+
+## [0.16.2] - 2026-06-11
+
+### Fixed
+- Navigationsleiste klebt jetzt zuverlässig am unteren Bildschirmrand – auch in der als App installierten Variante (Homescreen-PWA). Der App-Rahmen wird fix am Viewport verankert statt über prozentuale Höhen, die in iOS-Standalone-PWAs unzuverlässig sind.
+
+---
+
+## [0.16.1] - 2026-06-11
+
+### Fixed
+- Navigationsleiste sitzt jetzt korrekt am unteren Bildschirmrand – kein Leerraum darunter mehr und sie verdeckt keine Inhalte mehr. Der Abstand zur iOS-Home-Anzeige passt sich automatisch an.
+
+---
+
+## [0.16.0] - 2026-06-11
+
+### Changed
+- App hat jetzt ein festes Layout: Der Bildschirm bleibt fixiert und das störende „Mitziehen"/Zurückschnappen beim Wischen auf iOS ist weg. Nur lange Listen scrollen noch – innerhalb des Inhaltsbereichs.
+
+---
+
 ## [0.15.0] - 2026-06-11
 
 ### Changed
