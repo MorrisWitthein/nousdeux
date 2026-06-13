@@ -3,6 +3,8 @@ const base = `
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+body { background: var(--warm); }
+
 :root {
   --cream: #F5F0E8;
   --warm: #EDE5D5;

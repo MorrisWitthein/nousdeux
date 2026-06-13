@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.18.4] - 2026-06-13
+
+### Fixed
+- Dunkelmodus: Die Ränder links und rechts neben der App (auf breiteren Bildschirmen) erscheinen jetzt ebenfalls dunkel statt im hellen Farbton.
+
+---
+
 ## [0.18.0] - 2026-06-13
 
 ### Added
