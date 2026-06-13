@@ -55,7 +55,7 @@ export default function App() {
   const { movies, loading: moviesLoading, addMovie, updateMovie, deleteMovie, searchMovies, fetchMovieDetail, patchMovieImage } = useMovies()
   const weatherEmoji = useWeather()
   const { settings, updateSetting } = useSettings()
-  const { suggestions, suggestEvent, acceptSuggestion, declineSuggestion } = useEventSuggestions()
+  const { received: receivedSuggestions, sent: sentSuggestions, suggestEvent, acceptSuggestion, declineSuggestion, counterSuggestion } = useEventSuggestions()
   const userIsAdmin = isAdmin()
 
   return (
@@ -76,9 +76,9 @@ export default function App() {
                   onClick={() => setShowSuggestions(true)}
                 >
                   <BellIcon width={22} height={22} />
-                  {suggestions.length > 0 && (
+                  {receivedSuggestions.length > 0 && (
                     <span
-                      aria-label={`${suggestions.length} neue Vorschläge`}
+                      aria-label={`${receivedSuggestions.length} neue Vorschläge`}
                       style={{
                         position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16,
                         padding: '0 4px', borderRadius: 999, background: 'var(--accent)',
@@ -86,7 +86,7 @@ export default function App() {
                         textAlign: 'center',
                       }}
                     >
-                      {suggestions.length}
+                      {receivedSuggestions.length}
                     </span>
                   )}
                 </button>
@@ -156,10 +156,12 @@ export default function App() {
 
         {showSuggestions && (
           <SuggestionsSheet
-            suggestions={suggestions}
+            received={receivedSuggestions}
+            sent={sentSuggestions}
             currentUser={currentUser}
             onAccept={acceptSuggestion}
             onDecline={declineSuggestion}
+            onCounter={counterSuggestion}
             onClose={() => setShowSuggestions(false)}
           />
         )}

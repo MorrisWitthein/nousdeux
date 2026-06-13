@@ -51,6 +51,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
   }, [prefill])
 
   const [showForm, setShowForm] = useState(false)
+  const [suggestMode, setSuggestMode] = useState(false)
   const [newEvent, setNewEvent] = useState({ ...EMPTY_EVENT })
   const [editing, setEditing] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_EVENT })
@@ -94,35 +95,25 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
     setSubmitted(true)
     if (!newEvent.title.trim()) return
     try {
-      const created = await addEvent(newEvent)
-      if (created && pendingFiles.length > 0) {
-        for (const file of pendingFiles) {
-          await uploadAttachment(created.id, file)
+      // In suggest mode the event is proposed to the other user instead of being
+      // added directly. Suggestions carry the event fields only (no attachments).
+      if (suggestMode && suggestEvent) {
+        await suggestEvent(newEvent)
+        showToast('Vorschlag gesendet', 'info')
+      } else {
+        const created = await addEvent(newEvent)
+        if (created && pendingFiles.length > 0) {
+          for (const file of pendingFiles) {
+            await uploadAttachment(created.id, file)
+          }
         }
       }
       setPendingFiles([])
       setNewEvent({ ...EMPTY_EVENT })
+      setSuggestMode(false)
       setFormError(null)
       setSubmitted(false)
       setShowForm(false)
-    } catch (err) {
-      setFormError(err.message)
-    }
-  }
-
-  // Propose the event to the other user instead of adding it directly. Suggestions
-  // carry the event fields only (no attachments), so any pending files are dropped.
-  const handleSuggest = async () => {
-    setSubmitted(true)
-    if (!newEvent.title.trim()) return
-    try {
-      await suggestEvent(newEvent)
-      setPendingFiles([])
-      setNewEvent({ ...EMPTY_EVENT })
-      setFormError(null)
-      setSubmitted(false)
-      setShowForm(false)
-      showToast('Vorschlag gesendet', 'info')
     } catch (err) {
       setFormError(err.message)
     }
@@ -254,6 +245,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
               ...EMPTY_EVENT,
               date: selectedDay ? toISO(year, month, selectedDay) : '',
             })
+            setSuggestMode(false)
             setShowForm(true)
           }}
         >
@@ -330,8 +322,8 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
         <EventForm
           fields={newEvent} setFields={setNewEvent}
           onSave={handleAdd}
-          onSuggest={suggestEvent ? handleSuggest : undefined}
-          onCancel={() => { setShowForm(false); setPendingFiles([]); setFormError(null); setSubmitted(false) }}
+          canSuggest={!!suggestEvent} suggestMode={suggestMode} setSuggestMode={setSuggestMode}
+          onCancel={() => { setShowForm(false); setSuggestMode(false); setPendingFiles([]); setFormError(null); setSubmitted(false) }}
           title="Neuer Termin"
           error={formError} onErrorClear={() => setFormError(null)}
           pendingFiles={pendingFiles} setPendingFiles={setPendingFiles}

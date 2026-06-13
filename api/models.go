@@ -33,6 +33,12 @@ type EventSuggestion struct {
 	Status      string     `json:"status"`
 	CreatedAt   time.Time  `json:"created_at"`
 	ResolvedAt  *time.Time `json:"resolvedAt,omitempty"`
+	// Awaiting is whose turn it is, relative to SuggestedBy: "recipient" (the
+	// non-suggester) or "sender" (the original suggester); empty once resolved.
+	Awaiting string `json:"awaiting,omitempty"`
+	// LastProposedBy is who made the currently-open proposal (the suggester, or
+	// the other user after a counter-proposal).
+	LastProposedBy string `json:"lastProposedBy,omitempty"`
 }
 
 // Recipe mirrors the recipes table.

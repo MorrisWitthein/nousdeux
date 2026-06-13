@@ -38,6 +38,16 @@
 - [x] 7.2 Verify accept creates exactly one calendar event and removes the suggestion; decline removes it without creating an event
 - [x] 7.3 Verify a user does not see their own suggestions in their notifications
 
+## 9. Enhancements — checkbox, counter-proposals, sent tracking
+
+- [x] 9.1 Migration `020_suggestion_negotiation.sql`: add `awaiting` (recipient/sender role) and `last_proposed_by`
+- [x] 9.2 API: turn-aware accept/decline; new `counter` endpoint that flips `awaiting` and updates the proposed date/time
+- [x] 9.3 API: GET returns `{received, sent}` so one request drives both the action queue and sent-status tracking
+- [x] 9.4 API tests: counter bounces back and accepts with countered values; wrong-turn counter rejected; received/sent split
+- [x] 9.5 Frontend: replace the "suggest" button with an "Als Vorschlag senden" checkbox in the event form
+- [x] 9.6 Frontend: SuggestionsSheet gets "Erhalten"/"Gesendet" tabs and an inline counter-propose form
+- [x] 9.7 Bump versions (api 0.18.0, frontend 0.21.0) + changelog
+
 ## 8. Release bookkeeping
 
 - [x] 8.1 Bump `api/VERSION` (API change)

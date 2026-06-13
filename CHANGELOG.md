@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.21.0] - 2026-06-13
+
+### Changed
+- **Termin vorschlagen ist jetzt eine Checkbox** statt eines eigenen Knopfs: Im Formular „Neuer Termin“ gibt es das Häkchen **„Als Vorschlag senden“**. Ist es gesetzt, heißt der Knopf **„Vorschlagen“** und der Termin geht erst als Vorschlag an die andere Person; ohne Häkchen wird der Termin wie gewohnt direkt gespeichert.
+
+### Added
+- **Gegenvorschlag**: Wer einen Terminvorschlag erhält, kann mit **„Anderer Termin“** ein abweichendes Datum/Uhrzeit vorschlagen. Der Vorschlag geht dann zurück an die andere Person, die ihn annehmen, ablehnen oder erneut einen Gegenvorschlag machen kann – so lange, bis jemand annimmt. Beim Annehmen entsteht der Termin mit den zuletzt vorgeschlagenen Daten.
+- **Status der gesendeten Vorschläge**: Die Glocke hat jetzt zwei Tabs – **„Erhalten“** (Vorschläge, die auf deine Antwort warten) und **„Gesendet“** (von dir verschickte Vorschläge mit Status **Ausstehend**, **Angenommen** oder **Abgelehnt**).
+
+---
+
 ## [0.20.0] - 2026-06-13
 
 ### Added

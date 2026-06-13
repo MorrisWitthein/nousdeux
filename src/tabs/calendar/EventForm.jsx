@@ -11,7 +11,8 @@ const BADGE_OPTIONS = [
 
 export default function EventForm({
   fields, setFields: setFieldsRaw, onSave, onCancel, title,
-  error, onErrorClear, pendingFiles, setPendingFiles, submitted, onSuggest,
+  error, onErrorClear, pendingFiles, setPendingFiles, submitted,
+  canSuggest, suggestMode, setSuggestMode,
 }) {
   const fileInputRef = useRef(null)
   const setFields = (...args) => { onErrorClear(); setFieldsRaw(...args) }
@@ -102,23 +103,28 @@ export default function EventForm({
           </div>
         )}
       </div>
+      {canSuggest && (
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '4px 2px 10px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={suggestMode}
+            onChange={e => setSuggestMode(e.target.checked)}
+            style={{ width: 18, height: 18, marginTop: 1, flexShrink: 0, accentColor: 'var(--accent2)' }}
+          />
+          <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.4 }}>
+            Als Vorschlag senden – muss erst bestätigt werden, bevor der Termin im Kalender erscheint.
+          </span>
+        </label>
+      )}
       {error && (
         <div style={{ color: 'var(--accent)', fontSize: 13, padding: '6px 2px' }}>{error}</div>
       )}
       <div className="btn-row">
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid || !fields.title.trim()}>Speichern</button>
-      </div>
-      {onSuggest && (
-        <button
-          className="btn btn-ghost"
-          style={{ width: '100%', marginTop: 8 }}
-          onClick={onSuggest}
-          disabled={endDateInvalid || !fields.title.trim()}
-        >
-          Stattdessen vorschlagen
+        <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid || !fields.title.trim()}>
+          {canSuggest && suggestMode ? 'Vorschlagen' : 'Speichern'}
         </button>
-      )}
+      </div>
     </Sheet>
   )
 }

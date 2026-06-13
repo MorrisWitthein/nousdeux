@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+// suggestionLists mirrors the GET /api/event-suggestions response.
+type suggestionLists struct {
+	Received []EventSuggestion `json:"received"`
+	Sent     []EventSuggestion `json:"sent"`
+}
+
 // createSuggestion posts a suggestion as user and returns the created row.
 func createSuggestion(t *testing.T, app *App, user, body string) EventSuggestion {
 	t.Helper()
@@ -22,8 +28,8 @@ func createSuggestion(t *testing.T, app *App, user, body string) EventSuggestion
 	return s
 }
 
-// listSuggestions returns the pending suggestions visible to user.
-func listSuggestions(t *testing.T, app *App, user string) []EventSuggestion {
+// listSuggestions returns the received/sent lists visible to user.
+func listSuggestions(t *testing.T, app *App, user string) suggestionLists {
 	t.Helper()
 	req := authedRequest(http.MethodGet, "/api/event-suggestions", "", user)
 	rr := httptest.NewRecorder()
@@ -31,7 +37,7 @@ func listSuggestions(t *testing.T, app *App, user string) []EventSuggestion {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("list expected 200, got %d: %s", rr.Code, rr.Body.String())
 	}
-	var out []EventSuggestion
+	var out suggestionLists
 	if err := decodeJSON(rr, &out); err != nil {
 		t.Fatalf("list decode: %v", err)
 	}
@@ -62,6 +68,9 @@ func TestSuggestionCreateAttributionAndNotify(t *testing.T) {
 	if s.Status != "pending" {
 		t.Fatalf("expected status 'pending', got %q", s.Status)
 	}
+	if s.Awaiting != "recipient" {
+		t.Fatalf("expected awaiting 'recipient', got %q", s.Awaiting)
+	}
 	if !notified() {
 		t.Fatal("expected the suggestions broker to be notified on create")
 	}
@@ -85,23 +94,36 @@ func TestSuggestionCreateValidation(t *testing.T) {
 	}
 }
 
-func TestSuggestionListFiltersOwnAndPending(t *testing.T) {
+func TestSuggestionReceivedVsSentSplit(t *testing.T) {
 	app := newTestApp(t)
 
 	s := createSuggestion(t, app, "max", `{"title":"Kino","date":"2026-07-04"}`)
 
-	// The other user sees it; the suggester does not.
-	if got := listSuggestions(t, app, "lena"); !containsSuggestion(got, s.ID) {
-		t.Fatal("expected lena to see max's pending suggestion")
+	// The recipient sees it under received, not sent.
+	lena := listSuggestions(t, app, "lena")
+	if !containsSuggestion(lena.Received, s.ID) {
+		t.Fatal("expected lena to see max's suggestion under received")
 	}
-	if got := listSuggestions(t, app, "max"); containsSuggestion(got, s.ID) {
-		t.Fatal("expected max NOT to see their own suggestion")
+	if containsSuggestion(lena.Sent, s.ID) {
+		t.Fatal("lena did not send this; it must not be under sent")
 	}
 
-	// Once resolved it leaves the pending list.
+	// The sender sees it under sent (tracking), never under received.
+	max := listSuggestions(t, app, "max")
+	if containsSuggestion(max.Received, s.ID) {
+		t.Fatal("a user must not be notified of their own suggestion")
+	}
+	if !containsSuggestion(max.Sent, s.ID) {
+		t.Fatal("expected max to track their own suggestion under sent")
+	}
+
+	// Once resolved it leaves received but stays in the sender's sent history.
 	declineSuggestion(t, app, "lena", s.ID, http.StatusOK)
-	if got := listSuggestions(t, app, "lena"); containsSuggestion(got, s.ID) {
-		t.Fatal("expected a declined suggestion to leave the list")
+	if containsSuggestion(listSuggestions(t, app, "lena").Received, s.ID) {
+		t.Fatal("a declined suggestion should leave received")
+	}
+	if got := findSuggestion(listSuggestions(t, app, "max").Sent, s.ID); got == nil || got.Status != "declined" {
+		t.Fatalf("expected max's sent thread to show status declined, got %+v", got)
 	}
 }
 
@@ -126,8 +148,8 @@ func TestSuggestionAcceptCreatesOneEventIdempotent(t *testing.T) {
 	if got := countEvents(t, app); got != before+1 {
 		t.Fatalf("re-accept created an extra event: now %d", got)
 	}
-	if got := listSuggestions(t, app, "lena"); containsSuggestion(got, s.ID) {
-		t.Fatal("accepted suggestion should not appear in the pending list")
+	if containsSuggestion(listSuggestions(t, app, "lena").Received, s.ID) {
+		t.Fatal("accepted suggestion should not appear under received")
 	}
 
 	// The created event carries the suggester as `who`.
@@ -153,33 +175,87 @@ func TestSuggestionDeclineCreatesNoEvent(t *testing.T) {
 	}
 }
 
+func TestSuggestionCounterBouncesBackAndAccepts(t *testing.T) {
+	app := newTestApp(t)
+
+	before := countEvents(t, app)
+	s := createSuggestion(t, app, "max", `{"title":"Kino","date":"2026-10-01","time":"19:00","badgeType":"green"}`)
+
+	// Lena counters with a different date/time. It leaves her received queue and
+	// bounces back to max, who now sees it under received as a counter-proposal.
+	counterSuggestion(t, app, "lena", s.ID, `{"date":"2026-10-02","time":"20:00"}`, http.StatusOK)
+	if containsSuggestion(listSuggestions(t, app, "lena").Received, s.ID) {
+		t.Fatal("after countering, it should leave lena's received queue")
+	}
+	maxRecv := findSuggestion(listSuggestions(t, app, "max").Received, s.ID)
+	if maxRecv == nil {
+		t.Fatal("expected the counter to bounce back to max's received queue")
+	}
+	if maxRecv.Date != "2026-10-02" || maxRecv.Time != "20:00" {
+		t.Fatalf("expected countered date/time, got %s %s", maxRecv.Date, maxRecv.Time)
+	}
+	if maxRecv.LastProposedBy != "lena" {
+		t.Fatalf("expected lastProposedBy 'lena', got %q", maxRecv.LastProposedBy)
+	}
+
+	// Max accepts the counter: exactly one event with the countered values.
+	acceptSuggestion(t, app, "max", s.ID, http.StatusOK)
+	if got := countEvents(t, app); got != before+1 {
+		t.Fatalf("expected one event after accepting the counter, got %d", got)
+	}
+	var date, tm string
+	if err := app.pool.QueryRow(t.Context(),
+		`SELECT COALESCE(date,''), COALESCE(time,'') FROM events WHERE title='Kino'`).Scan(&date, &tm); err != nil {
+		t.Fatalf("lookup event: %v", err)
+	}
+	if date != "2026-10-02" || tm != "20:00" {
+		t.Fatalf("event should carry the countered date/time, got %s %s", date, tm)
+	}
+}
+
+func TestSuggestionCounterRejectsWrongTurn(t *testing.T) {
+	app := newTestApp(t)
+
+	// max created it, so it is awaiting lena; max cannot counter on lena's turn.
+	s := createSuggestion(t, app, "max", `{"title":"Kino","date":"2026-11-01"}`)
+	counterSuggestion(t, app, "max", s.ID, `{"date":"2026-11-02"}`, http.StatusConflict)
+}
+
 func acceptSuggestion(t *testing.T, app *App, user, id string, wantCode int) {
 	t.Helper()
-	req := authedRequest(http.MethodPost, "/api/event-suggestions/"+id+"/accept", "", user)
-	req.SetPathValue("id", id)
-	rr := httptest.NewRecorder()
-	app.handleSuggestionAccept(rr, req)
-	if rr.Code != wantCode {
-		t.Fatalf("accept expected %d, got %d: %s", wantCode, rr.Code, rr.Body.String())
-	}
+	postSuggestionAction(t, app.handleSuggestionAccept, user, id, "", wantCode, "accept")
 }
 
 func declineSuggestion(t *testing.T, app *App, user, id string, wantCode int) {
 	t.Helper()
-	req := authedRequest(http.MethodPost, "/api/event-suggestions/"+id+"/decline", "", user)
+	postSuggestionAction(t, app.handleSuggestionDecline, user, id, "", wantCode, "decline")
+}
+
+func counterSuggestion(t *testing.T, app *App, user, id, body string, wantCode int) {
+	t.Helper()
+	postSuggestionAction(t, app.handleSuggestionCounter, user, id, body, wantCode, "counter")
+}
+
+func postSuggestionAction(t *testing.T, h http.HandlerFunc, user, id, body string, wantCode int, name string) {
+	t.Helper()
+	req := authedRequest(http.MethodPost, "/api/event-suggestions/"+id+"/"+name, body, user)
 	req.SetPathValue("id", id)
 	rr := httptest.NewRecorder()
-	app.handleSuggestionDecline(rr, req)
+	h(rr, req)
 	if rr.Code != wantCode {
-		t.Fatalf("decline expected %d, got %d: %s", wantCode, rr.Code, rr.Body.String())
+		t.Fatalf("%s expected %d, got %d: %s", name, wantCode, rr.Code, rr.Body.String())
 	}
 }
 
-func containsSuggestion(list []EventSuggestion, id string) bool {
-	for _, s := range list {
-		if s.ID == id {
-			return true
+func findSuggestion(list []EventSuggestion, id string) *EventSuggestion {
+	for i := range list {
+		if list[i].ID == id {
+			return &list[i]
 		}
 	}
-	return false
+	return nil
+}
+
+func containsSuggestion(list []EventSuggestion, id string) bool {
+	return findSuggestion(list, id) != nil
 }

@@ -110,6 +110,7 @@ func main() {
 	mux.HandleFunc("/api/event-suggestions", cors(app.requireAuth(app.handleEventSuggestions)))
 	mux.HandleFunc("/api/event-suggestions/{id}/accept", cors(app.requireAuth(app.handleSuggestionAccept)))
 	mux.HandleFunc("/api/event-suggestions/{id}/decline", cors(app.requireAuth(app.handleSuggestionDecline)))
+	mux.HandleFunc("/api/event-suggestions/{id}/counter", cors(app.requireAuth(app.handleSuggestionCounter)))
 	mux.HandleFunc("/api/event-suggestions/stream", cors(app.requireAuth(app.suggestionsBroker.ServeHTTP)))
 	mux.HandleFunc("/api/shopping", cors(app.requireAuth(app.handleShoppingList)))
 	mux.HandleFunc("/api/shopping/history", cors(app.requireAuth(app.handleShoppingHistory)))

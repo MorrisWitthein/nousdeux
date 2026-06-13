@@ -55,3 +55,29 @@ Declining a pending suggestion SHALL mark it declined without creating any calen
 - **THEN** the suggestion is marked declined
 - **AND** no calendar event is created
 - **AND** it leaves the notifications list
+
+### Requirement: Counter-propose a different date/time
+
+The user whose turn it is to respond SHALL be able to counter-propose a different date/time instead of accepting or declining. A counter-proposal SHALL update the suggestion's proposed date/time and route the suggestion back to the other user, who SHALL then be able to accept, decline, or counter again. Only the user whose turn it is SHALL be able to act on a suggestion. Accepting SHALL create the event with the most recently proposed date/time.
+
+#### Scenario: Recipient counters and originator accepts
+
+- **WHEN** the recipient counter-proposes a different date/time
+- **THEN** the suggestion bounces back to the original suggester as a pending item awaiting their response
+- **AND** it leaves the recipient's incoming list
+- **WHEN** the original suggester accepts
+- **THEN** a single event is created using the counter-proposed date/time
+
+#### Scenario: Only the awaiting user can act
+
+- **WHEN** a user who is not the one currently awaited tries to accept, decline, or counter
+- **THEN** the action is rejected (or is a no-op) and the suggestion is unchanged
+
+### Requirement: Sender can track sent suggestions
+
+A user SHALL be able to see the suggestions they initiated and each one's status (pending, accepted, or declined), separate from the incoming notifications they need to act on.
+
+#### Scenario: View sent suggestion status
+
+- **WHEN** a user opens their sent suggestions
+- **THEN** each suggestion they initiated is listed with its current status
