@@ -56,6 +56,23 @@ export function CartIcon() {
   )
 }
 
+export function BellIcon(p) {
+  return (
+    <svg {...props} {...p}>
+      <path d="M8 1.5a4 4 0 0 0-4 4c0 3-1.5 4.5-1.5 4.5h11S12 8.5 12 5.5a4 4 0 0 0-4-4Z" />
+      <path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
+    </svg>
+  )
+}
+
+export function CheckIcon(p) {
+  return (
+    <svg {...props} {...p}>
+      <path d="M3 8.5L6.5 12L13 4" />
+    </svg>
+  )
+}
+
 // Streaming/TV glyph — a screen with a play triangle. Accepts size overrides
 // (e.g. <TvIcon width={13} height={13} />) for use inside compact chips.
 export function TvIcon(p) {

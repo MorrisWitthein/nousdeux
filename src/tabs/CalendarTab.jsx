@@ -13,7 +13,7 @@ import { useSwipeMonth } from './calendar/useSwipeMonth.js'
 const EMPTY_EVENT = { title: '', date: '', endDate: '', time: '', badge: 'Geplant', badgeType: 'green' }
 const PAGE_SIZE = 5
 
-export default function CalendarTab({ events, loading, addEvent, updateEvent, deleteEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
+export default function CalendarTab({ events, loading, addEvent, updateEvent, deleteEvent, suggestEvent, currentUser, targetDate, onTargetConsumed, prefill, onPrefillConsumed, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl }) {
   const showToast = useToast()
   const now = new Date()
   const nowYear = now.getFullYear()
@@ -105,6 +105,24 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
       setFormError(null)
       setSubmitted(false)
       setShowForm(false)
+    } catch (err) {
+      setFormError(err.message)
+    }
+  }
+
+  // Propose the event to the other user instead of adding it directly. Suggestions
+  // carry the event fields only (no attachments), so any pending files are dropped.
+  const handleSuggest = async () => {
+    setSubmitted(true)
+    if (!newEvent.title.trim()) return
+    try {
+      await suggestEvent(newEvent)
+      setPendingFiles([])
+      setNewEvent({ ...EMPTY_EVENT })
+      setFormError(null)
+      setSubmitted(false)
+      setShowForm(false)
+      showToast('Vorschlag gesendet', 'info')
     } catch (err) {
       setFormError(err.message)
     }
@@ -312,6 +330,7 @@ export default function CalendarTab({ events, loading, addEvent, updateEvent, de
         <EventForm
           fields={newEvent} setFields={setNewEvent}
           onSave={handleAdd}
+          onSuggest={suggestEvent ? handleSuggest : undefined}
           onCancel={() => { setShowForm(false); setPendingFiles([]); setFormError(null); setSubmitted(false) }}
           title="Neuer Termin"
           error={formError} onErrorClear={() => setFormError(null)}

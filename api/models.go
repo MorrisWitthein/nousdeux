@@ -18,6 +18,23 @@ type Event struct {
 	AttachmentCount int       `json:"attachmentCount"`
 }
 
+// EventSuggestion mirrors the event_suggestions table: an event one user
+// proposes for the other to accept (creating a real event) or decline. Fields
+// are listed in column order so RowToStructByPos can scan list queries.
+type EventSuggestion struct {
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Date        string     `json:"date,omitempty"`
+	EndDate     string     `json:"endDate,omitempty"`
+	Time        string     `json:"time,omitempty"`
+	Badge       string     `json:"badge,omitempty"`
+	BadgeType   string     `json:"badgeType,omitempty"`
+	SuggestedBy string     `json:"suggestedBy"`
+	Status      string     `json:"status"`
+	CreatedAt   time.Time  `json:"created_at"`
+	ResolvedAt  *time.Time `json:"resolvedAt,omitempty"`
+}
+
 // Recipe mirrors the recipes table.
 type Recipe struct {
 	ID          string    `json:"id"`

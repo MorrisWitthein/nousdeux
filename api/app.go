@@ -12,12 +12,13 @@ type App struct {
 	pool      *pgxpool.Pool
 	jwtSecret []byte
 
-	eventsBroker     *sse.Broker
-	recipesBroker    *sse.Broker
-	seriesBroker     *sse.Broker
-	activitiesBroker *sse.Broker
-	moviesBroker     *sse.Broker
-	shoppingBroker   *sse.Broker
+	eventsBroker      *sse.Broker
+	recipesBroker     *sse.Broker
+	seriesBroker      *sse.Broker
+	activitiesBroker  *sse.Broker
+	moviesBroker      *sse.Broker
+	shoppingBroker    *sse.Broker
+	suggestionsBroker *sse.Broker
 }
 
 // newApp constructs an App with freshly created SSE brokers.
@@ -25,11 +26,12 @@ func newApp(pool *pgxpool.Pool, jwtSecret []byte) *App {
 	return &App{
 		pool:             pool,
 		jwtSecret:        jwtSecret,
-		eventsBroker:     sse.NewBroker(),
-		recipesBroker:    sse.NewBroker(),
-		seriesBroker:     sse.NewBroker(),
-		activitiesBroker: sse.NewBroker(),
-		moviesBroker:     sse.NewBroker(),
-		shoppingBroker:   sse.NewBroker(),
+		eventsBroker:      sse.NewBroker(),
+		recipesBroker:     sse.NewBroker(),
+		seriesBroker:      sse.NewBroker(),
+		activitiesBroker:  sse.NewBroker(),
+		moviesBroker:      sse.NewBroker(),
+		shoppingBroker:    sse.NewBroker(),
+		suggestionsBroker: sse.NewBroker(),
 	}
 }

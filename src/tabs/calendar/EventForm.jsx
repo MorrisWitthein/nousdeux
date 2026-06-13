@@ -11,7 +11,7 @@ const BADGE_OPTIONS = [
 
 export default function EventForm({
   fields, setFields: setFieldsRaw, onSave, onCancel, title,
-  error, onErrorClear, pendingFiles, setPendingFiles, submitted,
+  error, onErrorClear, pendingFiles, setPendingFiles, submitted, onSuggest,
 }) {
   const fileInputRef = useRef(null)
   const setFields = (...args) => { onErrorClear(); setFieldsRaw(...args) }
@@ -109,6 +109,16 @@ export default function EventForm({
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" onClick={onSave} disabled={endDateInvalid || !fields.title.trim()}>Speichern</button>
       </div>
+      {onSuggest && (
+        <button
+          className="btn btn-ghost"
+          style={{ width: '100%', marginTop: 8 }}
+          onClick={onSuggest}
+          disabled={endDateInvalid || !fields.title.trim()}
+        >
+          Stattdessen vorschlagen
+        </button>
+      )}
     </Sheet>
   )
 }

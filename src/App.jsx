@@ -9,11 +9,14 @@ import { useActivities } from './hooks/useActivities.js'
 import { useMovies } from './hooks/useMovies.js'
 import { useWeather } from './hooks/useWeather.js'
 import { useSettings } from './hooks/useSettings.js'
+import { useEventSuggestions } from './hooks/useEventSuggestions.js'
 import HomeTab from './tabs/HomeTab.jsx'
 import CalendarTab from './tabs/CalendarTab.jsx'
 import ListsTab from './tabs/ListsTab.jsx'
 import RecipesTab from './tabs/RecipesTab.jsx'
 import ProfileModal from './components/ProfileModal.jsx'
+import SuggestionsSheet from './components/SuggestionsSheet.jsx'
+import { BellIcon } from './components/Icons.jsx'
 
 const tabs = [
   { id: 'home',     icon: '🏠', label: 'Home' },
@@ -29,6 +32,7 @@ export default function App() {
   const [calendarTarget, setCalendarTarget] = useState(null)
   const [calendarPrefill, setCalendarPrefill] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const currentUser = getCurrentUser()
 
   const navigateToCalendar = (isoDate, prefill = null) => {
@@ -51,6 +55,7 @@ export default function App() {
   const { movies, loading: moviesLoading, addMovie, updateMovie, deleteMovie, searchMovies, fetchMovieDetail, patchMovieImage } = useMovies()
   const weatherEmoji = useWeather()
   const { settings, updateSetting } = useSettings()
+  const { suggestions, suggestEvent, acceptSuggestion, declineSuggestion } = useEventSuggestions()
   const userIsAdmin = isAdmin()
 
   return (
@@ -63,15 +68,38 @@ export default function App() {
           <div className="header-top">
             <div className="logo">nous<span>deux</span></div>
             {currentUser && (
-              <button
-                type="button"
-                className="avatar"
-                aria-label="Profil öffnen"
-                style={{ background: authorColor(currentUser, currentUser), cursor: 'pointer', border: 'none', padding: 0, fontFamily: 'inherit' }}
-                onClick={() => setShowProfile(true)}
-              >
-                {currentUser.charAt(0).toUpperCase()}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button
+                  type="button"
+                  aria-label="Vorschläge öffnen"
+                  style={{ position: 'relative', background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--ink)', display: 'flex', alignItems: 'center' }}
+                  onClick={() => setShowSuggestions(true)}
+                >
+                  <BellIcon width={22} height={22} />
+                  {suggestions.length > 0 && (
+                    <span
+                      aria-label={`${suggestions.length} neue Vorschläge`}
+                      style={{
+                        position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16,
+                        padding: '0 4px', borderRadius: 999, background: 'var(--accent)',
+                        color: '#fff', fontSize: 10, fontWeight: 700, lineHeight: '16px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {suggestions.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="avatar"
+                  aria-label="Profil öffnen"
+                  style={{ background: authorColor(currentUser, currentUser), cursor: 'pointer', border: 'none', padding: 0, fontFamily: 'inherit' }}
+                  onClick={() => setShowProfile(true)}
+                >
+                  {currentUser.charAt(0).toUpperCase()}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -92,7 +120,7 @@ export default function App() {
             />
           )}
           {activeTab === 'calendar' && (
-            <CalendarTab events={events} loading={eventsLoading} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} listAttachments={listAttachments} uploadAttachment={uploadAttachment} deleteAttachment={deleteAttachment} attachmentUrl={attachmentUrl} />
+            <CalendarTab events={events} loading={eventsLoading} addEvent={addEvent} updateEvent={updateEvent} deleteEvent={deleteEvent} suggestEvent={suggestEvent} currentUser={currentUser} targetDate={calendarTarget} onTargetConsumed={() => setCalendarTarget(null)} prefill={calendarPrefill} onPrefillConsumed={() => setCalendarPrefill(null)} listAttachments={listAttachments} uploadAttachment={uploadAttachment} deleteAttachment={deleteAttachment} attachmentUrl={attachmentUrl} />
           )}
           {activeTab === 'lists' && (
             <ListsTab
@@ -125,6 +153,16 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        {showSuggestions && (
+          <SuggestionsSheet
+            suggestions={suggestions}
+            currentUser={currentUser}
+            onAccept={acceptSuggestion}
+            onDecline={declineSuggestion}
+            onClose={() => setShowSuggestions(false)}
+          />
+        )}
 
         {showProfile && (
           <ProfileModal

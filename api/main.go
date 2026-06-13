@@ -107,6 +107,10 @@ func main() {
 	mux.HandleFunc("/api/series/stream", cors(app.requireAuth(app.seriesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/activities/stream", cors(app.requireAuth(app.activitiesBroker.ServeHTTP)))
 	mux.HandleFunc("/api/movies/stream", cors(app.requireAuth(app.moviesBroker.ServeHTTP)))
+	mux.HandleFunc("/api/event-suggestions", cors(app.requireAuth(app.handleEventSuggestions)))
+	mux.HandleFunc("/api/event-suggestions/{id}/accept", cors(app.requireAuth(app.handleSuggestionAccept)))
+	mux.HandleFunc("/api/event-suggestions/{id}/decline", cors(app.requireAuth(app.handleSuggestionDecline)))
+	mux.HandleFunc("/api/event-suggestions/stream", cors(app.requireAuth(app.suggestionsBroker.ServeHTTP)))
 	mux.HandleFunc("/api/shopping", cors(app.requireAuth(app.handleShoppingList)))
 	mux.HandleFunc("/api/shopping/history", cors(app.requireAuth(app.handleShoppingHistory)))
 	mux.HandleFunc("/api/shopping/stream", cors(app.requireAuth(app.shoppingBroker.ServeHTTP)))
@@ -140,6 +144,7 @@ func main() {
 	app.activitiesBroker.Shutdown()
 	app.moviesBroker.Shutdown()
 	app.shoppingBroker.Shutdown()
+	app.suggestionsBroker.Shutdown()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {

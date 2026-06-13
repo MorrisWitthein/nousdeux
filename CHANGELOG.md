@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.20.0] - 2026-06-13
+
+### Added
+- **Terminvorschläge**: Statt einen Termin direkt einzutragen, könnt ihr ihn jetzt der anderen Person **vorschlagen**. Im Formular „Neuer Termin“ gibt es dafür unter „Speichern“ die Aktion **„Stattdessen vorschlagen“**. Der Vorschlag landet bei der anderen Person als Benachrichtigung – oben in der Kopfzeile erscheint eine **Glocke** mit der Anzahl offener Vorschläge. Dort lässt sich jeder Vorschlag **annehmen** (er wird zu einem echten Termin im Kalender) oder **ablehnen**. Neue Vorschläge erscheinen live, ohne die App neu zu laden. Eigene Vorschläge zeigt die Glocke nicht an.
+
+---
+
 ## [0.19.0] - 2026-06-13
 
 ### Changed
