@@ -11,9 +11,9 @@ const LISTS = [
 ]
 
 export default function ListsTab({
-  series, addSeries, updateSeries, deleteSeries, seriesLoading, setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage,
+  series, addSeries, updateSeries, deleteSeries, seriesLoading, searchSeries, fetchSeriesDetail, patchSeriesImage,
   activities, addActivity, updateActivity, deleteActivity, activitiesLoading,
-  movies, addMovie, updateMovie, deleteMovie, moviesLoading, setMovieImage, clearMovieImage, fetchMovieMeta, patchMovieImage,
+  movies, addMovie, updateMovie, deleteMovie, moviesLoading, searchMovies, fetchMovieDetail, patchMovieImage,
   currentUser,
   onNavigateToCalendar,
   activeList,
@@ -38,8 +38,8 @@ export default function ListsTab({
       {activeList === 'series' && (
         <SeriesSubTab
           series={series} addSeries={addSeries} updateSeries={updateSeries} deleteSeries={deleteSeries}
-          seriesLoading={seriesLoading} setSeriesImage={setSeriesImage} clearSeriesImage={clearSeriesImage}
-          fetchSeriesMeta={fetchSeriesMeta} patchSeriesImage={patchSeriesImage}
+          seriesLoading={seriesLoading} searchSeries={searchSeries} fetchSeriesDetail={fetchSeriesDetail}
+          patchSeriesImage={patchSeriesImage}
           currentUser={currentUser}
         />
       )}
@@ -47,8 +47,8 @@ export default function ListsTab({
       {activeList === 'movies' && (
         <MoviesSubTab
           movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie}
-          moviesLoading={moviesLoading} setMovieImage={setMovieImage} clearMovieImage={clearMovieImage}
-          fetchMovieMeta={fetchMovieMeta} patchMovieImage={patchMovieImage}
+          moviesLoading={moviesLoading} searchMovies={searchMovies} fetchMovieDetail={fetchMovieDetail}
+          patchMovieImage={patchMovieImage}
           currentUser={currentUser}
         />
       )}

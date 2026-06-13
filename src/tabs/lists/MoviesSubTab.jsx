@@ -4,14 +4,14 @@ import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterControls, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterPicker, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
   { label: 'Gesehen', type: 'green' },
 ]
 
-const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow' }
+const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow', imageUrl: '' }
 
 function MovieDetail({ movie, onEdit, onClose, currentUser }) {
   return (
@@ -31,7 +31,7 @@ function MovieDetail({ movie, onEdit, onClose, currentUser }) {
   )
 }
 
-function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, knownGenres, imageBlock }) {
+function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, knownGenres, search, fetchDetail, showToast }) {
   const titleMissing = submitted && !fields.title.trim()
   const handleStatusChange = (e) => {
     const opt = STATUS_OPTIONS.find(o => o.label === e.target.value)
@@ -39,7 +39,21 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
   }
   return (
     <Sheet title={title} onClose={onCancel}>
-      {imageBlock}
+      <PosterPicker
+        imageUrl={fields.imageUrl}
+        onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
+        query={fields.title}
+        search={search}
+        fetchDetail={fetchDetail}
+        onApply={(c, detail) => setFields(f => ({
+          ...f,
+          title: c.title,
+          imageUrl: c.posterUrl,
+          genres: detail.genres?.length ? detail.genres : f.genres,
+          sub: detail.platform || f.sub,
+        }))}
+        showToast={showToast}
+      />
       <div>
         <label className="form-label">Titel</label>
         <input
@@ -55,7 +69,7 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
         value={fields.genres}
         onChange={genres => setFields(f => ({ ...f, genres }))}
         suggestions={knownGenres}
-        placeholder="Wird automatisch erkannt (Enter)"
+        placeholder="Über Suche oder manuell (Enter)"
       />
       <div className="form-row">
         <div style={{ flex: 1 }}>
@@ -82,7 +96,7 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
 
 export default function MoviesSubTab({
   movies, addMovie, updateMovie, deleteMovie, moviesLoading,
-  setMovieImage, clearMovieImage, fetchMovieMeta, patchMovieImage,
+  searchMovies, fetchMovieDetail, patchMovieImage,
   currentUser,
 }) {
   const showToast = useToast()
@@ -92,31 +106,8 @@ export default function MoviesSubTab({
   const [editFields, setEditFields] = useState({ ...EMPTY_MOVIE })
   const [viewingId, setViewingId] = useState(null)
   const [submitted, setSubmitted] = useState(false)
-  const [posterBusy, setPosterBusy] = useState(false)
   const [showDone, setShowDone] = useState(false)
   const [activeGenres, setActiveGenres] = useState([])
-
-  // Ids of newly-added movies currently being enriched with TMDB metadata
-  // (genre/platform). Drives the inline "Lädt…" spinner on the card.
-  const [enrichingIds, setEnrichingIds] = useState(() => new Set())
-
-  // After creating a movie, fetch TMDB metadata and fill the poster plus any
-  // fields the user left blank (genre/platform). Never overwrites manual
-  // input. The row PATCH is a full replace, so we merge into the original
-  // payload. Runs in the background; failures are silent (poster stays default).
-  const enrich = async (id, base) => {
-    setEnrichingIds(s => new Set(s).add(id))
-    try {
-      const meta = await fetchMovieMeta(base.title)
-      const patch = { ...base }
-      let changed = false
-      if (!(base.genres || []).length && meta.genres?.length) { patch.genres = meta.genres; changed = true }
-      if (!(base.sub || '').trim() && meta.platform) { patch.sub = meta.platform; changed = true }
-      if (changed) await updateMovie(id, patch)
-      if (meta.url) await patchMovieImage(id, meta.url)
-    } catch { /* keep default poster/fields */ }
-    finally { setEnrichingIds(s => { const n = new Set(s); n.delete(id); return n }) }
-  }
 
   const knownGenres = useMemo(
     () => [...new Set(movies.flatMap(m => m.genres || []))].sort(),
@@ -143,7 +134,11 @@ export default function MoviesSubTab({
         statusType: newMovie.statusType,
       }
       const id = await addMovie(payload)
-      if (id) enrich(id, payload)
+      // Poster persists separately; the row already exists, so a failure here
+      // must not block closing the form (retrying would duplicate the movie).
+      if (id && newMovie.imageUrl) {
+        try { await patchMovieImage(id, newMovie.imageUrl) } catch (e) { showToast(e.message) }
+      }
       setNewMovie({ ...EMPTY_MOVIE })
       setSubmitted(false)
       setShowForm(false)
@@ -164,6 +159,7 @@ export default function MoviesSubTab({
       genres: m.genres || [],
       status: m.status || 'Geplant',
       statusType: m.statusType || 'yellow',
+      imageUrl: m.imageUrl || '',
     })
     setShowForm(false)
   }
@@ -172,7 +168,10 @@ export default function MoviesSubTab({
     setSubmitted(true)
     if (!editFields.title.trim()) return
     try {
-      await updateMovie(editingId, editFields)
+      const { imageUrl, ...rest } = editFields
+      await updateMovie(editingId, rest)
+      const row = movies.find(m => m.id === editingId)
+      if ((row?.imageUrl || '') !== (imageUrl || '')) await patchMovieImage(editingId, imageUrl || '')
       setSubmitted(false)
       setEditingId(null)
     } catch (err) {
@@ -202,7 +201,7 @@ export default function MoviesSubTab({
           <div className="card-title">{m.title}</div>
           <span className={`badge badge-${m.statusType}`}>{m.status}</span>
         </div>
-        <MediaMeta enriching={enrichingIds.has(m.id)} platform={m.sub} neutral={m.genres || []} />
+        <MediaMeta platform={m.sub} neutral={m.genres || []} />
         <div className="media-footer">
           <AuthorLine who={m.who} currentUser={currentUser} />
           <div style={{ display: 'flex', gap: 4 }}>
@@ -268,6 +267,7 @@ export default function MoviesSubTab({
           fields={newMovie} setFields={setNewMovie}
           onSave={handleAdd} onCancel={() => { setShowForm(false); setSubmitted(false) }}
           title="Film hinzufügen" submitted={submitted} knownGenres={knownGenres}
+          search={searchMovies} fetchDetail={fetchMovieDetail} showToast={showToast}
         />
       )}
       {editingId && (
@@ -275,14 +275,7 @@ export default function MoviesSubTab({
           fields={editFields} setFields={setEditFields}
           onSave={handleUpdate} onCancel={() => { setEditingId(null); setSubmitted(false) }}
           title="Film bearbeiten" submitted={submitted} knownGenres={knownGenres}
-          imageBlock={
-            <PosterControls
-              item={movies.find(m => m.id === editingId)}
-              busy={posterBusy} setBusy={setPosterBusy} showToast={showToast}
-              onRefetch={() => setMovieImage(editingId, editFields.title)}
-              onClear={() => clearMovieImage(editingId)}
-            />
-          }
+          search={searchMovies} fetchDetail={fetchMovieDetail} showToast={showToast}
         />
       )}
     </>

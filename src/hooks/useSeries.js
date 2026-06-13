@@ -36,42 +36,45 @@ export function useSeries() {
     }
   }
 
-  // Fetches poster + metadata (genres, platform) from TMDB without persisting.
-  const fetchSeriesMeta = async (query) => {
-    const imgRes = await fetch(
+  // Searches TMDB and returns all candidate titles so the user can pick the
+  // right one: [{ tmdbId, title, year, posterUrl }]. Nothing is persisted.
+  const searchSeries = async (query) => {
+    const res = await fetch(
       `${API}/api/series/image?q=${encodeURIComponent(query)}`,
       { headers: authHeaders() }
     )
-    if (!imgRes.ok) {
-      const err = await imgRes.json().catch(() => ({}))
-      throw new Error(err.error || `Bildfehler ${imgRes.status}`)
+    if (!res.ok) {
+      handleUnauth(res)
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || `Suche fehlgeschlagen (${res.status})`)
     }
-    return imgRes.json() // { url, genres, platform }
+    const data = await res.json()
+    return data.results || []
   }
 
+  // Fetches genres + platform for one chosen TMDB title (by id).
+  const fetchSeriesDetail = async (tmdbId) => {
+    const res = await fetch(`${API}/api/series/image?tmdbId=${tmdbId}`, {
+      headers: authHeaders(),
+    })
+    if (!res.ok) {
+      handleUnauth(res)
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || `Details laden fehlgeschlagen (${res.status})`)
+    }
+    return res.json() // { genres, platform }
+  }
+
+  // Persists (or clears, when url is '') the poster on a series row.
   const patchSeriesImage = async (id, url) => {
     const patchRes = await fetch(`${API}/api/series/image?id=${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ url }),
     })
-    if (!patchRes.ok) throw new Error(`Bild speichern fehlgeschlagen`)
-  }
-
-  const setSeriesImage = async (id, query) => {
-    const { url } = await fetchSeriesMeta(query)
-    await patchSeriesImage(id, url)
-  }
-
-  const clearSeriesImage = async (id) => {
-    const res = await fetch(`${API}/api/series/image?id=${id}`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ url: '' }),
-    })
-    if (!res.ok) {
-      handleUnauth(res)
-      if (res.status !== 401) throw new Error(`Bild entfernen fehlgeschlagen`)
+    if (!patchRes.ok) {
+      handleUnauth(patchRes)
+      if (patchRes.status !== 401) throw new Error(`Poster speichern fehlgeschlagen`)
     }
   }
 
@@ -102,5 +105,5 @@ export function useSeries() {
     }
   }
 
-  return { series, loading, addSeries, updateSeries, deleteSeries, setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage }
+  return { series, loading, addSeries, updateSeries, deleteSeries, searchSeries, fetchSeriesDetail, patchSeriesImage }
 }

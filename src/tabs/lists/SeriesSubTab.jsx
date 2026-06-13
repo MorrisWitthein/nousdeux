@@ -3,7 +3,7 @@ import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterControls, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterPicker, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -11,7 +11,7 @@ const STATUS_OPTIONS = [
   { label: 'Fertig', type: 'red' },
 ]
 
-const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', status: 'Geplant', statusType: 'yellow' }
+const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', status: 'Geplant', statusType: 'yellow', imageUrl: '' }
 
 function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   const neutral = series.season > 0 ? [`Staffel ${series.season}`] : []
@@ -32,7 +32,7 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   )
 }
 
-function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, imageBlock }) {
+function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, search, fetchDetail, showToast }) {
   const titleMissing = submitted && !fields.title.trim()
   const handleStatusChange = (e) => {
     const opt = STATUS_OPTIONS.find(o => o.label === e.target.value)
@@ -40,7 +40,20 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, ima
   }
   return (
     <Sheet title={title} onClose={onCancel}>
-      {imageBlock}
+      <PosterPicker
+        imageUrl={fields.imageUrl}
+        onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
+        query={fields.title}
+        search={search}
+        fetchDetail={fetchDetail}
+        onApply={(c, detail) => setFields(f => ({
+          ...f,
+          title: c.title,
+          imageUrl: c.posterUrl,
+          sub: detail.platform || f.sub,
+        }))}
+        showToast={showToast}
+      />
       <div>
         <label className="form-label">Titel</label>
         <input
@@ -89,7 +102,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, ima
 
 export default function SeriesSubTab({
   series, addSeries, updateSeries, deleteSeries, seriesLoading,
-  setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage,
+  searchSeries, fetchSeriesDetail, patchSeriesImage,
   currentUser,
 }) {
   const showToast = useToast()
@@ -99,26 +112,7 @@ export default function SeriesSubTab({
   const [editFields, setEditFields] = useState({ ...EMPTY_SERIES })
   const [viewingId, setViewingId] = useState(null)
   const [submitted, setSubmitted] = useState(false)
-  const [posterBusy, setPosterBusy] = useState(false)
   const [showDone, setShowDone] = useState(false)
-
-  // Ids of newly-added series currently being enriched with TMDB metadata
-  // (platform). Drives the inline "Lädt…" spinner on the card.
-  const [enrichingIds, setEnrichingIds] = useState(() => new Set())
-
-  // After creating a series, fetch TMDB metadata and fill the poster plus any
-  // fields the user left blank (platform). Never overwrites manual input. The
-  // row PATCH is a full replace, so we merge into the original payload. Runs
-  // in the background; failures are silent (poster stays default).
-  const enrich = async (id, base) => {
-    setEnrichingIds(s => new Set(s).add(id))
-    try {
-      const meta = await fetchSeriesMeta(base.title)
-      if (!(base.sub || '').trim() && meta.platform) await updateSeries(id, { ...base, sub: meta.platform })
-      if (meta.url) await patchSeriesImage(id, meta.url)
-    } catch { /* keep default poster/fields */ }
-    finally { setEnrichingIds(s => { const n = new Set(s); n.delete(id); return n }) }
-  }
 
   const handleAdd = async () => {
     setSubmitted(true)
@@ -133,7 +127,11 @@ export default function SeriesSubTab({
         statusType: newSeries.statusType,
       }
       const id = await addSeries(payload)
-      if (id) enrich(id, payload)
+      // Poster persists separately; the row already exists, so a failure here
+      // must not block closing the form (retrying would duplicate the series).
+      if (id && newSeries.imageUrl) {
+        try { await patchSeriesImage(id, newSeries.imageUrl) } catch (e) { showToast(e.message) }
+      }
       setNewSeries({ ...EMPTY_SERIES })
       setSubmitted(false)
       setShowForm(false)
@@ -154,6 +152,7 @@ export default function SeriesSubTab({
       season: s.season || '',
       status: s.status || 'Geplant',
       statusType: s.statusType || 'yellow',
+      imageUrl: s.imageUrl || '',
     })
     setShowForm(false)
   }
@@ -162,10 +161,13 @@ export default function SeriesSubTab({
     setSubmitted(true)
     if (!editFields.title.trim()) return
     try {
+      const { imageUrl, ...rest } = editFields
       await updateSeries(editingId, {
-        ...editFields,
+        ...rest,
         season: parseInt(editFields.season, 10) || 0,
       })
+      const row = series.find(s => s.id === editingId)
+      if ((row?.imageUrl || '') !== (imageUrl || '')) await patchSeriesImage(editingId, imageUrl || '')
       setSubmitted(false)
       setEditingId(null)
     } catch (err) {
@@ -197,7 +199,7 @@ export default function SeriesSubTab({
             <div className="card-title">{s.title}</div>
             <span className={`badge badge-${s.statusType}`}>{s.status}</span>
           </div>
-          <MediaMeta enriching={enrichingIds.has(s.id)} platform={s.sub} neutral={neutral} />
+          <MediaMeta platform={s.sub} neutral={neutral} />
           <div className="media-footer">
             <AuthorLine who={s.who} currentUser={currentUser} />
             <div style={{ display: 'flex', gap: 4 }}>
@@ -247,6 +249,7 @@ export default function SeriesSubTab({
           fields={newSeries} setFields={setNewSeries}
           onSave={handleAdd} onCancel={() => { setShowForm(false); setSubmitted(false) }}
           title="Serie hinzufügen" submitted={submitted}
+          search={searchSeries} fetchDetail={fetchSeriesDetail} showToast={showToast}
         />
       )}
       {editingId && (
@@ -254,14 +257,7 @@ export default function SeriesSubTab({
           fields={editFields} setFields={setEditFields}
           onSave={handleUpdate} onCancel={() => { setEditingId(null); setSubmitted(false) }}
           title="Serie bearbeiten" submitted={submitted}
-          imageBlock={
-            <PosterControls
-              item={series.find(s => s.id === editingId)}
-              busy={posterBusy} setBusy={setPosterBusy} showToast={showToast}
-              onRefetch={() => setSeriesImage(editingId, editFields.title)}
-              onClear={() => clearSeriesImage(editingId)}
-            />
-          }
+          search={searchSeries} fetchDetail={fetchSeriesDetail} showToast={showToast}
         />
       )}
     </>

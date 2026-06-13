@@ -22,14 +22,32 @@ func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) htt
 		ctx := r.Context()
 		switch r.Method {
 		case http.MethodGet:
-			q := r.URL.Query().Get("q")
-			if q == "" {
-				writeError(w, http.StatusBadRequest, "q is required")
-				return
-			}
 			key := os.Getenv("TMDB_API_KEY")
 			if key == "" {
 				writeError(w, http.StatusServiceUnavailable, "image search not configured")
+				return
+			}
+			// Detail lookup for one specific TMDB title (selected from the search
+			// results): returns genres + DE platform so the picker can fill the
+			// form. Takes precedence over the search branch when present.
+			if raw := r.URL.Query().Get("tmdbId"); raw != "" {
+				tmdbID, err := strconv.Atoi(raw)
+				if err != nil {
+					writeError(w, http.StatusBadRequest, "tmdbId must be a number")
+					return
+				}
+				genres, platform := fetchTMDBDetail(ctx, key, mediaType, tmdbID)
+				writeJSON(w, http.StatusOK, map[string]any{
+					"genres":   genres,
+					"platform": platform,
+				})
+				return
+			}
+			// Search: return all candidate titles so the user can disambiguate
+			// instead of blindly taking the first hit.
+			q := r.URL.Query().Get("q")
+			if q == "" {
+				writeError(w, http.StatusBadRequest, "q or tmdbId is required")
 				return
 			}
 			apiURL := "https://api.tmdb.org/3/search/" + mediaType +
@@ -54,8 +72,12 @@ func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) htt
 			}
 			var result struct {
 				Results []struct {
-					ID         int    `json:"id"`
-					PosterPath string `json:"poster_path"`
+					ID           int    `json:"id"`
+					PosterPath   string `json:"poster_path"`
+					Title        string `json:"title"`          // movies
+					Name         string `json:"name"`           // series
+					ReleaseDate  string `json:"release_date"`   // movies
+					FirstAirDate string `json:"first_air_date"` // series
 				} `json:"results"`
 			}
 			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -63,28 +85,40 @@ func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) htt
 				writeError(w, http.StatusBadGateway, "decode: "+err.Error())
 				return
 			}
-			poster := ""
-			tmdbID := 0
+			// Cap the list so the picker stays scannable; TMDB orders by relevance.
+			const maxResults = 8
+			candidates := make([]map[string]any, 0, maxResults)
 			for _, res := range result.Results {
+				title := res.Title
+				if title == "" {
+					title = res.Name
+				}
+				if title == "" {
+					continue
+				}
+				date := res.ReleaseDate
+				if date == "" {
+					date = res.FirstAirDate
+				}
+				year := ""
+				if len(date) >= 4 {
+					year = date[:4]
+				}
+				posterURL := ""
 				if res.PosterPath != "" {
-					poster = res.PosterPath
-					tmdbID = res.ID
+					posterURL = "https://image.tmdb.org/t/p/w342" + res.PosterPath
+				}
+				candidates = append(candidates, map[string]any{
+					"tmdbId":    res.ID,
+					"title":     title,
+					"year":      year,
+					"posterUrl": posterURL,
+				})
+				if len(candidates) >= maxResults {
 					break
 				}
 			}
-			if poster == "" {
-				slog.Warn("tmdb no poster", "query", q, "type", mediaType)
-				writeError(w, http.StatusNotFound, "no poster found")
-				return
-			}
-			// Best-effort: enrich with genres + DE streaming platforms from the
-			// detail endpoint. Failures here must not block the poster response.
-			genres, platform := fetchTMDBDetail(ctx, key, mediaType, tmdbID)
-			writeJSON(w, http.StatusOK, map[string]any{
-				"url":      "https://image.tmdb.org/t/p/w342" + poster,
-				"genres":   genres,
-				"platform": platform,
-			})
+			writeJSON(w, http.StatusOK, map[string]any{"results": candidates})
 
 		case http.MethodPatch:
 			id := r.URL.Query().Get("id")

@@ -46,9 +46,9 @@ export default function App() {
 
   const { events, loading: eventsLoading, addEvent, updateEvent, deleteEvent, listAttachments, uploadAttachment, deleteAttachment, attachmentUrl } = useEvents()
   const { recipes, loading: recipesLoading, addRecipe, updateRecipe, deleteRecipe, setRecipeImage, uploadRecipeImage, clearRecipeImage, importRecipe }   = useRecipes()
-  const { series,     loading: seriesLoading,     addSeries,   updateSeries,   deleteSeries, setSeriesImage, clearSeriesImage, fetchSeriesMeta, patchSeriesImage }   = useSeries()
+  const { series,     loading: seriesLoading,     addSeries,   updateSeries,   deleteSeries, searchSeries, fetchSeriesDetail, patchSeriesImage }   = useSeries()
   const { activities, loading: activitiesLoading, addActivity, updateActivity, deleteActivity } = useActivities()
-  const { movies, loading: moviesLoading, addMovie, updateMovie, deleteMovie, setMovieImage, clearMovieImage, fetchMovieMeta, patchMovieImage } = useMovies()
+  const { movies, loading: moviesLoading, addMovie, updateMovie, deleteMovie, searchMovies, fetchMovieDetail, patchMovieImage } = useMovies()
   const weatherEmoji = useWeather()
   const { settings, updateSetting } = useSettings()
   const userIsAdmin = isAdmin()
@@ -97,10 +97,10 @@ export default function App() {
           {activeTab === 'lists' && (
             <ListsTab
               series={series} addSeries={addSeries} updateSeries={updateSeries} deleteSeries={deleteSeries} seriesLoading={seriesLoading}
-              setSeriesImage={setSeriesImage} clearSeriesImage={clearSeriesImage} fetchSeriesMeta={fetchSeriesMeta} patchSeriesImage={patchSeriesImage}
+              searchSeries={searchSeries} fetchSeriesDetail={fetchSeriesDetail} patchSeriesImage={patchSeriesImage}
               activities={activities} addActivity={addActivity} updateActivity={updateActivity} deleteActivity={deleteActivity} activitiesLoading={activitiesLoading}
               movies={movies} addMovie={addMovie} updateMovie={updateMovie} deleteMovie={deleteMovie} moviesLoading={moviesLoading}
-              setMovieImage={setMovieImage} clearMovieImage={clearMovieImage} fetchMovieMeta={fetchMovieMeta} patchMovieImage={patchMovieImage}
+              searchMovies={searchMovies} fetchMovieDetail={fetchMovieDetail} patchMovieImage={patchMovieImage}
               currentUser={currentUser}
               onNavigateToCalendar={navigateToCalendar}
               activeList={listsActiveList}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { TvIcon } from '../../components/Icons.jsx'
 import { authorColor } from '../../utils/authorColor.js'
 
@@ -23,7 +24,7 @@ export function PlatformSelect({ value, onChange }) {
   const legacy = value && !PLATFORMS.includes(value)
   return (
     <select value={value || ''} onChange={e => onChange(e.target.value)}>
-      <option value="">– Automatisch erkannt –</option>
+      <option value="">– Keine –</option>
       {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
       {legacy && <option value={value}>{value}</option>}
     </select>
@@ -62,17 +63,15 @@ export function MediaChips({ platform, neutral }) {
 }
 
 // Color-coded meta row for media cards: a teal platform chip (where to watch)
-// first, then neutral genre/season chips. While the row is being enriched with
-// TMDB data, a small spinner chip is shown alongside whatever is already there.
-export function MediaMeta({ enriching, platform, neutral }) {
-  if (!platform && neutral.length === 0 && !enriching) return null
+// first, then neutral genre/season chips.
+export function MediaMeta({ platform, neutral }) {
+  if (!platform && neutral.length === 0) return null
   return (
     <div className="media-meta">
       {platform && (
         <span className="chip-platform"><TvIcon width={13} height={13} />{platform}</span>
       )}
       {neutral.map((t, i) => <span key={i} className="chip-genre">{t}</span>)}
-      {enriching && <span className="chip-loading"><span className="spinner-sm" />Lädt…</span>}
     </div>
   )
 }
@@ -101,30 +100,79 @@ export function DoneSection({ items, open, onToggle, renderRow, label = 'Erledig
   )
 }
 
-// Poster controls shown inside the edit forms. `item` is the live row (so the
-// preview reflects stream updates); refetch/clear persist immediately via the
-// dedicated image endpoint, independent of the Save button.
-export function PosterControls({ item, busy, setBusy, onRefetch, onClear, showToast }) {
-  if (!item) return null
-  const run = (fn) => async () => {
+// Poster + metadata picker shown at the top of the create/edit forms. Lets the
+// user search TMDB by the current title, pick the right match from the results
+// (disambiguating titles like remakes), and have its poster/genres/platform
+// applied to the form. Nothing is persisted here — the form's Save button does
+// that — so the same control works for both creating and editing.
+//
+// `imageUrl` is the poster currently held in form state; `onClear` drops it;
+// `onApply(candidate, detail)` receives the chosen match plus its TMDB detail.
+export function PosterPicker({ imageUrl, onClear, query, search, fetchDetail, onApply, showToast }) {
+  // null = idle (not searched yet), [] = searched with no hits, [...] = results.
+  const [results, setResults] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const runSearch = async () => {
+    const q = (query || '').trim()
+    if (!q) return
     setBusy(true)
-    try { await fn() } catch (e) { showToast(e.message) } finally { setBusy(false) }
+    try {
+      setResults(await search(q))
+    } catch (e) {
+      showToast(e.message)
+    } finally {
+      setBusy(false)
+    }
   }
+
+  const pick = async (c) => {
+    setBusy(true)
+    try {
+      const detail = await fetchDetail(c.tmdbId)
+      onApply(c, detail)
+      setResults(null)
+    } catch (e) {
+      showToast(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div style={{ marginBottom: 16 }}>
-      <label className="form-label">Poster</label>
-      {item.imageUrl && (
-        <img src={item.imageUrl} alt=""
-          style={{ width: 96, height: 144, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: 8 }} />
-      )}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-ghost" disabled={busy} onClick={run(onRefetch)}>
-          {busy ? 'Suche…' : item.imageUrl ? 'Poster aktualisieren' : 'Poster suchen'}
-        </button>
-        {item.imageUrl && (
-          <button className="btn btn-ghost" disabled={busy} onClick={run(onClear)}>Entfernen</button>
-        )}
+      <label className="form-label">Poster &amp; Infos</label>
+      <div className="poster-picker-head">
+        {imageUrl
+          ? <img className="poster-picker-preview" src={imageUrl} alt="" />
+          : <div className="poster-picker-preview poster-picker-empty">🎬</div>}
+        <div className="poster-picker-actions">
+          <button type="button" className="btn btn-ghost" disabled={busy || !(query || '').trim()} onClick={runSearch}>
+            {busy ? 'Suche…' : '🔍 In TMDB suchen'}
+          </button>
+          {imageUrl && (
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClear}>Entfernen</button>
+          )}
+        </div>
       </div>
+      {results !== null && (
+        results.length === 0
+          ? <p className="poster-picker-hint">Nichts gefunden – Felder unten manuell ausfüllen.</p>
+          : <ul className="tmdb-results">
+              {results.map(c => (
+                <li key={c.tmdbId}>
+                  <button type="button" className="tmdb-result" disabled={busy} onClick={() => pick(c)}>
+                    {c.posterUrl
+                      ? <img src={c.posterUrl} alt="" loading="lazy" />
+                      : <span className="tmdb-result-noimg">🎬</span>}
+                    <span className="tmdb-result-title">
+                      {c.title}{c.year ? <span className="tmdb-result-year"> ({c.year})</span> : null}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+      )}
     </div>
   )
 }

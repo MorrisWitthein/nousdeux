@@ -159,28 +159,6 @@ const lists = `
   white-space: nowrap;
 }
 
-/* Loading chip shown while TMDB metadata is being fetched after create. */
-.chip-loading {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 100px;
-  background: var(--warm);
-  color: var(--muted);
-}
-
-.spinner-sm {
-  width: 11px;
-  height: 11px;
-  border: 1.5px solid var(--border);
-  border-top-color: var(--accent2);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
 .media-footer {
   margin-top: auto;
   display: flex;
@@ -198,6 +176,96 @@ const lists = `
   margin: 0 auto 12px;
   display: block;
 }
+
+/* POSTER + TMDB PICKER (create/edit forms) */
+.poster-picker-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.poster-picker-preview {
+  width: 80px;
+  height: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.poster-picker-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  background: var(--warm);
+  border: 1px solid var(--border);
+}
+
+.poster-picker-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poster-picker-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Scrollable list of TMDB matches the user picks from. */
+.tmdb-results {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tmdb-results li + li {
+  border-top: 1px solid var(--border);
+}
+
+.tmdb-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tmdb-result:hover { background: var(--warm); }
+.tmdb-result:disabled { opacity: 0.6; cursor: default; }
+
+.tmdb-result img,
+.tmdb-result-noimg {
+  width: 36px;
+  height: 54px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.tmdb-result-noimg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: var(--warm);
+}
+
+.tmdb-result-title {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.tmdb-result-year { color: var(--muted); }
 
 /* SHOPPING LIST */
 .shopping-input-row {

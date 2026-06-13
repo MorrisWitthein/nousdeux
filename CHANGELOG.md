@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.17.0] - 2026-06-13
+
+### Changed
+- Filme und Serien: Poster und Infos (Genre, Plattform) werden nicht mehr automatisch aus dem ersten Treffer übernommen. Stattdessen gibt es im Hinzufügen- und Bearbeiten-Formular einen Button **„🔍 In TMDB suchen“**, der alle gefundenen Titel mit Poster und Jahr auflistet. Per Tipp auf den richtigen Treffer werden Poster, Genre und Plattform ins Formular übernommen – so lassen sich mehrdeutige Titel (z. B. Remakes) eindeutig zuordnen. Wird nichts Passendes gefunden, können alle Felder weiterhin manuell ausgefüllt werden.
+
+---
+
 ## [0.16.5] - 2026-06-13
 
 ### Fixed
