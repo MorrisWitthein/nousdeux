@@ -3,18 +3,6 @@ const base = `
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  overscroll-behavior: none;
-  /* iOS standalone PWA: the home-indicator strip below the dvh viewport
-     renders with the page background. Match the app so it never flashes white. */
-  background: var(--cream);
-}
-
-#root { height: 100%; }
-
 :root {
   --cream: #F5F0E8;
   --warm: #EDE5D5;
@@ -60,14 +48,11 @@ html, body {
 .app {
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
   max-width: 390px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .grain {
