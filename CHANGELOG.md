@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.18.1] - 2026-06-13
+
+### Changed
+- Abhängigkeiten aktualisiert: React und React-DOM auf 19.2.7, Vite auf 8.0.16, `@vitejs/plugin-react` auf 6.0.2 sowie das Node-Build-Image auf `node:26-alpine`. Keine sichtbaren Funktionsänderungen.
+
+---
+
 ## [0.18.0] - 2026-06-13
 
 ### Added
