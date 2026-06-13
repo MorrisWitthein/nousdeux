@@ -73,7 +73,7 @@ const layout = `
 .tab.active {
   background: var(--ink);
   border-color: var(--ink);
-  color: white;
+  color: var(--on-ink);
   font-weight: 500;
 }
 

@@ -26,7 +26,7 @@ const lists = `
   position: absolute;
   bottom: 8px; left: 8px;
   background: var(--ink);
-  color: white;
+  color: var(--on-ink);
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 100px;
@@ -142,7 +142,7 @@ const lists = `
   font-weight: 500;
   padding: 3px 9px 3px 7px;
   border-radius: 100px;
-  background: #E3F0EE;
+  background: var(--badge-green-bg);
   color: var(--accent2);
   white-space: nowrap;
 }

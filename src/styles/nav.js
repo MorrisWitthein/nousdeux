@@ -104,7 +104,7 @@ const nav = `
   transform: translateX(-50%);
   width: 100%;
   max-width: 390px;
-  background: rgba(245,240,232,0.92);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   display: flex;

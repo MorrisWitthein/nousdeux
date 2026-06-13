@@ -8,6 +8,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>nousdeux</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <!-- Apply the stored/inferred theme before first paint to avoid a flash of
+         the wrong theme. Mirrors src/utils/theme.js; keep the two in sync. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          document.documentElement.setAttribute('data-theme', theme)
+          // App CSS loads with React; paint the base bg now so there is no white flash.
+          document.documentElement.style.backgroundColor = theme === 'dark' ? '#1A1815' : '#F5F0E8'
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

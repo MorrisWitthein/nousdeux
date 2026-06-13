@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.18.0] - 2026-06-13
+
+### Added
+- **Dunkelmodus**: Die App lässt sich jetzt in einem dunklen Farbschema anzeigen. Im Profil gibt es unter **Darstellung** einen Schalter **„Dunkelmodus“**, der sofort zwischen hell und dunkel umschaltet. Die Wahl wird pro Gerät gespeichert und beim nächsten Öffnen ohne Aufflackern wiederhergestellt. Wer noch nichts ausgewählt hat, startet automatisch im zum Systemdesign (`prefers-color-scheme`) passenden Modus.
+
+---
+
 ## [0.17.0] - 2026-06-13
 
 ### Changed

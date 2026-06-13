@@ -202,7 +202,7 @@ const forms = `
   height: 24px;
   border-radius: 50%;
   background: var(--ink);
-  color: white;
+  color: var(--on-ink);
   font-size: 11px;
   display: flex;
   align-items: center;
@@ -397,7 +397,7 @@ const forms = `
   align-items: center;
   gap: 4px;
   background: var(--ink);
-  color: white;
+  color: var(--on-ink);
   border-radius: 100px;
   padding: 3px 8px 3px 10px;
   font-size: 12px;
@@ -408,7 +408,7 @@ const forms = `
 .tag-chip-remove {
   background: none;
   border: none;
-  color: white;
+  color: var(--on-ink);
   opacity: 0.6;
   cursor: pointer;
   font-size: 15px;
@@ -483,7 +483,7 @@ const forms = `
 
 .filter-chip.active {
   background: var(--ink);
-  color: white;
+  color: var(--on-ink);
   border-color: var(--ink);
 }
 
@@ -549,7 +549,7 @@ const forms = `
   flex-shrink: 0;
 }
 .btn-delete:hover {
-  background: #FEE9E5;
+  background: var(--badge-red-bg);
   color: var(--accent);
 }
 
@@ -569,7 +569,7 @@ const forms = `
   flex-shrink: 0;
 }
 .btn-edit:hover {
-  background: #E3F0EE;
+  background: var(--badge-green-bg);
   color: var(--accent2);
 }
 `
