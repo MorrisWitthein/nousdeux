@@ -1,11 +1,14 @@
 import Sheet from './Sheet.jsx'
 import PasswordChange from './PasswordChange.jsx'
 import { authorColor } from '../utils/authorColor.js'
+import { useTheme } from '../utils/theme.js'
 
 export default function ProfileModal({ currentUser, userIsAdmin, settings, updateSetting, onLogout, onClose }) {
   const displayName = currentUser
     ? currentUser.charAt(0).toUpperCase() + currentUser.slice(1)
     : null
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   return (
     <Sheet title="Profil" onClose={onClose}>
@@ -28,6 +31,38 @@ export default function ProfileModal({ currentUser, userIsAdmin, settings, updat
       <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginBottom: 28 }}>
         {currentUser}@nousdeux
       </p>
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          Darstellung
+        </p>
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', borderRadius: 14, background: 'var(--warm)',
+          }}
+        >
+          <span style={{ fontSize: 14, color: 'var(--ink)' }}>Dunkelmodus</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isDark}
+            aria-label="Dunkelmodus"
+            style={{
+              width: 44, height: 26, borderRadius: 13, cursor: 'pointer',
+              background: isDark ? 'var(--accent)' : 'var(--muted)',
+              position: 'relative', transition: 'background 0.2s',
+              border: 'none', padding: 0,
+            }}
+            onClick={toggleTheme}
+          >
+            <div style={{
+              position: 'absolute', top: 3, left: isDark ? 21 : 3,
+              width: 20, height: 20, borderRadius: '50%', background: 'white',
+              transition: 'left 0.2s',
+            }} />
+          </button>
+        </div>
+      </div>
       {userIsAdmin && (
         <div style={{ marginBottom: 16 }}>
           <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>

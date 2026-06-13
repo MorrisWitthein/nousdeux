@@ -105,6 +105,15 @@ Both the frontend and API use semver version files as the image tag source. **Bu
 
 Use patch bumps (`x.y.Z`) for fixes and small changes, minor bumps (`x.Y.0`) for new features. The CI workflow tags the Docker image with this version, so leaving it unchanged means the new image silently overwrites the previous tag.
 
+### Homelab deployment version
+
+The image tag here is only what CI builds — the cluster deploys whatever the **homelab repo** Helm charts pin. **For each release, also bump the matching chart in the `homelab` repo so the deployment actually rolls the new image:**
+
+- **Frontend** — `deploy/charts/nousdeux-frontend/values.yaml` → `image.version` (e.g. `"v0.18.0"`, matching `package.json`).
+- **API** — `deploy/charts/nousdeux-api/values.yaml` → `image.version` (matching `api/VERSION`).
+
+Keep the `v` prefix and the leading version in sync with the source repo. This is a separate commit in the `homelab` repo.
+
 ## Release Notes (Frontend only)
 
 `CHANGELOG.md` at the repo root tracks frontend changes in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.

@@ -43,9 +43,9 @@ const cards = `
   flex-shrink: 0;
 }
 
-.badge-red { background: #FEE9E5; color: var(--accent); }
-.badge-green { background: #E3F0EE; color: var(--accent2); }
-.badge-yellow { background: #FDF3DC; color: #9A7030; }
+.badge-red { background: var(--badge-red-bg); color: var(--accent); }
+.badge-green { background: var(--badge-green-bg); color: var(--accent2); }
+.badge-yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-fg); }
 .badge-gray { background: var(--warm); color: var(--muted); }
 
 .card-footer {
@@ -102,7 +102,7 @@ const cards = `
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
-  color: white;
+  color: var(--on-ink);
   position: relative;
   overflow: hidden;
   font-family: inherit;

@@ -25,6 +25,36 @@ html, body {
   --accent3: #D4A853;
   --card: #FFFFFF;
   --border: rgba(28,26,23,0.1);
+
+  /* Text on an --ink-coloured (inverse) surface. Flips with the theme so
+     "dark pill / white text" emphasis elements invert cleanly in dark mode. */
+  --on-ink: #FFFFFF;
+  /* Translucent bottom-nav backdrop (blurred), tuned per theme. */
+  --nav-bg: rgba(245,240,232,0.92);
+  /* Badge / chip tints — soft accent washes with adequate contrast. */
+  --badge-red-bg: #FEE9E5;
+  --badge-green-bg: #E3F0EE;
+  --badge-yellow-bg: #FDF3DC;
+  --badge-yellow-fg: #9A7030;
+}
+
+[data-theme="dark"] {
+  --cream: #1A1815;
+  --warm: #2A2620;
+  --ink: #ECE5D8;
+  --muted: #9A917F;
+  --accent: #E0735C;
+  --accent2: #6FA697;
+  --accent3: #D4A853;
+  --card: #221E18;
+  --border: rgba(236,229,216,0.12);
+
+  --on-ink: #1A1815;
+  --nav-bg: rgba(26,24,21,0.92);
+  --badge-red-bg: rgba(224,115,92,0.18);
+  --badge-green-bg: rgba(111,166,151,0.20);
+  --badge-yellow-bg: rgba(212,168,83,0.18);
+  --badge-yellow-fg: #D4A853;
 }
 
 .app {
@@ -103,7 +133,7 @@ html, body {
   box-shadow: 0 4px 20px rgba(0,0,0,0.18);
 }
 .toast-error { background: var(--accent); color: #fff; }
-.toast-info { background: var(--ink); color: #fff; }
+.toast-info { background: var(--ink); color: var(--on-ink); }
 .toast-actions {
   display: flex;
   align-items: center;

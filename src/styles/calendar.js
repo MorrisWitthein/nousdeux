@@ -28,7 +28,7 @@ const calendar = `
   transition: all 0.15s;
 }
 
-.nav-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
+.nav-btn:hover { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
 
 .cal-track {
   display: flex;
@@ -97,9 +97,10 @@ const calendar = `
 .cal-day.selected .cal-day-num::before { background: var(--accent3); }
 .cal-day.today.selected .cal-day-num::before { background: var(--ink); }
 
-.cal-day.today .cal-day-num { color: white; font-weight: 600; }
-.cal-day.selected .cal-day-num { color: var(--ink); font-weight: 600; }
-.cal-day.today.selected .cal-day-num { color: white; }
+.cal-day.today .cal-day-num { color: var(--on-ink); font-weight: 600; }
+/* Gold (--accent3) chip is theme-independent, so its text stays a fixed dark. */
+.cal-day.selected .cal-day-num { color: #1C1A17; font-weight: 600; }
+.cal-day.today.selected .cal-day-num { color: var(--on-ink); }
 
 .cal-event-lanes {
   height: 22px;
