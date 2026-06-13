@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.4] - 2026-06-13
+
+### Fixed
+- Weißer/leerer Streifen am unteren Rand der als App installierten Homescreen-PWA (iOS) ist weg. Der App-Rahmen nutzte intern noch eine prozentuale Höhe (`height: 100%`), die in iOS-Standalone-PWAs unzuverlässig ist und die Navigationsleiste oberhalb des echten Bildschirmrands enden ließ. Er wird jetzt direkt über `100dvh` gesteuert, und der Seitenhintergrund ist cremefarben hinterlegt, damit unterhalb der sicheren Zone nie Weiß durchscheint.
+
+---
+
 ## [0.16.3] - 2026-06-11
 
 ### Fixed
