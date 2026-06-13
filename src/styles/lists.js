@@ -213,6 +213,11 @@ const lists = `
   color: var(--muted);
 }
 
+/* Title field that drives the TMDB autocomplete; anchors the dropdown. */
+.title-search {
+  position: relative;
+}
+
 /* Scrollable list of TMDB matches the user picks from. */
 .tmdb-results {
   list-style: none;
@@ -222,6 +227,19 @@ const lists = `
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 12px;
+}
+
+/* As an autocomplete dropdown the list floats over the form below the input
+   instead of pushing the fields down. */
+.title-search-results {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  margin: 0;
+  background: var(--cream);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .tmdb-results li + li {

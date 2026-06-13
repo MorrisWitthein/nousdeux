@@ -3,7 +3,7 @@ import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterPicker, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -40,10 +40,11 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
   }
   return (
     <Sheet title={title} onClose={onCancel}>
-      <PosterPicker
+      <PosterTitleField
         imageUrl={fields.imageUrl}
         onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
-        query={fields.title}
+        value={fields.title}
+        onChange={title => setFields(f => ({ ...f, title }))}
         search={search}
         fetchDetail={fetchDetail}
         onApply={(c, detail) => setFields(f => ({
@@ -53,17 +54,9 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
           sub: detail.platform || f.sub,
         }))}
         showToast={showToast}
+        error={titleMissing}
+        errorText="Titel ist erforderlich"
       />
-      <div>
-        <label className="form-label">Titel</label>
-        <input
-          className={titleMissing ? 'input-error' : ''}
-          placeholder="Titel"
-          value={fields.title}
-          onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
-        />
-        {titleMissing && <span className="form-error">Titel ist erforderlich</span>}
-      </div>
       <div>
         <label className="form-label">Plattform</label>
         <PlatformSelect

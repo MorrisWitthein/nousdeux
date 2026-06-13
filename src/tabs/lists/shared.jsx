@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TvIcon } from '../../components/Icons.jsx'
 import { authorColor } from '../../utils/authorColor.js'
 
@@ -100,38 +100,57 @@ export function DoneSection({ items, open, onToggle, renderRow, label = 'Erledig
   )
 }
 
-// Poster + metadata picker shown at the top of the create/edit forms. Lets the
-// user search TMDB by the current title, pick the right match from the results
-// (disambiguating titles like remakes), and have its poster/genres/platform
-// applied to the form. Nothing is persisted here — the form's Save button does
-// that — so the same control works for both creating and editing.
+// Title field at the top of the create/edit forms that doubles as a TMDB
+// search box. As the user types, matches are fetched (debounced) and shown in a
+// dropdown; picking one disambiguates titles like remakes and applies the
+// poster/genres/platform to the form. Typing without picking still works for
+// fully manual entry. A poster preview appears once one is set. Nothing is
+// persisted here — the form's Save button does that — so the same control works
+// for both creating and editing.
 //
-// `imageUrl` is the poster currently held in form state; `onClear` drops it;
+// `value`/`onChange` drive the title; `imageUrl`/`onClear` the poster preview;
 // `onApply(candidate, detail)` receives the chosen match plus its TMDB detail.
-export function PosterPicker({ imageUrl, onClear, query, search, fetchDetail, onApply, showToast }) {
-  // null = idle (not searched yet), [] = searched with no hits, [...] = results.
+export function PosterTitleField({
+  imageUrl, onClear, value, onChange,
+  search, fetchDetail, onApply, showToast,
+  error, errorText, placeholder = 'Titel',
+}) {
+  // null = no search yet, [] = searched with no hits, [...] = matches.
   const [results, setResults] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [open, setOpen] = useState(false)
+  // Skips the search the value change would otherwise trigger: once on mount
+  // (so opening an edit form with a title doesn't auto-pop a dropdown) and
+  // again right after a pick (which writes the chosen title back into `value`).
+  const skipSearch = useRef(true)
 
-  const runSearch = async () => {
-    const q = (query || '').trim()
-    if (!q) return
+  useEffect(() => {
+    if (skipSearch.current) { skipSearch.current = false; return }
+    const q = (value || '').trim()
+    if (q.length < 2) { setResults(null); setOpen(false); return }
+    let cancelled = false
     setBusy(true)
-    try {
-      setResults(await search(q))
-    } catch (e) {
-      showToast(e.message)
-    } finally {
-      setBusy(false)
-    }
-  }
+    const t = setTimeout(async () => {
+      try {
+        const r = await search(q)
+        if (!cancelled) { setResults(r); setOpen(true) }
+      } catch (e) {
+        if (!cancelled) showToast(e.message)
+      } finally {
+        if (!cancelled) setBusy(false)
+      }
+    }, 350)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [value])
 
   const pick = async (c) => {
     setBusy(true)
     try {
       const detail = await fetchDetail(c.tmdbId)
+      skipSearch.current = true
       onApply(c, detail)
       setResults(null)
+      setOpen(false)
     } catch (e) {
       showToast(e.message)
     } finally {
@@ -141,38 +160,48 @@ export function PosterPicker({ imageUrl, onClear, query, search, fetchDetail, on
 
   return (
     <div style={{ marginBottom: 16 }}>
-      <label className="form-label">Poster &amp; Infos</label>
-      <div className="poster-picker-head">
-        {imageUrl
-          ? <img className="poster-picker-preview" src={imageUrl} alt="" />
-          : <div className="poster-picker-preview poster-picker-empty">🎬</div>}
-        <div className="poster-picker-actions">
-          <button type="button" className="btn btn-ghost" disabled={busy || !(query || '').trim()} onClick={runSearch}>
-            {busy ? 'Suche…' : '🔍 In TMDB suchen'}
-          </button>
-          {imageUrl && (
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClear}>Entfernen</button>
-          )}
+      {imageUrl && (
+        <div className="poster-picker-head" style={{ marginBottom: 12 }}>
+          <img className="poster-picker-preview" src={imageUrl} alt="" />
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClear}>Entfernen</button>
         </div>
-      </div>
-      {results !== null && (
-        results.length === 0
-          ? <p className="poster-picker-hint">Nichts gefunden – Felder unten manuell ausfüllen.</p>
-          : <ul className="tmdb-results">
-              {results.map(c => (
-                <li key={c.tmdbId}>
-                  <button type="button" className="tmdb-result" disabled={busy} onClick={() => pick(c)}>
-                    {c.posterUrl
-                      ? <img src={c.posterUrl} alt="" loading="lazy" />
-                      : <span className="tmdb-result-noimg">🎬</span>}
-                    <span className="tmdb-result-title">
-                      {c.title}{c.year ? <span className="tmdb-result-year"> ({c.year})</span> : null}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
       )}
+      <label className="form-label">Titel</label>
+      <div className="title-search">
+        <input
+          className={error ? 'input-error' : ''}
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => { if (results && results.length) setOpen(true) }}
+          onBlur={() => setOpen(false)}
+        />
+        {open && results !== null && (
+          results.length === 0
+            ? (!busy && <p className="poster-picker-hint">Keine Treffer – Felder manuell ausfüllen.</p>)
+            : <ul className="tmdb-results title-search-results">
+                {results.map(c => (
+                  <li key={c.tmdbId}>
+                    <button
+                      type="button"
+                      className="tmdb-result"
+                      disabled={busy}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => pick(c)}
+                    >
+                      {c.posterUrl
+                        ? <img src={c.posterUrl} alt="" loading="lazy" />
+                        : <span className="tmdb-result-noimg">🎬</span>}
+                      <span className="tmdb-result-title">
+                        {c.title}{c.year ? <span className="tmdb-result-year"> ({c.year})</span> : null}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+        )}
+      </div>
+      {error && <span className="form-error">{errorText}</span>}
     </div>
   )
 }

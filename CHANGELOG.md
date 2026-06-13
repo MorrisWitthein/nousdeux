@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.19.0] - 2026-06-13
+
+### Changed
+- Filme & Serien: Die TMDB-Suche braucht keinen eigenen Button **„🔍 In TMDB suchen“** mehr. Stattdessen ist das **Titel**-Feld jetzt selbst die Suche: Beim Tippen erscheint direkt darunter eine Liste passender Treffer mit Poster und Jahr. Per Tipp auf den richtigen Treffer werden Poster, Genre und Plattform übernommen. Wer nichts auswählt, kann wie bisher alles manuell eintragen. Das Poster wird erst angezeigt, sobald eines gesetzt ist.
+
+---
+
 ## [0.18.4] - 2026-06-13
 
 ### Fixed
