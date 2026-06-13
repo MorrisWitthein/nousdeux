@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.16.5] - 2026-06-13
+
+### Fixed
+- Navigationsleiste sitzt in der installierten Homescreen-PWA (iOS) jetzt bündig am unteren Bildschirmrand. Die Leiste lief vorher im normalen Layoutfluss mit und endete oberhalb des echten Bildschirmrands, weil `100dvh` in iOS-Standalone-PWAs nicht bis zur Home-Indicator-Zone reicht. Sie ist jetzt fix am Viewport-Boden verankert (mit Safe-Area-Abstand für die Beschriftungen), und der Inhaltsbereich hat unten entsprechend Platz, damit nichts hinter der Leiste verschwindet.
+
+---
+
 ## [0.16.4] - 2026-06-13
 
 ### Fixed

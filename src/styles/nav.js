@@ -94,10 +94,16 @@ const nav = `
 
 /* BOTTOM NAV */
 .bottom-nav {
-  flex-shrink: 0;
+  /* Anchored to the physical viewport bottom. In iOS standalone PWAs the
+     100dvh flex column can stop above the home indicator, so an in-flow nav
+     leaves a gap; a fixed element anchors to the initial containing block,
+     which spans the full screen under viewport-fit=cover. */
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: 390px;
-  margin: 0 auto;
   background: rgba(245,240,232,0.92);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
