@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.24.1] - 2026-06-22
+
+### Changed
+- **Detailansichten wachsen aus dem angetippten Element**: Statt als Sheet von unten hereinzufahren, dehnt sich jetzt das angetippte Element selbst (Statistik-Kachel, Listen-Karte, „+"-Button, Stift-Symbol …) an Ort und Stelle zur Detail- bzw. Bearbeiten-Ansicht aus – und löst sich beim Schließen wieder dorthin auf. Betrifft alle Pop-ups (Events, Rezepte, Serien, Filme, Aktivitäten, Vorschläge, Statistiken). Nur das Profil behält bewusst das Sheet-von-unten.
+
+---
+
 ## [0.24.0] - 2026-06-22
 
 ### Added

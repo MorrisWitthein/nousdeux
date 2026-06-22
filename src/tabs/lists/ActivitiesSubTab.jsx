@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PencilIcon, CloseIcon, CalendarIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { AuthorLine, DetailFooter, DoneSection, activityStatusType, pressable } from './shared.jsx'
@@ -15,7 +15,7 @@ const EMPTY_ACTIVITY = { emoji: '✨', title: '', meta: '', status: 'Idee', stat
 
 function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar, currentUser }) {
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 48, marginBottom: 8 }}>{activity.emoji}</div>
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{activity.title}</div>
@@ -34,14 +34,14 @@ function ActivityDetail({ activity, onEdit, onClose, onNavigateToCalendar, curre
         </button>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
 function ActivityForm({ fields, setFields, onSave, onCancel, title, submitted }) {
   const titleMissing = submitted && !fields.title.trim()
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       <div className="form-row">
         <div style={{ flex: '0 0 70px' }}>
           <label className="form-label">Emoji</label>
@@ -78,7 +78,7 @@ function ActivityForm({ fields, setFields, onSave, onCancel, title, submitted })
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 

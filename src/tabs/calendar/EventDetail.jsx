@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { CloseIcon, PaperclipIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { authorColor } from '../../utils/authorColor.js'
 import { formatISOToGerman } from '../../utils/date.js'
@@ -53,7 +53,7 @@ export default function EventDetail({ event, onEdit, onClose, currentUser, listA
   }
 
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>
           {event.title}
@@ -119,6 +119,6 @@ export default function EventDetail({ event, onEdit, onClose, currentUser, listA
           Bearbeiten
         </button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }

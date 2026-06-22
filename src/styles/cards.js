@@ -196,7 +196,60 @@ const cards = `
   margin-bottom: 8px;
 }
 
-/* STAT POP-UP */
+/* STAT POP-UP — grows out of the tapped stat card (see ExpandingStats) */
+.stat-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,23,0.45);
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.stat-pop-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.stat-pop {
+  width: min(360px, 100%);
+  background: var(--cream);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(28,26,23,0.28);
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.stat-pop-inner {
+  position: relative;
+  padding: 26px 22px 28px;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.stat-pop-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--warm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .stat-sheet-head {
   text-align: center;
   margin-bottom: 8px;

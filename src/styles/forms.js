@@ -151,6 +151,52 @@ const forms = `
   to { transform: translateX(-50%) translateY(0); }
 }
 
+/* Expanding sheet — same chrome as the bottom sheet, but grows out of the
+   element that was tapped instead of sliding up (see ExpandingSheet /
+   useExpandCollapse). Reuses .sheet-header / .sheet-body for content styling. */
+.exp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,23,0.45);
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.exp-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.exp-panel {
+  width: 100%;
+  max-width: 390px;
+  max-height: calc(100vh - 32px);
+  background: var(--cream);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(28,26,23,0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform-origin: center center;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.exp-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
 /* Emoji picker */
 .emoji-picker {
   display: flex;

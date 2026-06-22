@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import TagInput from '../components/TagInput.jsx'
 import { PencilIcon, CloseIcon, ImportIcon, CartIcon, PaperclipIcon } from '../components/Icons.jsx'
-import Sheet from '../components/Sheet.jsx'
+import ExpandingSheet from '../components/ExpandingSheet.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { useShoppingList } from '../hooks/useShoppingList.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -123,7 +123,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
   }
 
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       {onImageSelected && (
         <div style={{ marginBottom: 16 }}>
           <label className="form-label">Bild</label>
@@ -262,7 +262,7 @@ function RecipeForm({ fields, setFields, onSave, onCancel, title, knownTags, cur
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={() => { setSubmitted(true); if (fields.title.trim()) onSave() }}>Speichern</button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -306,7 +306,7 @@ function ImportSheet({ onImport, onClose }) {
   const canSubmit = mode === 'url' ? urlValid : imageBase64 !== null
 
   return (
-    <Sheet title="Rezept importieren" onClose={onClose}>
+    <ExpandingSheet title="Rezept importieren" onClose={onClose}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button className={`filter-chip${mode === 'url' ? ' active' : ''}`} onClick={() => setMode('url')}>
           URL
@@ -376,7 +376,7 @@ function ImportSheet({ onImport, onClose }) {
           Importieren
         </button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -399,7 +399,7 @@ function ShoppingListSheet({ recipe, onClose, addItem }) {
   }
 
   return (
-    <Sheet title="Einkaufsliste" onClose={onClose}>
+    <ExpandingSheet title="Einkaufsliste" onClose={onClose}>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Zutaten aus „{recipe.title}" hinzufügen
       </p>
@@ -442,7 +442,7 @@ function ShoppingListSheet({ recipe, onClose, addItem }) {
           {loading ? 'Wird hinzugefügt…' : 'Zur Liste hinzufügen'}
         </button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -451,7 +451,7 @@ function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
   const steps = parseLines(recipe.steps)
 
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       {recipe.imageUrl
         ? <img src={recipe.imageUrl} alt={recipe.title}
             style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 16, marginBottom: 16 }} />
@@ -517,7 +517,7 @@ function RecipeDetail({ recipe, onEdit, onClose, onShopping, currentUser }) {
           </button>
         </div>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 

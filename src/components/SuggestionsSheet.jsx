@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Sheet from './Sheet.jsx'
+import ExpandingSheet from './ExpandingSheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CheckIcon, CloseIcon } from './Icons.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -144,7 +144,7 @@ export default function SuggestionsSheet({ received, sent, currentUser, onAccept
   const list = tab === 'received' ? received : sent
 
   return (
-    <Sheet title="Vorschläge" onClose={onClose}>
+    <ExpandingSheet title="Vorschläge" onClose={onClose}>
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         {[
           { id: 'received', label: `Erhalten${received.length ? ` (${received.length})` : ''}` },
@@ -166,6 +166,6 @@ export default function SuggestionsSheet({ received, sent, currentUser, onAccept
       ) : (
         list.map(tab === 'received' ? renderReceived : renderSent)
       )}
-    </Sheet>
+    </ExpandingSheet>
   )
 }

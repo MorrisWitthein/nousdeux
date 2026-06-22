@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { CloseIcon, PaperclipIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 
 const BADGE_OPTIONS = [
   { label: 'Geplant', type: 'green' },
@@ -20,7 +20,7 @@ export default function EventForm({
   const titleMissing = submitted && !fields.title.trim()
 
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       <input
         className={titleMissing ? 'input-error' : ''}
         placeholder="Titel"
@@ -125,6 +125,6 @@ export default function EventForm({
           {canSuggest && suggestMode ? 'Vorschlagen' : 'Speichern'}
         </button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
@@ -54,7 +54,7 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   const label = seasonLabel(series.season, series.totalSeasons)
   const neutral = label ? [label] : []
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         {series.imageUrl
           ? <img src={series.imageUrl} alt={series.title} className="detail-poster" />
@@ -66,7 +66,7 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
       <DetailFooter who={series.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -77,7 +77,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
     setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
   }
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       <PosterTitleField
         imageUrl={fields.imageUrl}
         onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
@@ -141,7 +141,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
