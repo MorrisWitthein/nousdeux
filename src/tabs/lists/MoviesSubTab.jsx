@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import TagInput from '../../components/TagInput.jsx'
 import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
@@ -101,19 +101,21 @@ export default function MoviesSubTab({
   const [viewingId, setViewingId] = useState(null)
   const [submitted, setSubmitted] = useState(false)
   const [showDone, setShowDone] = useState(false)
-  const [activeGenres, setActiveGenres] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef(null)
 
   const knownGenres = useMemo(
     () => [...new Set(movies.flatMap(m => m.genres || []))].sort(),
     [movies]
   )
 
-  const displayedMovies = activeGenres.length === 0
+  const displayedMovies = searchQuery.trim() === ''
     ? movies
-    : movies.filter(m => activeGenres.some(g => (m.genres || []).includes(g)))
-
-  const toggleGenre = (genre) =>
-    setActiveGenres(prev => prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre])
+    : movies.filter(m => {
+        const q = searchQuery.toLowerCase()
+        return m.title.toLowerCase().includes(q) || (m.genres || []).some(g => g.toLowerCase().includes(q))
+      })
 
   const handleAdd = async () => {
     setSubmitted(true)
@@ -211,19 +213,35 @@ export default function MoviesSubTab({
 
   return (
     <>
-      {knownGenres.length > 0 && (
-        <div className="filter-bar">
-          {knownGenres.map(genre => (
-            <button
-              key={genre}
-              className={`filter-chip${activeGenres.includes(genre) ? ' active' : ''}`}
-              onClick={() => toggleGenre(genre)}
-            >
-              {genre}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="tag-filter" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <input
+          ref={searchRef}
+          placeholder="Filme suchen…"
+          value={searchQuery}
+          onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true) }}
+          onFocus={() => setSearchOpen(true)}
+          onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+          style={{ flex: 1, paddingRight: searchQuery ? 28 : undefined }}
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onMouseDown={e => { e.preventDefault(); setSearchQuery(''); setSearchOpen(false); searchRef.current?.focus() }}
+            style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, lineHeight: 1, padding: 2 }}
+          >×</button>
+        )}
+        {searchOpen && (() => {
+          const q = searchQuery.toLowerCase()
+          const genreSuggestions = knownGenres.filter(g => !q || g.toLowerCase().includes(q))
+          return genreSuggestions.length > 0 ? (
+            <div className="tag-dropdown">
+              {genreSuggestions.map(g => (
+                <div key={g} className="tag-dropdown-item" onMouseDown={() => { setSearchQuery(g); setSearchOpen(false) }}>{g}</div>
+              ))}
+            </div>
+          ) : null
+        })()}
+      </div>
 
       {!showForm && !editingId && (
         <button
@@ -244,7 +262,7 @@ export default function MoviesSubTab({
       {displayedMovies.length === 0 && !showForm && !moviesLoading && (
         movies.length === 0
           ? <EmptyState emoji="🎬" title="Noch keine Filme" hint="Tippe auf +, um euren ersten Film zu eurer Watchlist hinzuzufügen." />
-          : <EmptyState emoji="🎬" title="Keine Treffer" hint="Kein Film passt zu den gewählten Genres." />
+          : <EmptyState emoji="🎬" title="Keine Treffer" hint={`Kein Film passt zu „${searchQuery}".`} />
       )}
 
       {viewingItem && (

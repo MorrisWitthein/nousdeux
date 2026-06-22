@@ -174,6 +174,72 @@ const cards = `
   margin-bottom: 8px;
 }
 
+/* STAT POP-UP */
+.stat-sheet-head {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.stat-sheet-emoji {
+  font-size: 40px;
+  margin-bottom: 4px;
+}
+
+.stat-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-row-value {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stat-authors {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.stat-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stat-author strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
 /* EMPTY STATE */
 .empty-state {
   text-align: center;
