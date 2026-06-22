@@ -59,17 +59,18 @@ type Recipe struct {
 
 // Series mirrors the series table.
 type Series struct {
-	ID         string    `json:"id"`
-	Emoji      string    `json:"emoji,omitempty"`
-	Title      string    `json:"title"`
-	Sub        string    `json:"sub,omitempty"`
-	Progress   int       `json:"progress"`
-	Season     int       `json:"season"`
-	Status     string    `json:"status,omitempty"`
-	StatusType string    `json:"statusType,omitempty"`
-	Who        string    `json:"who"`
-	ImageURL   string    `json:"imageUrl,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID           string    `json:"id"`
+	Emoji        string    `json:"emoji,omitempty"`
+	Title        string    `json:"title"`
+	Sub          string    `json:"sub,omitempty"`
+	Progress     int       `json:"progress"`
+	Season       int       `json:"season"`
+	TotalSeasons int       `json:"totalSeasons"`
+	Status       string    `json:"status,omitempty"`
+	StatusType   string    `json:"statusType,omitempty"`
+	Who          string    `json:"who"`
+	ImageURL     string    `json:"imageUrl,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 // Movie mirrors the movies table.
