@@ -4,11 +4,11 @@ import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
 import Sheet from '../../components/Sheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
-  { label: 'Gesehen', type: 'green' },
+  { label: 'Gesehen', type: 'red' },
 ]
 
 const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow', imageUrl: '' }
@@ -70,6 +70,7 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
           <PlatformSelect
             value={fields.sub}
             onChange={sub => setFields(f => ({ ...f, sub }))}
+            options={MOVIE_PLATFORMS}
           />
         </div>
         <div style={{ flex: 1 }}>

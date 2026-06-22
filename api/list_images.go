@@ -36,10 +36,11 @@ func (app *App) handleListImage(table, mediaType string, broker *sse.Broker) htt
 					writeError(w, http.StatusBadRequest, "tmdbId must be a number")
 					return
 				}
-				genres, platform := fetchTMDBDetail(ctx, key, mediaType, tmdbID)
+				genres, platform, totalSeasons := fetchTMDBDetail(ctx, key, mediaType, tmdbID)
 				writeJSON(w, http.StatusOK, map[string]any{
-					"genres":   genres,
-					"platform": platform,
+					"genres":       genres,
+					"platform":     platform,
+					"totalSeasons": totalSeasons,
 				})
 				return
 			}
@@ -180,38 +181,40 @@ func canonicalPlatform(name string) string {
 	return ""
 }
 
-// fetchTMDBDetail pulls genres (German) and the single best DE flatrate
-// streaming provider for a TMDB title. It is best-effort: any error returns
-// empty values so the caller can still serve the poster. genres are returned as
-// []string (always non-nil so JSON encodes [] rather than null); platform is a
-// single supported service name (see canonicalPlatform) or "".
-func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]string, string) {
+// fetchTMDBDetail pulls genres (German), the single best DE flatrate streaming
+// provider, and (for series) the total number of seasons for a TMDB title. It
+// is best-effort: any error returns zero values so the caller can still serve
+// the poster. genres are returned as []string (always non-nil so JSON encodes
+// [] rather than null); platform is a single supported service name (see
+// canonicalPlatform) or ""; totalSeasons is 0 for movies or when unknown.
+func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]string, string, int) {
 	genres := []string{}
 	if id == 0 {
-		return genres, ""
+		return genres, "", 0
 	}
 	apiURL := "https://api.tmdb.org/3/" + mediaType + "/" + strconv.Itoa(id) +
 		"?api_key=" + url.QueryEscape(key) +
 		"&language=de-DE&append_to_response=watch/providers"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
-		return genres, ""
+		return genres, "", 0
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		slog.Warn("tmdb detail fetch failed", "id", id, "type", mediaType, "err", err)
-		return genres, ""
+		return genres, "", 0
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		slog.Warn("tmdb detail returned error", "id", id, "type", mediaType, "status", resp.StatusCode)
-		return genres, ""
+		return genres, "", 0
 	}
 	var detail struct {
 		Genres []struct {
 			Name string `json:"name"`
 		} `json:"genres"`
-		WatchProviders struct {
+		NumberOfSeasons int `json:"number_of_seasons"` // series only; 0 for movies
+		WatchProviders  struct {
 			Results map[string]struct {
 				Flatrate []struct {
 					ProviderName string `json:"provider_name"`
@@ -221,7 +224,7 @@ func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]stri
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&detail); err != nil {
 		slog.Warn("tmdb detail decode failed", "id", id, "err", err)
-		return genres, ""
+		return genres, "", 0
 	}
 	for _, g := range detail.Genres {
 		if g.Name != "" {
@@ -238,5 +241,5 @@ func fetchTMDBDetail(ctx context.Context, key, mediaType string, id int) ([]stri
 			break
 		}
 	}
-	return genres, platform
+	return genres, platform, detail.NumberOfSeasons
 }

@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.22.0] - 2026-06-22
+
+### Added
+- **Staffel-Fortschritt bei Serien**: Laufende Serien zeigen jetzt einen Fortschrittsbalken **„Staffel X / Y"** (aktuelle vs. gesamte Staffeln). Die Gesamtzahl der Staffeln wird beim Auswählen aus der TMDB-Suche automatisch übernommen und lässt sich im Formular über das neue Feld **„Staffeln gesamt"** anpassen.
+- **Serien nach Status gruppiert**: Die Serienliste trennt **„Läuft"** und **„Geplant"** mit eigenen Abschnitts-Überschriften, sobald beide vorhanden sind – laufende Serien stehen oben.
+- **„Kino" als Plattform bei Filmen**: Im Plattform-Dropdown der Filme gibt es jetzt zusätzlich **„Kino"** für Filme, die (noch) im Kino laufen. Manuell wählbar – die automatische TMDB-Erkennung deckt weiterhin nur Streaming-Dienste ab.
+
+### Changed
+- **Einheitlicher „Gesehen“-Status für Serien und Filme**: Der abgeschlossene Status heißt jetzt überall **„Gesehen“** und wird einheitlich **rot** dargestellt. Vorher hießen abgeschlossene Serien „Fertig“ (rot) und Filme „Gesehen“ (grün). Bestehende Einträge werden automatisch angepasst.
+
+---
+
 ## [0.21.0] - 2026-06-13
 
 ### Changed

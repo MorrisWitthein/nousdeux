@@ -8,13 +8,40 @@ import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformS
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
   { label: 'Läuft', type: 'green' },
-  { label: 'Fertig', type: 'red' },
+  { label: 'Gesehen', type: 'red' },
 ]
 
-const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', status: 'Geplant', statusType: 'yellow', imageUrl: '' }
+const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', totalSeasons: '', status: 'Geplant', statusType: 'yellow', imageUrl: '' }
+
+// Builds the "Staffel X / Y" label, gracefully degrading when either number is
+// missing: "Staffel 2 / 5" → "Staffel 2" → "5 Staffeln" → null.
+function seasonLabel(season, total) {
+  if (season > 0) return `Staffel ${season}${total > 0 ? ` / ${total}` : ''}`
+  if (total > 0) return `${total} Staffeln`
+  return null
+}
+
+// Progress bar shown on cards of running ("Läuft") series: how far through the
+// seasons you are. Falls back to a plain label when the total is unknown.
+function SeasonProgress({ season, total }) {
+  if (!season && !total) return null
+  const pct = total > 0 ? Math.min(100, Math.round((season / total) * 100)) : 0
+  return (
+    <div className="season-progress">
+      <div className="season-progress-label">
+        <span>{seasonLabel(season, total)}</span>
+        {total > 0 && <span className="season-progress-pct">{pct}%</span>}
+      </div>
+      {total > 0 && (
+        <div className="season-bar"><div className="season-bar-fill" style={{ width: `${pct}%` }} /></div>
+      )}
+    </div>
+  )
+}
 
 function SeriesDetail({ series, onEdit, onClose, currentUser }) {
-  const neutral = series.season > 0 ? [`Staffel ${series.season}`] : []
+  const label = seasonLabel(series.season, series.totalSeasons)
+  const neutral = label ? [label] : []
   return (
     <Sheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -52,6 +79,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
           title: c.title,
           imageUrl: c.posterUrl,
           sub: detail.platform || f.sub,
+          totalSeasons: detail.totalSeasons > 0 ? String(detail.totalSeasons) : f.totalSeasons,
         }))}
         showToast={showToast}
         error={titleMissing}
@@ -76,6 +104,19 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
             placeholder="–"
             value={fields.season}
             onChange={e => setFields(f => ({ ...f, season: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="form-label">Staffeln gesamt</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            min="0"
+            max="50"
+            placeholder="–"
+            value={fields.totalSeasons}
+            onChange={e => setFields(f => ({ ...f, totalSeasons: e.target.value }))}
           />
         </div>
         <div>
@@ -116,6 +157,7 @@ export default function SeriesSubTab({
         title: newSeries.title,
         sub: newSeries.sub,
         season: parseInt(newSeries.season, 10) || 0,
+        totalSeasons: parseInt(newSeries.totalSeasons, 10) || 0,
         status: newSeries.status,
         statusType: newSeries.statusType,
       }
@@ -136,13 +178,14 @@ export default function SeriesSubTab({
 
   const startEdit = (s) => {
     setSubmitted(false)
-    if (s.status === 'Fertig') setShowDone(true)
+    if (s.status === 'Gesehen') setShowDone(true)
     setEditingId(s.id)
     setEditFields({
       title: s.title,
       sub: s.sub || '',
       emoji: s.emoji || '🎬',
       season: s.season || '',
+      totalSeasons: s.totalSeasons || '',
       status: s.status || 'Geplant',
       statusType: s.statusType || 'yellow',
       imageUrl: s.imageUrl || '',
@@ -158,6 +201,7 @@ export default function SeriesSubTab({
       await updateSeries(editingId, {
         ...rest,
         season: parseInt(editFields.season, 10) || 0,
+        totalSeasons: parseInt(editFields.totalSeasons, 10) || 0,
       })
       const row = series.find(s => s.id === editingId)
       if ((row?.imageUrl || '') !== (imageUrl || '')) await patchSeriesImage(editingId, imageUrl || '')
@@ -181,7 +225,10 @@ export default function SeriesSubTab({
   }
 
   const renderRow = (s) => {
-    const neutral = s.season > 0 ? [`Staffel ${s.season}`] : []
+    const running = s.status === 'Läuft'
+    // Running series show a progress bar instead of a static season chip; for
+    // planned/watched ones the chip is enough.
+    const neutral = (!running && s.season > 0) ? [`Staffel ${s.season}`] : []
     return (
       <div key={s.id} className="media-card" {...pressable(() => setViewingId(s.id))}>
         {s.imageUrl
@@ -193,6 +240,7 @@ export default function SeriesSubTab({
             <span className={`badge badge-${s.statusType}`}>{s.status}</span>
           </div>
           <MediaMeta platform={s.sub} neutral={neutral} />
+          {running && <SeasonProgress season={s.season} total={s.totalSeasons} />}
           <div className="media-footer">
             <AuthorLine who={s.who} currentUser={currentUser} />
             <div style={{ display: 'flex', gap: 4 }}>
@@ -207,6 +255,11 @@ export default function SeriesSubTab({
 
   const viewingItem = series.find(s => s.id === viewingId)
 
+  const running = series.filter(s => s.status === 'Läuft')
+  const planned = series.filter(s => s.status !== 'Läuft' && s.status !== 'Gesehen')
+  // Only label the groups when both exist — a lone header adds noise otherwise.
+  const showSections = running.length > 0 && planned.length > 0
+
   return (
     <>
       {!showForm && !editingId && (
@@ -217,12 +270,16 @@ export default function SeriesSubTab({
         >+</button>
       )}
 
-      {series.filter(s => s.status !== 'Fertig').map(renderRow)}
+      {showSections && running.length > 0 && <div className="list-section-head">Läuft</div>}
+      {running.map(renderRow)}
+      {showSections && planned.length > 0 && <div className="list-section-head">Geplant</div>}
+      {planned.map(renderRow)}
       <DoneSection
-        items={series.filter(s => s.status === 'Fertig')}
+        items={series.filter(s => s.status === 'Gesehen')}
         open={showDone}
         onToggle={() => setShowDone(v => !v)}
         renderRow={renderRow}
+        label="Gesehen"
       />
       {series.length === 0 && !showForm && !seriesLoading && (
         <EmptyState emoji="🍿" title="Noch keine Serien" hint="Tippe auf +, um eure erste Serie zu eurer Watchlist hinzuzufügen." />

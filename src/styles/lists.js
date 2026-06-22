@@ -167,6 +167,48 @@ const lists = `
   gap: 8px;
 }
 
+/* Subsection label inside a list (e.g. "Läuft" / "Geplant" for series). */
+.list-section-head {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 18px 2px 8px;
+}
+.list-section-head:first-child { margin-top: 0; }
+
+/* Season progress on running-series cards: "Staffel 2 / 5" + a thin bar. */
+.season-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.season-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.season-progress-pct {
+  color: var(--accent2);
+  font-weight: 600;
+}
+.season-bar {
+  height: 5px;
+  border-radius: 100px;
+  background: var(--warm);
+  overflow: hidden;
+}
+.season-bar-fill {
+  height: 100%;
+  background: var(--accent2);
+  border-radius: 100px;
+  transition: width 0.3s ease;
+}
+
 /* Poster in the detail sheet — centered, larger portrait */
 .detail-poster {
   width: 120px;

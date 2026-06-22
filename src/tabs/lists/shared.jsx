@@ -9,6 +9,10 @@ export const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 // labels, and the manual Plattform dropdown offers the same set.
 export const PLATFORMS = ['Netflix', 'Prime', 'Disney+', 'HBO', 'WOW']
 
+// Movies can additionally be "in cinema" — a manual-only option, since TMDB's
+// watch/providers feed only covers streaming, not theatrical runs.
+export const MOVIE_PLATFORMS = [...PLATFORMS, 'Kino']
+
 export function activityStatusType(status) {
   const map = { Idee: 'yellow', Geplant: 'green', Gemacht: 'gray' }
   return map[status] || 'yellow'
@@ -20,12 +24,12 @@ export { pressable } from '../../utils/pressable.js'
 // If the row already holds a value outside the allowlist (e.g. legacy
 // comma-separated data), it is shown as an extra option so editing the rest of
 // the form never silently drops it.
-export function PlatformSelect({ value, onChange }) {
-  const legacy = value && !PLATFORMS.includes(value)
+export function PlatformSelect({ value, onChange, options = PLATFORMS }) {
+  const legacy = value && !options.includes(value)
   return (
     <select value={value || ''} onChange={e => onChange(e.target.value)}>
       <option value="">– Keine –</option>
-      {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+      {options.map(p => <option key={p} value={p}>{p}</option>)}
       {legacy && <option value={value}>{value}</option>}
     </select>
   )
