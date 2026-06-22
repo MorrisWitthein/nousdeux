@@ -2,13 +2,19 @@ import { useState, useEffect } from 'react'
 import { connectStream } from './connectStream.js'
 import { API, authHeaders, handleUnauth } from './api.js'
 
+// Legacy rows predate the "Fertig" → "Gesehen" watched-status rename; normalise
+// them so watched series still collapse into the "Gesehen" dropdown and count
+// correctly on the home screen, even before the API data migration has run.
+const normalizeStatus = (s) =>
+  s.status === 'Fertig' ? { ...s, status: 'Gesehen', statusType: 'red' } : s
+
 export function useSeries() {
   const [series, setSeries] = useState([])
   const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     const res = await fetch(`${API}/api/series`, { headers: authHeaders() })
-    if (res.ok) setSeries(await res.json())
+    if (res.ok) setSeries((await res.json()).map(normalizeStatus))
     else handleUnauth(res)
   }
 

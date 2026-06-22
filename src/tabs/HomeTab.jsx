@@ -273,19 +273,27 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
         subs: ['Nicht zu lange', 'Schlaf gut bald', 'Der Tag war lang', 'Bald Zeit fürs Bett', 'Morgen wartet', 'Irgendwann schlafen'],
       }
 
-  const timeGreeting = rnd(greetings.texts)
-  const timeEmoji = weatherEmoji ?? rnd(greetings.emojis)
-  const timeSub = rnd(greetings.subs)
+  // Pick the random greeting once per mount so it stays stable across re-renders
+  // (e.g. opening/closing a stat pop-up). A fresh message only appears when the
+  // tab is unmounted and remounted — i.e. switching away and coming back.
+  const { timeGreeting, timeEmoji, timeSub } = useMemo(() => ({
+    timeGreeting: rnd(greetings.texts),
+    timeEmoji: weatherEmoji ?? rnd(greetings.emojis),
+    timeSub: rnd(greetings.subs),
+  }), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const today = now.toISOString().slice(0, 10)
+  const thisMonth = today.slice(0, 7) // "YYYY-MM"
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
   const genzLabels = ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe', 'Bei schlechtem Wetter eine Option', 'Es ist viel Rasen im Raum']
   const genzEmojis = ['💀', '🔥', '😭', '✨', '🫡', '✂️', '🦁']
-  const special = genzMode
-    ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
-    : getSpecialDay(now)
-
-  const today = now.toISOString().slice(0, 10)
-  const thisMonth = today.slice(0, 7) // "YYYY-MM"
+  const special = useMemo(
+    () => genzMode
+      ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
+      : getSpecialDay(now),
+    [genzMode, today] // eslint-disable-line react-hooks/exhaustive-deps
+  )
   const nextEvent = events
     .filter(e => e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))[0] ?? null

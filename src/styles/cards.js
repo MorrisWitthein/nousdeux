@@ -97,12 +97,12 @@ const cards = `
   display: block;
   width: 100%;
   text-align: left;
-  background: var(--ink);
+  background: var(--hero-bg);
   border: none;
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
-  color: var(--on-ink);
+  color: var(--hero-fg);
   position: relative;
   overflow: hidden;
   font-family: inherit;
@@ -112,17 +112,21 @@ const cards = `
   content: '';
   position: absolute;
   top: -20px; right: -20px;
-  width: 100px; height: 100px;
-  background: var(--accent);
+  width: 110px; height: 110px;
+  /* Accent corner bloom. Alpha is baked into --hero-glow per theme: subtle on
+     the near-black light banner, stronger on the warm-dark banner where a faint
+     terracotta would otherwise vanish into the background. */
+  background: var(--hero-glow);
   border-radius: 50%;
-  opacity: 0.2;
 }
 
 .next-up-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  opacity: 0.5;
+  /* Muted on the light banner; tinted accent in dark, where the surface is too
+     close to the page colour to rely on the corner bloom alone for accent. */
+  color: var(--hero-label);
   margin-bottom: 8px;
 }
 
@@ -136,6 +140,24 @@ const cards = `
 .next-up-time {
   font-size: 13px;
   opacity: 0.6;
+}
+
+/* Thin progress bar for the Serien "Weiterschauen" banner. Track + fill derive
+   from --hero-fg / --accent so they read correctly on the dark banner in both
+   themes. */
+.next-up-bar {
+  height: 5px;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--hero-fg) 22%, transparent);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.next-up-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 100px;
+  transition: width 0.3s ease;
 }
 
 .quick-stats {
