@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import Sheet from '../components/Sheet.jsx'
 import { authorColor } from '../utils/authorColor.js'
+import { CloseIcon } from '../components/Icons.jsx'
+import { useExpandCollapse } from '../components/ExpandingSheet.jsx'
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
@@ -103,9 +104,12 @@ function buildStats(metric, { events, recipes, series, activities }, now) {
   }
 }
 
-function StatsSheet({ stats, currentUser, onClose }) {
+function StatsContent({ stats, currentUser, onClose }) {
   return (
-    <Sheet title="" onClose={onClose}>
+    <>
+      <button type="button" className="stat-pop-close" onClick={onClose} aria-label="Schließen">
+        <CloseIcon />
+      </button>
       <div className="stat-sheet-head">
         <div className="stat-sheet-emoji">{stats.emoji}</div>
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)' }}>{stats.title}</div>
@@ -128,7 +132,32 @@ function StatsSheet({ stats, currentUser, onClose }) {
           ))}
         </div>
       )}
-    </Sheet>
+    </>
+  )
+}
+
+// Pop-up that visually grows out of the stat card that was tapped. `fromRect`
+// is the card's bounding box at click time; the grow/dissolve mechanics live in
+// the shared useExpandCollapse hook (also used by ExpandingSheet).
+function ExpandingStats({ stats, fromRect, currentUser, onClose }) {
+  const { panelRef, innerRef, shown, closing, beginClose, onTransitionEnd } =
+    useExpandCollapse({ fromRect, onClose })
+
+  return (
+    <>
+      <div
+        className="stat-pop-backdrop"
+        style={{ opacity: shown && !closing ? 1 : 0 }}
+        onClick={beginClose}
+      />
+      <div className="stat-pop-wrap">
+        <div className="stat-pop" ref={panelRef} onTransitionEnd={onTransitionEnd}>
+          <div className="stat-pop-inner" ref={innerRef}>
+            <StatsContent stats={stats} currentUser={currentUser} onClose={beginClose} />
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -273,19 +302,27 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
         subs: ['Nicht zu lange', 'Schlaf gut bald', 'Der Tag war lang', 'Bald Zeit fürs Bett', 'Morgen wartet', 'Irgendwann schlafen'],
       }
 
-  const timeGreeting = rnd(greetings.texts)
-  const timeEmoji = weatherEmoji ?? rnd(greetings.emojis)
-  const timeSub = rnd(greetings.subs)
+  // Pick the random greeting once per mount so it stays stable across re-renders
+  // (e.g. opening/closing a stat pop-up). A fresh message only appears when the
+  // tab is unmounted and remounted — i.e. switching away and coming back.
+  const { timeGreeting, timeEmoji, timeSub } = useMemo(() => ({
+    timeGreeting: rnd(greetings.texts),
+    timeEmoji: weatherEmoji ?? rnd(greetings.emojis),
+    timeSub: rnd(greetings.subs),
+  }), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const today = now.toISOString().slice(0, 10)
+  const thisMonth = today.slice(0, 7) // "YYYY-MM"
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
   const genzLabels = ['67', 'Slay', 'No cap', 'Lowkey sus heute', 'Schere Firma Diggi', 'Rede mein Löwe', 'Bei schlechtem Wetter eine Option', 'Es ist viel Rasen im Raum']
   const genzEmojis = ['💀', '🔥', '😭', '✨', '🫡', '✂️', '🦁']
-  const special = genzMode
-    ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
-    : getSpecialDay(now)
-
-  const today = now.toISOString().slice(0, 10)
-  const thisMonth = today.slice(0, 7) // "YYYY-MM"
+  const special = useMemo(
+    () => genzMode
+      ? { label: pick(genzLabels), emoji: pick(genzEmojis), isHoliday: true }
+      : getSpecialDay(now),
+    [genzMode, today] // eslint-disable-line react-hooks/exhaustive-deps
+  )
   const nextEvent = events
     .filter(e => e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''))[0] ?? null
@@ -302,12 +339,15 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   }
   const runningSeries = series.filter(s => s.status === 'Läuft').length
 
-  const [statMetric, setStatMetric] = useState(null)
+  // Holds { metric, rect } — the chosen stat plus the bounding box of the card
+  // that was tapped, so the pop-up can grow out of (and shrink back into) it.
+  const [activeStat, setActiveStat] = useState(null)
+  const openStat = (metric, e) => setActiveStat({ metric, rect: e.currentTarget.getBoundingClientRect() })
   const activeStats = useMemo(
-    () => statMetric ? buildStats(statMetric, { events, recipes, series, activities }, now) : null,
+    () => activeStat ? buildStats(activeStat.metric, { events, recipes, series, activities }, now) : null,
     // `now` is a fresh Date each render but only the calendar day matters; key on
     // its date string so stats don't recompute on every unrelated re-render.
-    [statMetric, events, recipes, series, activities, today] // eslint-disable-line react-hooks/exhaustive-deps
+    [activeStat, events, recipes, series, activities, today] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   return (
@@ -348,22 +388,22 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       )}
 
       <div className="quick-stats">
-        <button type="button" className="stat-card" onClick={() => setStatMetric('events')}>
+        <button type="button" className="stat-card" onClick={(e) => openStat('events', e)}>
           <div className="stat-icon">📅</div>
           <div className="stat-number">{loading ? '–' : events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
           <div className="stat-label">Events diesen Monat</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => setStatMetric('series')}>
+        <button type="button" className="stat-card" onClick={(e) => openStat('series', e)}>
           <div className="stat-icon">🍿</div>
           <div className="stat-number">{loading ? '–' : runningSeries}</div>
           <div className="stat-label">Serien am Laufen</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => setStatMetric('recipes')}>
+        <button type="button" className="stat-card" onClick={(e) => openStat('recipes', e)}>
           <div className="stat-icon">🍳</div>
           <div className="stat-number">{loading ? '–' : recipes.length}</div>
           <div className="stat-label">Rezepte gesammelt</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => setStatMetric('activities')}>
+        <button type="button" className="stat-card" onClick={(e) => openStat('activities', e)}>
           <div className="stat-icon">✨</div>
           <div className="stat-number">{loading ? '–' : activities.length}</div>
           <div className="stat-label">Aktivitäten geplant</div>
@@ -371,7 +411,12 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       </div>
 
       {activeStats && (
-        <StatsSheet stats={activeStats} currentUser={currentUser} onClose={() => setStatMetric(null)} />
+        <ExpandingStats
+          stats={activeStats}
+          fromRect={activeStat.rect}
+          currentUser={currentUser}
+          onClose={() => setActiveStat(null)}
+        />
       )}
     </div>
   )

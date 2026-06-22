@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
@@ -19,6 +19,17 @@ function seasonLabel(season, total) {
   if (season > 0) return `Staffel ${season}${total > 0 ? ` / ${total}` : ''}`
   if (total > 0) return `${total} Staffeln`
   return null
+}
+
+// Among the running series, pick the one to surface in the "Weiterschauen"
+// banner: the one closest to finishing, to nudge wrapping it up. Series without
+// a known total have no progress signal and sort last; title breaks ties.
+function pickContinue(running) {
+  if (running.length === 0) return null
+  const pct = (s) => (s.totalSeasons > 0 ? s.season / s.totalSeasons : -1)
+  return [...running].sort((a, b) =>
+    pct(b) - pct(a) || (b.season || 0) - (a.season || 0) || a.title.localeCompare(b.title)
+  )[0]
 }
 
 // Progress bar shown on cards of running ("Läuft") series: how far through the
@@ -43,7 +54,7 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
   const label = seasonLabel(series.season, series.totalSeasons)
   const neutral = label ? [label] : []
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         {series.imageUrl
           ? <img src={series.imageUrl} alt={series.title} className="detail-poster" />
@@ -55,7 +66,7 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
       <DetailFooter who={series.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -66,7 +77,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
     setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
   }
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       <PosterTitleField
         imageUrl={fields.imageUrl}
         onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
@@ -130,7 +141,7 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -257,8 +268,16 @@ export default function SeriesSubTab({
 
   const running = series.filter(s => s.status === 'Läuft')
   const planned = series.filter(s => s.status !== 'Läuft' && s.status !== 'Gesehen')
+  // The "Weiterschauen" hero promotes one running series out of the list, so it
+  // doesn't appear twice on the same screen.
+  const featured = pickContinue(running)
+  const restRunning = running.filter(s => s.id !== featured?.id)
   // Only label the groups when both exist — a lone header adds noise otherwise.
-  const showSections = running.length > 0 && planned.length > 0
+  const showSections = restRunning.length > 0 && planned.length > 0
+  const featuredPct = featured && featured.totalSeasons > 0
+    ? Math.min(100, Math.round((featured.season / featured.totalSeasons) * 100))
+    : null
+  const featuredSeasons = featured ? seasonLabel(featured.season, featured.totalSeasons) : null
 
   return (
     <>
@@ -270,8 +289,19 @@ export default function SeriesSubTab({
         >+</button>
       )}
 
-      {showSections && running.length > 0 && <div className="list-section-head">Läuft</div>}
-      {running.map(renderRow)}
+      {featured && (
+        <button type="button" className="next-up" style={{ cursor: 'pointer' }} onClick={() => setViewingId(featured.id)}>
+          <div className="next-up-label">Weiterschauen</div>
+          <div className="next-up-title">{featured.title}</div>
+          {featuredSeasons && <div className="next-up-time">{featuredSeasons}{featuredPct !== null ? ` · ${featuredPct}%` : ''}</div>}
+          {featuredPct !== null && (
+            <div className="next-up-bar"><div className="next-up-bar-fill" style={{ width: `${featuredPct}%` }} /></div>
+          )}
+        </button>
+      )}
+
+      {showSections && restRunning.length > 0 && <div className="list-section-head">Läuft</div>}
+      {restRunning.map(renderRow)}
       {showSections && planned.length > 0 && <div className="list-section-head">Geplant</div>}
       {planned.map(renderRow)}
       <DoneSection

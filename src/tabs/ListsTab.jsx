@@ -23,7 +23,7 @@ export default function ListsTab({
     <div>
       <p className="section-title">Eure <em>Listen</em></p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div className="tabs" style={{ marginBottom: 16 }}>
         {LISTS.map(([key, label]) => (
           <button
             key={key}

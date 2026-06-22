@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.24.1] - 2026-06-22
+
+### Changed
+- **Detailansichten wachsen aus dem angetippten Element**: Statt als Sheet von unten hereinzufahren, dehnt sich jetzt das angetippte Element selbst (Statistik-Kachel, Listen-Karte, „+"-Button, Stift-Symbol …) an Ort und Stelle zur Detail- bzw. Bearbeiten-Ansicht aus – und löst sich beim Schließen wieder dorthin auf. Betrifft alle Pop-ups (Events, Rezepte, Serien, Filme, Aktivitäten, Vorschläge, Statistiken). Nur das Profil behält bewusst das Sheet-von-unten.
+
+---
+
+## [0.24.0] - 2026-06-22
+
+### Added
+- **„Weiterschauen"-Banner bei den Serien**: Über der Serienliste erscheint jetzt – wie das „Als nächstes"-Banner auf dem Homescreen – ein dunkles Banner mit der laufenden Serie, die am nächsten am Abschluss ist, samt Staffel-Fortschrittsbalken. Die hervorgehobene Serie wird aus der „Läuft"-Liste herausgenommen, damit sie nicht doppelt erscheint.
+- **„Als nächstes geplant"-Banner bei den Aktivitäten**: Über der Aktivitätenliste erscheint ein dunkles Banner mit der ersten geplanten Aktivität (inkl. Notizen). Sie wird aus der Liste darunter herausgenommen, um Dopplung zu vermeiden.
+
+### Changed
+- **Listen-Auswahl in einer Zeile**: Die vier Listen-Chips (Serien · Filme · Aktivitäten · Einkauf) liegen jetzt in einer horizontal scrollbaren Zeile, statt umzubrechen – „Einkauf" steht nicht mehr allein in einer zweiten Reihe.
+
+### Fixed
+- **Begrüßung bleibt beim Öffnen von Statistik-Pop-ups stabil**: Die zufällige Begrüßung auf dem Homescreen wurde bisher bei jedem Re-Render neu gewürfelt – auch beim Öffnen oder Schließen eines Statistik-Pop-ups. Sie wird jetzt nur einmal pro Tab-Aufruf gewählt; eine neue Begrüßung erscheint erst, wenn man den Tab wechselt und zurückkommt.
+- **Gesehene Serien wieder im „Gesehen"-Aufklappmenü**: Ältere Serien mit dem früheren Status „Fertig" (vor der Umbenennung in „Gesehen") landeten fälschlich in der sichtbaren „Geplant"-Liste statt im eingeklappten „Gesehen"-Bereich. Der alte Status wird jetzt beim Laden auf „Gesehen" normalisiert, sodass solche Serien wieder ausgeblendet und auf dem Homescreen korrekt gezählt werden.
+
+---
+
 ## [0.23.0] - 2026-06-22
 
 ### Changed

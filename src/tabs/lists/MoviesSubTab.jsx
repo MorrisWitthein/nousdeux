@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import TagInput from '../../components/TagInput.jsx'
 import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
-import Sheet from '../../components/Sheet.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
@@ -15,7 +15,7 @@ const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Ge
 
 function MovieDetail({ movie, onEdit, onClose, currentUser }) {
   return (
-    <Sheet title="" onClose={onClose}>
+    <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         {movie.imageUrl
           ? <img src={movie.imageUrl} alt={movie.title} className="detail-poster" />
@@ -27,7 +27,7 @@ function MovieDetail({ movie, onEdit, onClose, currentUser }) {
       <DetailFooter who={movie.who} currentUser={currentUser}>
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 
@@ -38,7 +38,7 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
     setFields(f => ({ ...f, status: e.target.value, statusType: opt?.type || 'yellow' }))
   }
   return (
-    <Sheet title={title} onClose={onCancel}>
+    <ExpandingSheet title={title} onClose={onCancel}>
       <PosterTitleField
         imageUrl={fields.imageUrl}
         onClear={() => setFields(f => ({ ...f, imageUrl: '' }))}
@@ -84,7 +84,7 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
       </div>
-    </Sheet>
+    </ExpandingSheet>
   )
 }
 

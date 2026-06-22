@@ -97,12 +97,12 @@ const cards = `
   display: block;
   width: 100%;
   text-align: left;
-  background: var(--ink);
+  background: var(--hero-bg);
   border: none;
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 16px;
-  color: var(--on-ink);
+  color: var(--hero-fg);
   position: relative;
   overflow: hidden;
   font-family: inherit;
@@ -112,17 +112,21 @@ const cards = `
   content: '';
   position: absolute;
   top: -20px; right: -20px;
-  width: 100px; height: 100px;
-  background: var(--accent);
+  width: 110px; height: 110px;
+  /* Accent corner bloom. Alpha is baked into --hero-glow per theme: subtle on
+     the near-black light banner, stronger on the warm-dark banner where a faint
+     terracotta would otherwise vanish into the background. */
+  background: var(--hero-glow);
   border-radius: 50%;
-  opacity: 0.2;
 }
 
 .next-up-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  opacity: 0.5;
+  /* Muted on the light banner; tinted accent in dark, where the surface is too
+     close to the page colour to rely on the corner bloom alone for accent. */
+  color: var(--hero-label);
   margin-bottom: 8px;
 }
 
@@ -136,6 +140,24 @@ const cards = `
 .next-up-time {
   font-size: 13px;
   opacity: 0.6;
+}
+
+/* Thin progress bar for the Serien "Weiterschauen" banner. Track + fill derive
+   from --hero-fg / --accent so they read correctly on the dark banner in both
+   themes. */
+.next-up-bar {
+  height: 5px;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--hero-fg) 22%, transparent);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.next-up-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 100px;
+  transition: width 0.3s ease;
 }
 
 .quick-stats {
@@ -174,7 +196,60 @@ const cards = `
   margin-bottom: 8px;
 }
 
-/* STAT POP-UP */
+/* STAT POP-UP — grows out of the tapped stat card (see ExpandingStats) */
+.stat-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,23,0.45);
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.stat-pop-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.stat-pop {
+  width: min(360px, 100%);
+  background: var(--cream);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(28,26,23,0.28);
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.stat-pop-inner {
+  position: relative;
+  padding: 26px 22px 28px;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.stat-pop-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--warm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .stat-sheet-head {
   text-align: center;
   margin-bottom: 8px;

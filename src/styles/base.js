@@ -19,6 +19,17 @@ body { background: var(--warm); }
   /* Text on an --ink-coloured (inverse) surface. Flips with the theme so
      "dark pill / white text" emphasis elements invert cleanly in dark mode. */
   --on-ink: #FFFFFF;
+  /* "Hero" banner surface (Als nächstes / Weiterschauen). Always a dark surface
+     with light text in BOTH themes — unlike --ink it must not invert, or the
+     banner turns into a bright block against the dark background. In light mode
+     it's the near-black ink; in dark mode a deep warm-tinted dark that still
+     reads as an elevated highlight. */
+  --hero-bg: var(--ink);
+  --hero-fg: var(--on-ink);
+  /* Accent corner bloom on the hero banner; alpha tuned per theme. */
+  --hero-glow: rgba(200,85,61,0.22);
+  /* Hero label colour: muted-light in light mode, accent in dark. */
+  --hero-label: rgba(255,255,255,0.5);
   /* Translucent bottom-nav backdrop (blurred), tuned per theme. */
   --nav-bg: rgba(245,240,232,0.92);
   /* Badge / chip tints — soft accent washes with adequate contrast. */
@@ -40,6 +51,10 @@ body { background: var(--warm); }
   --border: rgba(236,229,216,0.12);
 
   --on-ink: #1A1815;
+  --hero-bg: #2E211A;
+  --hero-fg: #F2EBDE;
+  --hero-glow: rgba(224,115,92,0.6);
+  --hero-label: var(--accent);
   --nav-bg: rgba(26,24,21,0.92);
   --badge-red-bg: rgba(224,115,92,0.18);
   --badge-green-bg: rgba(111,166,151,0.20);
