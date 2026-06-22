@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.22.1] - 2026-06-22
+
+### Changed
+- **Abhängigkeiten aktualisiert** (Dependabot): react & react-dom 19.2.5 → 19.2.7, vite 8.0.11 → 8.0.16, @vitejs/plugin-react 6.0.1 → 6.0.2. Keine funktionalen Änderungen.
+
+---
+
 ## [0.22.0] - 2026-06-22
 
 ### Added
