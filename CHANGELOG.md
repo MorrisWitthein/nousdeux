@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.23.0] - 2026-06-22
+
+### Changed
+- **Filme suchen statt Genre-Filter**: Die Genre-Filterchips über der Filmliste wurden durch dieselbe Suchleiste wie bei den Rezepten ersetzt. Sie durchsucht Titel und Genres und schlägt vorhandene Genres in einem Dropdown vor.
+- **Statistik-Pop-ups auf dem Homescreen**: Die vier Kacheln auf der Startseite öffnen jetzt ein Pop-up mit Verlaufs-Statistiken zur jeweiligen Kennzahl, statt zum Tab zu springen. Events zeigen u. a. diesen Monat / dieses Jahr / vergangen gesamt / kommende / aktivster Monat, Serien laufend / geplant / gesehen / Staffeln, Rezepte Anzahl / Ø-Bewertung / Top-Tag, Aktivitäten Ideen / geplant / gemacht / Erledigt-Quote – jeweils mit Max/Lena-Aufteilung.
+
+---
+
 ## [0.22.1] - 2026-06-22
 
 ### Changed

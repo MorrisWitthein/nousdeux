@@ -1,3 +1,137 @@
+import { useState, useMemo } from 'react'
+import Sheet from '../components/Sheet.jsx'
+import { authorColor } from '../utils/authorColor.js'
+
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+
+// Group a record list by its `who` field and return [{ who, count }] sorted
+// by count desc, so each stat pop-up can show a Max/Lena attribution split.
+function authorSplit(items) {
+  const counts = {}
+  for (const it of items) {
+    const w = it.who || ''
+    if (!w) continue
+    counts[w] = (counts[w] || 0) + 1
+  }
+  return Object.entries(counts)
+    .map(([who, count]) => ({ who, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+// Build the rows + author split for each home-screen widget. `now` is passed in
+// so date math (this month / this year / past / upcoming) stays consistent with
+// the greeting clock above.
+function buildStats(metric, { events, recipes, series, activities }, now) {
+  const todayStr = now.toISOString().slice(0, 10)
+  const thisMonth = todayStr.slice(0, 7)
+  const thisYear = String(now.getFullYear())
+
+  switch (metric) {
+    case 'events': {
+      const dated = events.filter(e => e.date)
+      const monthLabels = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+      const perMonth = {}
+      for (const e of dated) perMonth[e.date.slice(0, 7)] = (perMonth[e.date.slice(0, 7)] || 0) + 1
+      const busiest = Object.entries(perMonth).sort((a, b) => b[1] - a[1])[0]
+      const busiestLabel = busiest
+        ? `${monthLabels[Number(busiest[0].slice(5, 7)) - 1]} ${busiest[0].slice(0, 4)} (${busiest[1]})`
+        : '–'
+      return {
+        emoji: '📅', title: 'Event-Statistik',
+        rows: [
+          { label: 'Diesen Monat', value: dated.filter(e => e.date.startsWith(thisMonth)).length },
+          { label: 'Dieses Jahr', value: dated.filter(e => e.date.startsWith(thisYear)).length },
+          { label: 'Vergangen gesamt', value: dated.filter(e => e.date < todayStr).length },
+          { label: 'Kommende', value: dated.filter(e => e.date >= todayStr).length },
+          { label: 'Aktivster Monat', value: busiestLabel },
+        ],
+        authors: authorSplit(events),
+      }
+    }
+    case 'series': {
+      const finished = series.filter(s => s.status === 'Gesehen')
+      const seasonsWatched = series.reduce((sum, s) => sum + (s.season || 0), 0)
+      return {
+        emoji: '🍿', title: 'Serien-Statistik',
+        rows: [
+          { label: 'Am Laufen', value: series.filter(s => s.status === 'Läuft').length },
+          { label: 'Geplant', value: series.filter(s => s.status === 'Geplant').length },
+          { label: 'Gesehen', value: finished.length },
+          { label: 'Serien gesamt', value: series.length },
+          { label: 'Staffeln gesehen', value: seasonsWatched },
+        ],
+        authors: authorSplit(series),
+      }
+    }
+    case 'recipes': {
+      const rated = recipes.filter(r => r.rating > 0)
+      const avg = rated.length
+        ? (rated.reduce((sum, r) => sum + r.rating, 0) / rated.length).toFixed(1)
+        : '–'
+      const tagCounts = {}
+      for (const r of recipes) for (const t of (r.tags || [])) tagCounts[t] = (tagCounts[t] || 0) + 1
+      const topTag = Object.entries(tagCounts).sort((a, b) => b[1] - a[1])[0]
+      return {
+        emoji: '🍳', title: 'Rezept-Statistik',
+        rows: [
+          { label: 'Gesammelt', value: recipes.length },
+          { label: 'Bewertet', value: rated.length },
+          { label: 'Ø Bewertung', value: avg === '–' ? '–' : `${avg} ★` },
+          { label: 'Top bewertet (5★)', value: recipes.filter(r => r.rating === 5).length },
+          { label: 'Beliebtester Tag', value: topTag ? `${topTag[0]} (${topTag[1]})` : '–' },
+        ],
+        authors: authorSplit(recipes),
+      }
+    }
+    case 'activities': {
+      const done = activities.filter(a => a.status === 'Gemacht').length
+      const rate = activities.length ? Math.round((done / activities.length) * 100) : 0
+      return {
+        emoji: '✨', title: 'Aktivitäten-Statistik',
+        rows: [
+          { label: 'Ideen', value: activities.filter(a => a.status === 'Idee').length },
+          { label: 'Geplant', value: activities.filter(a => a.status === 'Geplant').length },
+          { label: 'Gemacht', value: done },
+          { label: 'Insgesamt', value: activities.length },
+          { label: 'Erledigt-Quote', value: `${rate}%` },
+        ],
+        authors: authorSplit(activities),
+      }
+    }
+    default:
+      return null
+  }
+}
+
+function StatsSheet({ stats, currentUser, onClose }) {
+  return (
+    <Sheet title="" onClose={onClose}>
+      <div className="stat-sheet-head">
+        <div className="stat-sheet-emoji">{stats.emoji}</div>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)' }}>{stats.title}</div>
+      </div>
+      <div className="stat-rows">
+        {stats.rows.map(r => (
+          <div key={r.label} className="stat-row">
+            <span className="stat-row-label">{r.label}</span>
+            <span className="stat-row-value">{r.value}</span>
+          </div>
+        ))}
+      </div>
+      {stats.authors.length > 0 && (
+        <div className="stat-authors">
+          {stats.authors.map(a => (
+            <span key={a.who} className="stat-author">
+              <span className="dot" style={{ background: authorColor(a.who, currentUser) }} />
+              {cap(a.who)} <strong>{a.count}</strong>
+            </span>
+          ))}
+        </div>
+      )}
+    </Sheet>
+  )
+}
+
 // Compute Easter Sunday for a given year (Anonymous Gregorian algorithm)
 function easterSunday(year) {
   const a = year % 19
@@ -168,6 +302,14 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
   }
   const runningSeries = series.filter(s => s.status === 'Läuft').length
 
+  const [statMetric, setStatMetric] = useState(null)
+  const activeStats = useMemo(
+    () => statMetric ? buildStats(statMetric, { events, recipes, series, activities }, now) : null,
+    // `now` is a fresh Date each render but only the calendar day matters; key on
+    // its date string so stats don't recompute on every unrelated re-render.
+    [statMetric, events, recipes, series, activities, today] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   return (
     <div>
       {special ? (
@@ -206,27 +348,31 @@ export default function HomeTab({ events, recipes, series, activities, onNavigat
       )}
 
       <div className="quick-stats">
-        <button type="button" className="stat-card" onClick={() => onNavigate?.('calendar')}>
+        <button type="button" className="stat-card" onClick={() => setStatMetric('events')}>
           <div className="stat-icon">📅</div>
           <div className="stat-number">{loading ? '–' : events.filter(e => e.date?.startsWith(thisMonth)).length}</div>
           <div className="stat-label">Events diesen Monat</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate?.('lists')}>
+        <button type="button" className="stat-card" onClick={() => setStatMetric('series')}>
           <div className="stat-icon">🍿</div>
           <div className="stat-number">{loading ? '–' : runningSeries}</div>
           <div className="stat-label">Serien am Laufen</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate?.('recipes')}>
+        <button type="button" className="stat-card" onClick={() => setStatMetric('recipes')}>
           <div className="stat-icon">🍳</div>
           <div className="stat-number">{loading ? '–' : recipes.length}</div>
           <div className="stat-label">Rezepte gesammelt</div>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate?.('lists')}>
+        <button type="button" className="stat-card" onClick={() => setStatMetric('activities')}>
           <div className="stat-icon">✨</div>
           <div className="stat-number">{loading ? '–' : activities.length}</div>
           <div className="stat-label">Aktivitäten geplant</div>
         </button>
       </div>
+
+      {activeStats && (
+        <StatsSheet stats={activeStats} currentUser={currentUser} onClose={() => setStatMetric(null)} />
+      )}
     </div>
   )
 }
