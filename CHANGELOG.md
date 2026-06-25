@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.24.2] - 2026-06-25
+
+### Changed
+- **Dunkle Banner aus der Listen-Ansicht entfernt**: Die dunklen „Weiterschauen"- (Serien) und „Als nächstes geplant"-Banner (Aktivitäten) wurden wieder zurückgenommen – sie passten optisch nicht in die Listen. Die hervorgehobenen Einträge erscheinen jetzt wieder ganz normal in ihrer Liste. Das „Als nächstes"-Banner auf dem Homescreen bleibt unverändert.
+
+---
+
 ## [0.24.1] - 2026-06-22
 
 ### Changed

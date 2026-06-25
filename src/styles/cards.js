@@ -142,24 +142,6 @@ const cards = `
   opacity: 0.6;
 }
 
-/* Thin progress bar for the Serien "Weiterschauen" banner. Track + fill derive
-   from --hero-fg / --accent so they read correctly on the dark banner in both
-   themes. */
-.next-up-bar {
-  height: 5px;
-  border-radius: 100px;
-  background: color-mix(in srgb, var(--hero-fg) 22%, transparent);
-  overflow: hidden;
-  margin-top: 14px;
-}
-
-.next-up-bar-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 100px;
-  transition: width 0.3s ease;
-}
-
 .quick-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;

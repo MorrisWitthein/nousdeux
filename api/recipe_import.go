@@ -166,7 +166,7 @@ const extractPrompt = `Extract the recipe from the content below and return a JS
 - prepTime (integer, total minutes including cooking)
 - servings (integer)
 
-Translate all text to German. Return only valid JSON, no markdown fences.`
+Translate all text to German. Return only valid JSON, no markdown fences. If the provided content doesn't include a recipe or you are missing information, do NOT fill in the gaps yourself. Never include any information that is not part of the original recipe. If there is anything missing just say soF.`
 
 type claudeContent struct {
 	Type   string       `json:"type"`

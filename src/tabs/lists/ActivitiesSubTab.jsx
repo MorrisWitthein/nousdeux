@@ -169,11 +169,7 @@ export default function ActivitiesSubTab({
 
   const viewingItem = activities.find(a => a.id === viewingId)
 
-  // "Als nächstes geplant" hero: activities have no date, so the first planned
-  // one (list order) is the only available signal. It's promoted out of the
-  // list below so it doesn't show twice.
-  const featured = activities.find(a => a.status === 'Geplant')
-  const openItems = activities.filter(a => a.status !== 'Gemacht' && a.id !== featured?.id)
+  const openItems = activities.filter(a => a.status !== 'Gemacht')
 
   return (
     <>
@@ -183,14 +179,6 @@ export default function ActivitiesSubTab({
           aria-label="Aktivität vorschlagen"
           onClick={() => { setNewAct({ ...EMPTY_ACTIVITY }); setShowForm(true) }}
         >+</button>
-      )}
-
-      {featured && (
-        <button type="button" className="next-up" style={{ cursor: 'pointer' }} onClick={() => setViewingId(featured.id)}>
-          <div className="next-up-label">Als nächstes geplant</div>
-          <div className="next-up-title">{featured.emoji} {featured.title}</div>
-          {featured.meta && <div className="next-up-time">{featured.meta}</div>}
-        </button>
       )}
 
       {openItems.map(renderRow)}
