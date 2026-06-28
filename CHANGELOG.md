@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.24.3] - 2026-06-28
+
+### Changed
+- **Pop-ups in Karten-Farbe**: Der Hintergrund von Pop-ups und Sheets (Detail- und Bearbeiten-Ansichten, Statistik-Pop-up, Bottom-Sheet) entspricht jetzt der Farbe der Karten statt der App-Hintergrundfarbe. Eingabefelder heben sich dadurch klarer vom Pop-up ab.
+
+---
+
 ## [0.24.2] - 2026-06-25
 
 ### Changed

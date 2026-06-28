@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,8 +28,57 @@ type importedRecipe struct {
 	Tags        []string `json:"tags"`
 	Ingredients string   `json:"ingredients"`
 	Steps       string   `json:"steps"`
-	PrepTime    int      `json:"prepTime"`
-	Servings    int      `json:"servings"`
+	PrepTime    flexInt  `json:"prepTime"`
+	Servings    flexInt  `json:"servings"`
+}
+
+// flexInt is an integer that tolerates the loose values the model returns for
+// numeric fields. The extract prompt tells Claude to emit the placeholder
+// "soF" when a value is missing, so prepTime/servings can arrive as a string
+// (or a quoted number, or a float). Anything that isn't a clean integer
+// decodes to 0 rather than failing the whole import.
+type flexInt int
+
+func (fi *flexInt) UnmarshalJSON(data []byte) error {
+	data = bytes.TrimSpace(data)
+	if len(data) == 0 || string(data) == "null" {
+		*fi = 0
+		return nil
+	}
+	// Quoted value: unwrap the string, then take any leading integer ("30 min"
+	// → 30, "soF" → 0).
+	if data[0] == '"' {
+		var s string
+		if err := json.Unmarshal(data, &s); err != nil {
+			*fi = 0
+			return nil
+		}
+		*fi = flexInt(parseLeadingInt(s))
+		return nil
+	}
+	// Bare number, possibly a float (e.g. 4.0): truncate toward zero.
+	var f float64
+	if err := json.Unmarshal(data, &f); err != nil {
+		*fi = 0
+		return nil
+	}
+	*fi = flexInt(f)
+	return nil
+}
+
+// parseLeadingInt returns the integer formed by the leading digits of s, or 0
+// if it doesn't start with a digit once trimmed.
+func parseLeadingInt(s string) int {
+	s = strings.TrimSpace(s)
+	i := 0
+	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
+		i++
+	}
+	if i == 0 {
+		return 0
+	}
+	n, _ := strconv.Atoi(s[:i])
+	return n
 }
 
 func handleRecipeImport(w http.ResponseWriter, r *http.Request) {

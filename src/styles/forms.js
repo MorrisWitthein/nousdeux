@@ -15,7 +15,7 @@ const forms = `
   transform: translateX(-50%);
   width: 100%;
   max-width: 390px;
-  background: var(--cream);
+  background: var(--card);
   border-radius: 24px 24px 0 0;
   z-index: 201;
   max-height: 92vh;
@@ -177,7 +177,7 @@ const forms = `
   width: 100%;
   max-width: 390px;
   max-height: calc(100vh - 32px);
-  background: var(--cream);
+  background: var(--card);
   border-radius: 24px;
   box-shadow: 0 24px 60px rgba(28,26,23,0.28);
   overflow: hidden;

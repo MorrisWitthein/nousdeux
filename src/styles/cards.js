@@ -200,7 +200,7 @@ const cards = `
 
 .stat-pop {
   width: min(360px, 100%);
-  background: var(--cream);
+  background: var(--card);
   border-radius: 24px;
   box-shadow: 0 24px 60px rgba(28,26,23,0.28);
   overflow: hidden;

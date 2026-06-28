@@ -1,9 +1,42 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestImportedRecipeFlexInt(t *testing.T) {
+	cases := []struct {
+		name         string
+		json         string
+		wantPrep     flexInt
+		wantServings flexInt
+	}{
+		{"clean integers", `{"prepTime":45,"servings":4}`, 45, 4},
+		{"soF placeholder", `{"prepTime":"soF","servings":"soF"}`, 0, 0},
+		{"quoted numbers", `{"prepTime":"30","servings":"2"}`, 30, 2},
+		{"number with unit", `{"prepTime":"30 min","servings":"4 Portionen"}`, 30, 4},
+		{"float value", `{"prepTime":45.0,"servings":4.0}`, 45, 4},
+		{"null value", `{"prepTime":null,"servings":null}`, 0, 0},
+		{"missing fields", `{"title":"Pasta"}`, 0, 0},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var r importedRecipe
+			if err := json.Unmarshal([]byte(tc.json), &r); err != nil {
+				t.Fatalf("unmarshal %q: %v", tc.json, err)
+			}
+			if r.PrepTime != tc.wantPrep {
+				t.Errorf("PrepTime = %d, want %d", r.PrepTime, tc.wantPrep)
+			}
+			if r.Servings != tc.wantServings {
+				t.Errorf("Servings = %d, want %d", r.Servings, tc.wantServings)
+			}
+		})
+	}
+}
 
 func TestHtmlToText(t *testing.T) {
 	cases := []struct {
