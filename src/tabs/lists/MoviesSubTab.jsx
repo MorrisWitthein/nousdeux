@@ -1,19 +1,20 @@
 import { useState, useMemo, useRef } from 'react'
 import TagInput from '../../components/TagInput.jsx'
-import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
+import { PencilIcon, CloseIcon, CheckIcon } from '../../components/Icons.jsx'
 import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, StarRating, Stars, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
   { label: 'Gesehen', type: 'red' },
 ]
 
-const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow', imageUrl: '' }
+const EMPTY_MOVIE = { emoji: '🍿', title: '', sub: '', genres: [], status: 'Geplant', statusType: 'yellow', rating: 0, imageUrl: '' }
 
-function MovieDetail({ movie, onEdit, onClose, currentUser }) {
+function MovieDetail({ movie, onEdit, onMarkWatched, onClose, currentUser }) {
+  const watched = movie.status === 'Gesehen'
   return (
     <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -22,11 +23,52 @@ function MovieDetail({ movie, onEdit, onClose, currentUser }) {
           : <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{movie.title}</div>
         <span className={`badge badge-${movie.statusType}`} style={{ marginBottom: 12, display: 'inline-block' }}>{movie.status}</span>
+        {watched && movie.rating > 0 && (
+          <div style={{ color: 'var(--accent3)', fontSize: 20, margin: '4px 0 12px' }}>
+            {'★'.repeat(movie.rating)}{'☆'.repeat(5 - movie.rating)}
+          </div>
+        )}
         <MediaChips platform={movie.sub} neutral={movie.genres || []} />
       </div>
+      {!watched && (
+        <button
+          className="btn btn-primary"
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}
+          onClick={onMarkWatched}
+        >
+          <CheckIcon />Haben wir gesehen
+        </button>
+      )}
       <DetailFooter who={movie.who} currentUser={currentUser}>
+        {watched && (
+          <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={onMarkWatched}>
+            {movie.rating > 0 ? 'Neu bewerten' : 'Bewerten'}
+          </button>
+        )}
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
+    </ExpandingSheet>
+  )
+}
+
+// Popup shown after tapping "Haben wir gesehen": asks for a 0–5 star rating,
+// then flips the movie to "Gesehen" with that rating.
+function RateSheet({ movie, onConfirm, onCancel }) {
+  const [value, setValue] = useState(movie.rating || 0)
+  return (
+    <ExpandingSheet title="Gesehen!" onClose={onCancel}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        {movie.imageUrl
+          ? <img src={movie.imageUrl} alt={movie.title} className="detail-poster" />
+          : <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>}
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 20, color: 'var(--ink)', marginBottom: 4 }}>{movie.title}</div>
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>Wie hat euch der Film gefallen?</p>
+        <StarRating value={value} onChange={setValue} center />
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={() => onConfirm(value)}>Als gesehen speichern</button>
+      </div>
     </ExpandingSheet>
   )
 }
@@ -80,6 +122,12 @@ function MovieForm({ fields, setFields, onSave, onCancel, title, submitted, know
           </select>
         </div>
       </div>
+      {fields.status === 'Gesehen' && (
+        <>
+          <label className="form-label">Bewertung</label>
+          <StarRating value={fields.rating} onChange={v => setFields(f => ({ ...f, rating: v }))} />
+        </>
+      )}
       <div className="btn-row">
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
@@ -99,6 +147,7 @@ export default function MoviesSubTab({
   const [editingId, setEditingId] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_MOVIE })
   const [viewingId, setViewingId] = useState(null)
+  const [ratingId, setRatingId] = useState(null)
   const [submitted, setSubmitted] = useState(false)
   const [showDone, setShowDone] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -128,6 +177,7 @@ export default function MoviesSubTab({
         genres: newMovie.genres,
         status: newMovie.status,
         statusType: newMovie.statusType,
+        rating: newMovie.status === 'Gesehen' ? newMovie.rating : 0,
       }
       const id = await addMovie(payload)
       // Poster persists separately; the row already exists, so a failure here
@@ -155,6 +205,7 @@ export default function MoviesSubTab({
       genres: m.genres || [],
       status: m.status || 'Geplant',
       statusType: m.statusType || 'yellow',
+      rating: m.rating || 0,
       imageUrl: m.imageUrl || '',
     })
     setShowForm(false)
@@ -165,6 +216,8 @@ export default function MoviesSubTab({
     if (!editFields.title.trim()) return
     try {
       const { imageUrl, ...rest } = editFields
+      // A rating only applies to watched films; drop it otherwise.
+      if (rest.status !== 'Gesehen') rest.rating = 0
       await updateMovie(editingId, rest)
       const row = movies.find(m => m.id === editingId)
       if ((row?.imageUrl || '') !== (imageUrl || '')) await patchMovieImage(editingId, imageUrl || '')
@@ -174,6 +227,26 @@ export default function MoviesSubTab({
       showToast(err.message)
       setSubmitted(false)
     }
+  }
+
+  // Flip a movie to "Gesehen" with the chosen rating. PATCH overwrites the full
+  // row, so we send the movie's current fields alongside the new status/rating.
+  const handleRate = async (value) => {
+    const m = movies.find(x => x.id === ratingId)
+    if (!m) { setRatingId(null); return }
+    try {
+      await updateMovie(ratingId, {
+        emoji: m.emoji,
+        title: m.title,
+        sub: m.sub || '',
+        genres: m.genres || [],
+        status: 'Gesehen',
+        statusType: 'red',
+        rating: value,
+      })
+      setRatingId(null)
+      setShowDone(true)
+    } catch (err) { showToast(err.message) }
   }
 
   const handleDelete = async (id) => {
@@ -198,6 +271,7 @@ export default function MoviesSubTab({
           <span className={`badge badge-${m.statusType}`}>{m.status}</span>
         </div>
         <MediaMeta platform={m.sub} neutral={m.genres || []} />
+        {m.rating > 0 && <div className="media-rating"><Stars value={m.rating} /></div>}
         <div className="media-footer">
           <AuthorLine who={m.who} currentUser={currentUser} />
           <div style={{ display: 'flex', gap: 4 }}>
@@ -210,6 +284,7 @@ export default function MoviesSubTab({
   )
 
   const viewingItem = movies.find(m => m.id === viewingId)
+  const ratingItem = movies.find(m => m.id === ratingId)
 
   return (
     <>
@@ -269,8 +344,17 @@ export default function MoviesSubTab({
         <MovieDetail
           movie={viewingItem}
           onEdit={() => { setViewingId(null); startEdit(viewingItem) }}
+          onMarkWatched={() => { setRatingId(viewingItem.id); setViewingId(null) }}
           onClose={() => setViewingId(null)}
           currentUser={currentUser}
+        />
+      )}
+
+      {ratingItem && (
+        <RateSheet
+          movie={ratingItem}
+          onConfirm={handleRate}
+          onCancel={() => setRatingId(null)}
         />
       )}
 

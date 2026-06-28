@@ -35,6 +35,26 @@ export function PlatformSelect({ value, onChange, options = PLATFORMS }) {
   )
 }
 
+// Interactive 5-star rating control. Tapping the current value clears it back
+// to 0. Used in the movie form and the "mark as watched" sheet.
+export function StarRating({ value, onChange, center }) {
+  return (
+    <div className="star-rating" style={center ? { justifyContent: 'center' } : undefined}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" className={`star ${n <= value ? 'active' : 'inactive'}`}
+          aria-label={`${n} Sterne`}
+          onClick={() => onChange(n === value ? 0 : n)}>★</button>
+      ))}
+    </div>
+  )
+}
+
+// Read-only star display (filled + hollow), gold. Returns null for unrated.
+export function Stars({ value }) {
+  if (!value) return null
+  return <span className="stars-display">{'★'.repeat(value)}{'☆'.repeat(5 - value)}</span>
+}
+
 export function AuthorLine({ who, currentUser }) {
   if (!who) return <span />
   return (

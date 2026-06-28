@@ -82,6 +82,7 @@ type Movie struct {
 	Genres     []string  `json:"genres,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	StatusType string    `json:"statusType,omitempty"`
+	Rating     int       `json:"rating"`
 	Who        string    `json:"who"`
 	ImageURL   string    `json:"imageUrl,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`

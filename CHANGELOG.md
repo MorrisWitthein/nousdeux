@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.25.0] - 2026-06-28
+
+### Added
+- **Filme bewerten**: Filme lassen sich jetzt wie Rezepte mit 1–5 Sternen bewerten. Die Bewertung erscheint auf der Karte und in der Detailansicht.
+- **„Haben wir gesehen"-Knopf**: In der Detailansicht eines geplanten Films gibt es einen großen Knopf, um ihn als gesehen zu markieren. Dabei öffnet sich direkt ein Pop-up, das nach der Bewertung fragt. Bereits gesehene Filme lassen sich darüber neu bewerten.
+
+---
+
 ## [0.24.3] - 2026-06-28
 
 ### Changed

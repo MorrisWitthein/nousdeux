@@ -180,8 +180,11 @@ func TestValidateMovie(t *testing.T) {
 		{"valid full", Movie{Title: "Dune", StatusType: "green"}, ""},
 		{"valid statusType yellow", Movie{Title: "x", StatusType: "yellow"}, ""},
 		{"valid statusType red", Movie{Title: "x", StatusType: "red"}, ""},
+		{"valid rating", Movie{Title: "Dune", Rating: 4}, ""},
 		{"title too long", Movie{Title: long}, "title exceeds"},
 		{"bad statusType", Movie{Title: "x", StatusType: "blue"}, "statusType must be one of"},
+		{"rating too high", Movie{Title: "x", Rating: 6}, "rating must be between 0 and 5"},
+		{"rating negative", Movie{Title: "x", Rating: -1}, "rating must be between 0 and 5"},
 	}
 
 	for _, tc := range cases {

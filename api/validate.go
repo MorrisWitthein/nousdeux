@@ -49,6 +49,9 @@ func validateMovie(m Movie) error {
 	if len(m.Title) > maxTitleLen {
 		return fmt.Errorf("title exceeds %d characters", maxTitleLen)
 	}
+	if m.Rating < 0 || m.Rating > 5 {
+		return fmt.Errorf("rating must be between 0 and 5")
+	}
 	if m.StatusType != "" {
 		switch m.StatusType {
 		case "green", "yellow", "red":

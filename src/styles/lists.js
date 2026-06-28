@@ -159,6 +159,14 @@ const lists = `
   white-space: nowrap;
 }
 
+/* Gold star rating on watched-movie cards. */
+.media-rating {
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.stars-display { color: var(--accent3); }
+
 .media-footer {
   margin-top: auto;
   display: flex;
