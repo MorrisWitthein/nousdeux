@@ -35,6 +35,9 @@ func validateSeries(s Series) error {
 	if s.Season < 0 || s.Season > 50 {
 		return fmt.Errorf("season must be between 0 and 50")
 	}
+	if s.Rating < 0 || s.Rating > 5 {
+		return fmt.Errorf("rating must be between 0 and 5")
+	}
 	if s.StatusType != "" {
 		switch s.StatusType {
 		case "green", "yellow", "red":

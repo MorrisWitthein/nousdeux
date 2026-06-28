@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { TvIcon } from '../../components/Icons.jsx'
+import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import { authorColor } from '../../utils/authorColor.js'
 
 export const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
@@ -53,6 +54,28 @@ export function StarRating({ value, onChange, center }) {
 export function Stars({ value }) {
   if (!value) return null
   return <span className="stars-display">{'★'.repeat(value)}{'☆'.repeat(5 - value)}</span>
+}
+
+// Popup shown when marking a movie/series as watched: asks for a 0–5 star
+// rating, then hands the value back via onConfirm. Shared by both list tabs.
+export function RateSheet({ item, prompt = 'Wie hat es euch gefallen?', onConfirm, onCancel }) {
+  const [value, setValue] = useState(item.rating || 0)
+  return (
+    <ExpandingSheet title="Gesehen!" onClose={onCancel}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        {item.imageUrl
+          ? <img src={item.imageUrl} alt={item.title} className="detail-poster" />
+          : <div style={{ fontSize: 48, marginBottom: 8 }}>{item.emoji}</div>}
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 20, color: 'var(--ink)', marginBottom: 4 }}>{item.title}</div>
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>{prompt}</p>
+        <StarRating value={value} onChange={setValue} center />
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
+        <button className="btn btn-primary" onClick={() => onConfirm(value)}>Als gesehen speichern</button>
+      </div>
+    </ExpandingSheet>
+  )
 }
 
 export function AuthorLine({ who, currentUser }) {

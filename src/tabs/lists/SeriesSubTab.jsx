@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { PencilIcon, CloseIcon } from '../../components/Icons.jsx'
+import { PencilIcon, CloseIcon, CheckIcon } from '../../components/Icons.jsx'
 import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, PlatformSelect, PosterTitleField, RateSheet, StarRating, Stars, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -11,7 +11,7 @@ const STATUS_OPTIONS = [
   { label: 'Gesehen', type: 'red' },
 ]
 
-const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', totalSeasons: '', status: 'Geplant', statusType: 'yellow', imageUrl: '' }
+const EMPTY_SERIES = { title: '', sub: '', emoji: '🎬', season: '', totalSeasons: '', status: 'Geplant', statusType: 'yellow', rating: 0, imageUrl: '' }
 
 // Builds the "Staffel X / Y" label, gracefully degrading when either number is
 // missing: "Staffel 2 / 5" → "Staffel 2" → "5 Staffeln" → null.
@@ -39,9 +39,14 @@ function SeasonProgress({ season, total }) {
   )
 }
 
-function SeriesDetail({ series, onEdit, onClose, currentUser }) {
+function SeriesDetail({ series, onEdit, onNextSeason, onRate, onClose, currentUser }) {
   const label = seasonLabel(series.season, series.totalSeasons)
   const neutral = label ? [label] : []
+  const watched = series.status === 'Gesehen'
+  const total = series.totalSeasons || 0
+  // Only offer "next season" while there are seasons left to go (or the total is
+  // unknown). At the last known season the natural next step is finishing.
+  const canAdvance = !watched && (total === 0 || (series.season || 0) < total)
   return (
     <ExpandingSheet title="" onClose={onClose}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -50,9 +55,35 @@ function SeriesDetail({ series, onEdit, onClose, currentUser }) {
           : <div style={{ fontSize: 48, marginBottom: 8 }}>{series.emoji}</div>}
         <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, color: 'var(--ink)', marginBottom: 8 }}>{series.title}</div>
         <span className={`badge badge-${series.statusType}`} style={{ marginBottom: 12, display: 'inline-block' }}>{series.status}</span>
+        {watched && series.rating > 0 && (
+          <div style={{ color: 'var(--accent3)', fontSize: 20, margin: '4px 0 12px' }}>
+            {'★'.repeat(series.rating)}{'☆'.repeat(5 - series.rating)}
+          </div>
+        )}
         <MediaChips platform={series.sub} neutral={neutral} />
       </div>
+      {!watched && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+          {canAdvance && (
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onNextSeason}>
+              + Staffel {(series.season || 0) + 1}
+            </button>
+          )}
+          <button
+            className="btn btn-primary"
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            onClick={onRate}
+          >
+            <CheckIcon />Fertig geschaut
+          </button>
+        </div>
+      )}
       <DetailFooter who={series.who} currentUser={currentUser}>
+        {watched && (
+          <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={onRate}>
+            {series.rating > 0 ? 'Neu bewerten' : 'Bewerten'}
+          </button>
+        )}
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
     </ExpandingSheet>
@@ -126,6 +157,12 @@ function SeriesForm({ fields, setFields, onSave, onCancel, title, submitted, sea
           </select>
         </div>
       </div>
+      {fields.status === 'Gesehen' && (
+        <>
+          <label className="form-label">Bewertung</label>
+          <StarRating value={fields.rating} onChange={v => setFields(f => ({ ...f, rating: v }))} />
+        </>
+      )}
       <div className="btn-row">
         <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button className="btn btn-primary" disabled={!fields.title.trim()} onClick={onSave}>Speichern</button>
@@ -145,6 +182,7 @@ export default function SeriesSubTab({
   const [editingId, setEditingId] = useState(null)
   const [editFields, setEditFields] = useState({ ...EMPTY_SERIES })
   const [viewingId, setViewingId] = useState(null)
+  const [ratingId, setRatingId] = useState(null)
   const [submitted, setSubmitted] = useState(false)
   const [showDone, setShowDone] = useState(false)
 
@@ -160,6 +198,7 @@ export default function SeriesSubTab({
         totalSeasons: parseInt(newSeries.totalSeasons, 10) || 0,
         status: newSeries.status,
         statusType: newSeries.statusType,
+        rating: newSeries.status === 'Gesehen' ? newSeries.rating : 0,
       }
       const id = await addSeries(payload)
       // Poster persists separately; the row already exists, so a failure here
@@ -188,6 +227,7 @@ export default function SeriesSubTab({
       totalSeasons: s.totalSeasons || '',
       status: s.status || 'Geplant',
       statusType: s.statusType || 'yellow',
+      rating: s.rating || 0,
       imageUrl: s.imageUrl || '',
     })
     setShowForm(false)
@@ -198,6 +238,8 @@ export default function SeriesSubTab({
     if (!editFields.title.trim()) return
     try {
       const { imageUrl, ...rest } = editFields
+      // A rating only applies to finished series; drop it otherwise.
+      if (rest.status !== 'Gesehen') rest.rating = 0
       await updateSeries(editingId, {
         ...rest,
         season: parseInt(editFields.season, 10) || 0,
@@ -211,6 +253,48 @@ export default function SeriesSubTab({
       showToast(err.message)
       setSubmitted(false)
     }
+  }
+
+  // Bump a series to its next season (capped at the total, when known) and make
+  // sure it reads as "Läuft". PATCH overwrites the row, so we resend its fields.
+  const handleNextSeason = async (s) => {
+    const total = s.totalSeasons || 0
+    const next = (s.season || 0) + 1
+    if (total > 0 && next > total) return
+    try {
+      await updateSeries(s.id, {
+        emoji: s.emoji,
+        title: s.title,
+        sub: s.sub || '',
+        progress: s.progress || 0,
+        season: next,
+        totalSeasons: total,
+        status: 'Läuft',
+        statusType: 'green',
+        rating: s.rating || 0,
+      })
+    } catch (err) { showToast(err.message) }
+  }
+
+  // Flip a series to "Gesehen" with the chosen rating.
+  const handleRate = async (value) => {
+    const s = series.find(x => x.id === ratingId)
+    if (!s) { setRatingId(null); return }
+    try {
+      await updateSeries(ratingId, {
+        emoji: s.emoji,
+        title: s.title,
+        sub: s.sub || '',
+        progress: s.progress || 0,
+        season: s.season || 0,
+        totalSeasons: s.totalSeasons || 0,
+        status: 'Gesehen',
+        statusType: 'red',
+        rating: value,
+      })
+      setRatingId(null)
+      setShowDone(true)
+    } catch (err) { showToast(err.message) }
   }
 
   const handleDelete = async (id) => {
@@ -241,6 +325,7 @@ export default function SeriesSubTab({
           </div>
           <MediaMeta platform={s.sub} neutral={neutral} />
           {running && <SeasonProgress season={s.season} total={s.totalSeasons} />}
+          {s.rating > 0 && <div className="media-rating"><Stars value={s.rating} /></div>}
           <div className="media-footer">
             <AuthorLine who={s.who} currentUser={currentUser} />
             <div style={{ display: 'flex', gap: 4 }}>
@@ -254,6 +339,7 @@ export default function SeriesSubTab({
   }
 
   const viewingItem = series.find(s => s.id === viewingId)
+  const ratingItem = series.find(s => s.id === ratingId)
 
   const running = series.filter(s => s.status === 'Läuft')
   const planned = series.filter(s => s.status !== 'Läuft' && s.status !== 'Gesehen')
@@ -289,8 +375,19 @@ export default function SeriesSubTab({
         <SeriesDetail
           series={viewingItem}
           onEdit={() => { setViewingId(null); startEdit(viewingItem) }}
+          onNextSeason={() => handleNextSeason(viewingItem)}
+          onRate={() => { setRatingId(viewingItem.id); setViewingId(null) }}
           onClose={() => setViewingId(null)}
           currentUser={currentUser}
+        />
+      )}
+
+      {ratingItem && (
+        <RateSheet
+          item={ratingItem}
+          prompt="Wie hat euch die Serie gefallen?"
+          onConfirm={handleRate}
+          onCancel={() => setRatingId(null)}
         />
       )}
 

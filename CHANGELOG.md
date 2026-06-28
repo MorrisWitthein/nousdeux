@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.26.0] - 2026-06-28
+
+### Added
+- **Serien bewerten**: Serien lassen sich jetzt wie Filme und Rezepte mit 1–5 Sternen bewerten. Die Bewertung erscheint auf der Karte und in der Detailansicht.
+- **Staffel-für-Staffel-Fortschritt**: In der Detailansicht einer Serie gibt es einen „+ Staffel X"-Knopf, der direkt zur nächsten Staffel weiterzählt und die Serie auf „Läuft" setzt.
+- **„Fertig geschaut"-Knopf**: Ein großer Knopf markiert die Serie als gesehen und öffnet dabei das Bewertungs-Pop-up. Bereits gesehene Serien lassen sich darüber neu bewerten.
+
+---
+
 ## [0.25.0] - 2026-06-28
 
 ### Added

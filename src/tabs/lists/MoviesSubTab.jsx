@@ -4,7 +4,7 @@ import { PencilIcon, CloseIcon, CheckIcon } from '../../components/Icons.jsx'
 import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 import EmptyState from '../../components/EmptyState.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, StarRating, Stars, pressable } from './shared.jsx'
+import { AuthorLine, DetailFooter, DoneSection, MediaChips, MediaMeta, MOVIE_PLATFORMS, PlatformSelect, PosterTitleField, RateSheet, StarRating, Stars, pressable } from './shared.jsx'
 
 const STATUS_OPTIONS = [
   { label: 'Geplant', type: 'yellow' },
@@ -47,28 +47,6 @@ function MovieDetail({ movie, onEdit, onMarkWatched, onClose, currentUser }) {
         )}
         <button className="btn btn-primary" style={{ padding: '10px 20px' }} onClick={onEdit}>Bearbeiten</button>
       </DetailFooter>
-    </ExpandingSheet>
-  )
-}
-
-// Popup shown after tapping "Haben wir gesehen": asks for a 0–5 star rating,
-// then flips the movie to "Gesehen" with that rating.
-function RateSheet({ movie, onConfirm, onCancel }) {
-  const [value, setValue] = useState(movie.rating || 0)
-  return (
-    <ExpandingSheet title="Gesehen!" onClose={onCancel}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        {movie.imageUrl
-          ? <img src={movie.imageUrl} alt={movie.title} className="detail-poster" />
-          : <div style={{ fontSize: 48, marginBottom: 8 }}>{movie.emoji}</div>}
-        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 20, color: 'var(--ink)', marginBottom: 4 }}>{movie.title}</div>
-        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>Wie hat euch der Film gefallen?</p>
-        <StarRating value={value} onChange={setValue} center />
-      </div>
-      <div className="btn-row">
-        <button className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn btn-primary" onClick={() => onConfirm(value)}>Als gesehen speichern</button>
-      </div>
     </ExpandingSheet>
   )
 }
@@ -352,7 +330,8 @@ export default function MoviesSubTab({
 
       {ratingItem && (
         <RateSheet
-          movie={ratingItem}
+          item={ratingItem}
+          prompt="Wie hat euch der Film gefallen?"
           onConfirm={handleRate}
           onCancel={() => setRatingId(null)}
         />
