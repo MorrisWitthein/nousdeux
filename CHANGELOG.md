@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.26.1] - 2026-08-11
+
+### Changed
+- **Abhängigkeiten aktualisiert**: React und React DOM auf 19.2.8, Vite auf 8.2, `@vitejs/plugin-react` auf 6.0.5 sowie die Go-Bibliotheken und das Go-Basis-Image der API auf den aktuellen Stand gebracht. Rein technische Aktualisierung — an der App ändert sich nichts.
+
+---
+
 ## [0.26.0] - 2026-06-28
 
 ### Added
