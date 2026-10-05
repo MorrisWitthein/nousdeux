@@ -275,7 +275,7 @@ func buildImageMessage(imageBase64 string) claudeMsg {
 
 func callClaude(ctx context.Context, apiKey string, msg claudeMsg) (importedRecipe, error) {
 	payload := claudeAPIReq{
-		Model:     "claude-haiku-4-5-20251001",
+		Model:     "claude-sonnet-5-5",
 		MaxTokens: 1024,
 		Messages:  []claudeMsg{msg},
 	}
