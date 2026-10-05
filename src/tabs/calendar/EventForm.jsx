@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { CloseIcon, PaperclipIcon } from '../../components/Icons.jsx'
 import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 
@@ -15,8 +15,12 @@ export default function EventForm({
   canSuggest, suggestMode, setSuggestMode,
 }) {
   const fileInputRef = useRef(null)
+  const endDateRef = useRef(null)
+  // True while the end date is temporarily prefilled with the start date so the
+  // native picker opens on the start month instead of the current month.
+  const [endDatePrefilled, setEndDatePrefilled] = useState(false)
   const setFields = (...args) => { onErrorClear(); setFieldsRaw(...args) }
-  const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
+  const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date && !endDatePrefilled
   const titleMissing = submitted && !fields.title.trim()
 
   return (
@@ -38,13 +42,62 @@ export default function EventForm({
           />
         </div>
         <div>
-          <label className="form-label">Bis (opt.)</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>Bis (opt.)</label>
+            <button
+              className="form-label-clear"
+              title="Bis-Datum entfernen"
+              aria-label="Bis-Datum entfernen"
+              style={{ visibility: fields.endDate && !endDatePrefilled ? 'visible' : 'hidden' }}
+              onClick={() => setFields(f => ({ ...f, endDate: '' }))}
+            >
+              <CloseIcon /> entfernen
+            </button>
+          </div>
           <input
+            ref={endDateRef}
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
             style={endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : undefined}
-            onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
+            onPointerDown={() => {
+              // Prefill before focus so the native picker opens on the start
+              // month — changing the value during focus makes some browsers
+              // skip opening the picker entirely.
+              if (!fields.endDate && fields.date) {
+                setEndDatePrefilled(true)
+                setFields(f => ({ ...f, endDate: f.date }))
+              }
+            }}
+            onFocus={() => {
+              // Keyboard fallback (no pointerdown): prefill on focus.
+              if (!fields.endDate && fields.date) {
+                setEndDatePrefilled(true)
+                setFields(f => ({ ...f, endDate: f.date }))
+              }
+              if (endDatePrefilled) {
+                // If the browser suppressed the picker because the value
+                // changed during the gesture, open it explicitly. Runs after
+                // the natural open decision, so it's a no-op when the picker
+                // is already showing.
+                requestAnimationFrame(() => {
+                  try {
+                    if (document.activeElement === endDateRef.current) endDateRef.current?.showPicker?.()
+                  } catch { /* already open or unsupported */ }
+                })
+              }
+            }}
+            onChange={e => {
+              setEndDatePrefilled(false)
+              setFields(f => ({ ...f, endDate: e.target.value }))
+            }}
+            onBlur={() => {
+              // Picker was dismissed without choosing a date: drop the prefill.
+              if (endDatePrefilled) {
+                setEndDatePrefilled(false)
+                setFields(f => ({ ...f, endDate: '' }))
+              }
+            }}
           />
           {endDateInvalid && (
             <div style={{ color: 'var(--accent)', fontSize: 11, marginTop: 3 }}>
@@ -54,7 +107,18 @@ export default function EventForm({
         </div>
       </div>
       <div>
-        <label className="form-label">Uhrzeit (opt.)</label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+          <label className="form-label" style={{ marginBottom: 0 }}>Uhrzeit (opt.)</label>
+          <button
+            className="form-label-clear"
+            title="Uhrzeit entfernen"
+            aria-label="Uhrzeit entfernen"
+            style={{ visibility: fields.time ? 'visible' : 'hidden' }}
+            onClick={() => setFields(f => ({ ...f, time: '' }))}
+          >
+            <CloseIcon /> entfernen
+          </button>
+        </div>
         <input
           type="time"
           value={fields.time}

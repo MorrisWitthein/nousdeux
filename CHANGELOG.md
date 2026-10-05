@@ -7,8 +7,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.26.2] - 2026-10-05
 
-### Changed
-- **Abhängigkeiten aktualisiert**: React und React DOM auf 19.3.0, Vite auf 8.3, `@vitejs/plugin-react` auf 6.1 sowie die Go-Bibliotheken (pgx, x/crypto, x/image, x/net) und das Go-Basis-Image der API auf den aktuellen Stand gebracht. Rein technische Aktualisierung — an der App ändert sich nichts.
+### Fixed
+- **„Bis"-Datum löschbar**: Im Event-Formular lässt sich ein gesetztes „Bis"-Datum jetzt über einen ×-Knopf wieder entfernen, ohne das Formular abzubrechen. Gleiches gilt für die optionale Uhrzeit.
+- **Datumsauswahl verankert**: Der Kalender für das „Bis"-Datum öffnet sich jetzt im Monat des Startdatums statt im aktuellen Monat — ohne Auswahl bleibt das Feld leer.
 
 ---
 
