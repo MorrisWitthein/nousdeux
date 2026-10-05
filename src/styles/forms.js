@@ -579,6 +579,28 @@ const forms = `
   color: var(--ink);
 }
 
+/* Small "entfernen" action in a form label row */
+.form-label-clear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 2px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.form-label-clear:hover,
+.form-label-clear:active {
+  background: var(--badge-red-bg);
+  color: var(--accent);
+}
+
 .btn-delete {
   background: none;
   border: none;

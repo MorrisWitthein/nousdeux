@@ -45,10 +45,10 @@ export default function EventForm({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
             <label className="form-label" style={{ marginBottom: 0 }}>Bis (opt.)</label>
             <button
-              className="btn-ghost"
+              className="form-label-clear"
               title="Bis-Datum entfernen"
               aria-label="Bis-Datum entfernen"
-              style={{ visibility: fields.endDate && !endDatePrefilled ? 'visible' : 'hidden', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--accent)', padding: '2px 4px' }}
+              style={{ visibility: fields.endDate && !endDatePrefilled ? 'visible' : 'hidden' }}
               onClick={() => setFields(f => ({ ...f, endDate: '' }))}
             >
               <CloseIcon /> entfernen
@@ -110,10 +110,10 @@ export default function EventForm({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
           <label className="form-label" style={{ marginBottom: 0 }}>Uhrzeit (opt.)</label>
           <button
-            className="btn-ghost"
+            className="form-label-clear"
             title="Uhrzeit entfernen"
             aria-label="Uhrzeit entfernen"
-            style={{ visibility: fields.time ? 'visible' : 'hidden', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--accent)', padding: '2px 4px' }}
+            style={{ visibility: fields.time ? 'visible' : 'hidden' }}
             onClick={() => setFields(f => ({ ...f, time: '' }))}
           >
             <CloseIcon /> entfernen
