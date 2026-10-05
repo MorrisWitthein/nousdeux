@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.26.2] - 2026-10-05
+
+### Fixed
+- **„Bis"-Datum löschbar**: Im Event-Formular lässt sich ein gesetztes „Bis"-Datum jetzt über einen ×-Knopf wieder entfernen, ohne das Formular abzubrechen. Gleiches gilt für die optionale Uhrzeit.
+- **Datumsauswahl verankert**: Der Kalender für das „Bis"-Datum öffnet sich jetzt im Monat des Startdatums statt im aktuellen Monat — ohne Auswahl bleibt das Feld leer.
+
+---
+
 ## [0.26.1] - 2026-08-11
 
 ### Changed

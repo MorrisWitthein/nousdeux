@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { CloseIcon, PaperclipIcon } from '../../components/Icons.jsx'
 import ExpandingSheet from '../../components/ExpandingSheet.jsx'
 
@@ -15,8 +15,11 @@ export default function EventForm({
   canSuggest, suggestMode, setSuggestMode,
 }) {
   const fileInputRef = useRef(null)
+  // True while the end date is temporarily prefilled with the start date so the
+  // native picker opens on the start month instead of the current month.
+  const [endDatePrefilled, setEndDatePrefilled] = useState(false)
   const setFields = (...args) => { onErrorClear(); setFieldsRaw(...args) }
-  const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date
+  const endDateInvalid = fields.endDate && fields.date && fields.endDate <= fields.date && !endDatePrefilled
   const titleMissing = submitted && !fields.title.trim()
 
   return (
@@ -37,15 +40,45 @@ export default function EventForm({
             onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
           />
         </div>
-        <div>
+        <div style={{ position: 'relative' }}>
           <label className="form-label">Bis (opt.)</label>
           <input
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
             style={endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : undefined}
-            onChange={e => setFields(f => ({ ...f, endDate: e.target.value }))}
+            onFocus={e => {
+              if (!fields.endDate && fields.date) {
+                // Prefill so the native picker opens on the start month; also set
+                // the DOM value synchronously for pickers that read it at open time.
+                e.target.value = fields.date
+                setEndDatePrefilled(true)
+                setFields(f => ({ ...f, endDate: f.date }))
+              }
+            }}
+            onChange={e => {
+              setEndDatePrefilled(false)
+              setFields(f => ({ ...f, endDate: e.target.value }))
+            }}
+            onBlur={() => {
+              // Picker was dismissed without choosing a date: drop the prefill.
+              if (endDatePrefilled) {
+                setEndDatePrefilled(false)
+                setFields(f => ({ ...f, endDate: '' }))
+              }
+            }}
           />
+          {fields.endDate && (
+            <button
+              className="btn-delete"
+              title="Bis-Datum entfernen"
+              aria-label="Bis-Datum entfernen"
+              style={{ position: 'absolute', right: 8, top: 25, width: 30, height: 30, fontSize: 16 }}
+              onClick={() => setFields(f => ({ ...f, endDate: '' }))}
+            >
+              <CloseIcon />
+            </button>
+          )}
           {endDateInvalid && (
             <div style={{ color: 'var(--accent)', fontSize: 11, marginTop: 3 }}>
               Muss nach dem Startdatum liegen
@@ -53,13 +86,24 @@ export default function EventForm({
           )}
         </div>
       </div>
-      <div>
+      <div style={{ position: 'relative' }}>
         <label className="form-label">Uhrzeit (opt.)</label>
         <input
           type="time"
           value={fields.time}
           onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
         />
+        {fields.time && (
+          <button
+            className="btn-delete"
+            title="Uhrzeit entfernen"
+            aria-label="Uhrzeit entfernen"
+            style={{ position: 'absolute', right: 8, top: 25, width: 30, height: 30, fontSize: 16 }}
+            onClick={() => setFields(f => ({ ...f, time: '' }))}
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
       <select
         value={fields.badge}
