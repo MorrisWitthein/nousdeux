@@ -15,6 +15,7 @@ export default function EventForm({
   canSuggest, suggestMode, setSuggestMode,
 }) {
   const fileInputRef = useRef(null)
+  const endDateRef = useRef(null)
   // True while the end date is temporarily prefilled with the start date so the
   // native picker opens on the start month instead of the current month.
   const [endDatePrefilled, setEndDatePrefilled] = useState(false)
@@ -43,17 +44,36 @@ export default function EventForm({
         <div style={{ position: 'relative' }}>
           <label className="form-label">Bis (opt.)</label>
           <input
+            ref={endDateRef}
             type="date"
             value={fields.endDate}
             min={fields.date || undefined}
             style={endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : undefined}
-            onFocus={e => {
+            onPointerDown={() => {
+              // Prefill before focus so the native picker opens on the start
+              // month — changing the value during focus makes some browsers
+              // skip opening the picker entirely.
               if (!fields.endDate && fields.date) {
-                // Prefill so the native picker opens on the start month; also set
-                // the DOM value synchronously for pickers that read it at open time.
-                e.target.value = fields.date
                 setEndDatePrefilled(true)
                 setFields(f => ({ ...f, endDate: f.date }))
+              }
+            }}
+            onFocus={() => {
+              // Keyboard fallback (no pointerdown): prefill on focus.
+              if (!fields.endDate && fields.date) {
+                setEndDatePrefilled(true)
+                setFields(f => ({ ...f, endDate: f.date }))
+              }
+              if (endDatePrefilled) {
+                // If the browser suppressed the picker because the value
+                // changed during the gesture, open it explicitly. Runs after
+                // the natural open decision, so it's a no-op when the picker
+                // is already showing.
+                requestAnimationFrame(() => {
+                  try {
+                    if (document.activeElement === endDateRef.current) endDateRef.current?.showPicker?.()
+                  } catch { /* already open or unsupported */ }
+                })
               }
             }}
             onChange={e => {
@@ -68,7 +88,7 @@ export default function EventForm({
               }
             }}
           />
-          {fields.endDate && (
+          {fields.endDate && !endDatePrefilled && (
             <button
               className="btn-delete"
               title="Bis-Datum entfernen"
