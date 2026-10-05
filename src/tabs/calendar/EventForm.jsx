@@ -41,64 +41,64 @@ export default function EventForm({
             onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
           />
         </div>
-        <div style={{ position: 'relative' }}>
+        <div>
           <label className="form-label">Bis (opt.)</label>
-          <input
-            ref={endDateRef}
-            type="date"
-            value={fields.endDate}
-            min={fields.date || undefined}
-            style={endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : undefined}
-            onPointerDown={() => {
-              // Prefill before focus so the native picker opens on the start
-              // month — changing the value during focus makes some browsers
-              // skip opening the picker entirely.
-              if (!fields.endDate && fields.date) {
-                setEndDatePrefilled(true)
-                setFields(f => ({ ...f, endDate: f.date }))
-              }
-            }}
-            onFocus={() => {
-              // Keyboard fallback (no pointerdown): prefill on focus.
-              if (!fields.endDate && fields.date) {
-                setEndDatePrefilled(true)
-                setFields(f => ({ ...f, endDate: f.date }))
-              }
-              if (endDatePrefilled) {
-                // If the browser suppressed the picker because the value
-                // changed during the gesture, open it explicitly. Runs after
-                // the natural open decision, so it's a no-op when the picker
-                // is already showing.
-                requestAnimationFrame(() => {
-                  try {
-                    if (document.activeElement === endDateRef.current) endDateRef.current?.showPicker?.()
-                  } catch { /* already open or unsupported */ }
-                })
-              }
-            }}
-            onChange={e => {
-              setEndDatePrefilled(false)
-              setFields(f => ({ ...f, endDate: e.target.value }))
-            }}
-            onBlur={() => {
-              // Picker was dismissed without choosing a date: drop the prefill.
-              if (endDatePrefilled) {
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <input
+              ref={endDateRef}
+              type="date"
+              value={fields.endDate}
+              min={fields.date || undefined}
+              style={{ flex: 1, minWidth: 0, marginBottom: 0, ...(endDateInvalid ? { borderColor: 'var(--accent)', outline: 'none' } : {}) }}
+              onPointerDown={() => {
+                // Prefill before focus so the native picker opens on the start
+                // month — changing the value during focus makes some browsers
+                // skip opening the picker entirely.
+                if (!fields.endDate && fields.date) {
+                  setEndDatePrefilled(true)
+                  setFields(f => ({ ...f, endDate: f.date }))
+                }
+              }}
+              onFocus={() => {
+                // Keyboard fallback (no pointerdown): prefill on focus.
+                if (!fields.endDate && fields.date) {
+                  setEndDatePrefilled(true)
+                  setFields(f => ({ ...f, endDate: f.date }))
+                }
+                if (endDatePrefilled) {
+                  // If the browser suppressed the picker because the value
+                  // changed during the gesture, open it explicitly. Runs after
+                  // the natural open decision, so it's a no-op when the picker
+                  // is already showing.
+                  requestAnimationFrame(() => {
+                    try {
+                      if (document.activeElement === endDateRef.current) endDateRef.current?.showPicker?.()
+                    } catch { /* already open or unsupported */ }
+                  })
+                }
+              }}
+              onChange={e => {
                 setEndDatePrefilled(false)
-                setFields(f => ({ ...f, endDate: '' }))
-              }
-            }}
-          />
-          {fields.endDate && !endDatePrefilled && (
+                setFields(f => ({ ...f, endDate: e.target.value }))
+              }}
+              onBlur={() => {
+                // Picker was dismissed without choosing a date: drop the prefill.
+                if (endDatePrefilled) {
+                  setEndDatePrefilled(false)
+                  setFields(f => ({ ...f, endDate: '' }))
+                }
+              }}
+            />
             <button
               className="btn-delete"
               title="Bis-Datum entfernen"
               aria-label="Bis-Datum entfernen"
-              style={{ position: 'absolute', right: 8, top: 25, width: 30, height: 30, fontSize: 16 }}
+              style={{ visibility: fields.endDate && !endDatePrefilled ? 'visible' : 'hidden' }}
               onClick={() => setFields(f => ({ ...f, endDate: '' }))}
             >
               <CloseIcon />
             </button>
-          )}
+          </div>
           {endDateInvalid && (
             <div style={{ color: 'var(--accent)', fontSize: 11, marginTop: 3 }}>
               Muss nach dem Startdatum liegen
@@ -106,24 +106,25 @@ export default function EventForm({
           )}
         </div>
       </div>
-      <div style={{ position: 'relative' }}>
+      <div>
         <label className="form-label">Uhrzeit (opt.)</label>
-        <input
-          type="time"
-          value={fields.time}
-          onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
-        />
-        {fields.time && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <input
+            type="time"
+            value={fields.time}
+            style={{ flex: 1, minWidth: 0, marginBottom: 0 }}
+            onChange={e => setFields(f => ({ ...f, time: e.target.value }))}
+          />
           <button
             className="btn-delete"
             title="Uhrzeit entfernen"
             aria-label="Uhrzeit entfernen"
-            style={{ position: 'absolute', right: 8, top: 25, width: 30, height: 30, fontSize: 16 }}
+            style={{ visibility: fields.time ? 'visible' : 'hidden' }}
             onClick={() => setFields(f => ({ ...f, time: '' }))}
           >
             <CloseIcon />
           </button>
-        )}
+        </div>
       </div>
       <select
         value={fields.badge}
