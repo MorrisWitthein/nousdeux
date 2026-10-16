@@ -143,3 +143,31 @@ func TestStripMarkdownFences(t *testing.T) {
 		})
 	}
 }
+
+func TestParseRecipeJSON(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    string
+		title string
+	}{
+		{"plain object", `{"title":"Pasta"}`, "Pasta"},
+		{"trailing note", "{\"title\":\"Gefüllte Paprika\",\"prepTime\":null}\n\nHinweis: Die Gesamtzeit fehlt, daher soF.", "Gefüllte Paprika"},
+		{"leading text", "Hier ist das Rezept:\n{\"title\":\"Pasta\"}", "Pasta"},
+		{"fenced with trailing note", "```json\n{\"title\":\"Pasta\"}\n```\nHinweis: soF", "Pasta"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r, err := parseRecipeJSON(tc.in)
+			if err != nil {
+				t.Fatalf("parseRecipeJSON(%q) error: %v", tc.in, err)
+			}
+			if r.Title != tc.title {
+				t.Errorf("title = %q, want %q", r.Title, tc.title)
+			}
+		})
+	}
+
+	if _, err := parseRecipeJSON("soF"); err == nil {
+		t.Error("expected error for non-JSON input")
+	}
+}

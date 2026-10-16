@@ -216,7 +216,7 @@ const extractPrompt = `Extract the recipe from the content below and return a JS
 - prepTime (integer, total minutes including cooking)
 - servings (integer)
 
-Translate all text to German. Return only valid JSON, no markdown fences. If the provided content doesn't include a recipe or you are missing information, do NOT fill in the gaps yourself. Never include any information that is not part of the original recipe. If there is anything missing just say soF.`
+Translate all text to German. Return only the JSON object — no markdown fences, and no notes or explanations before or after it. If the provided content doesn't include a recipe or you are missing information, do NOT fill in the gaps yourself. Never include any information that is not part of the original recipe. If there is anything missing just say soF.`
 
 type claudeContent struct {
 	Type   string       `json:"type"`
@@ -335,9 +335,19 @@ func callClaude(ctx context.Context, apiKey string, msg claudeMsg) (importedReci
 		return importedRecipe{}, fmt.Errorf("claude returned empty response (stop_reason=%s)", resp.StopReason)
 	}
 
+	return parseRecipeJSON(raw)
+}
+
+// parseRecipeJSON decodes the first JSON object in the model's reply. The
+// model sometimes adds a note after the object (e.g. "Hinweis: prepTime
+// fehlt"), so anything before the first '{' or after the object is ignored.
+func parseRecipeJSON(raw string) (importedRecipe, error) {
 	text := stripMarkdownFences(strings.TrimSpace(raw))
+	if i := strings.Index(text, "{"); i > 0 {
+		text = text[i:]
+	}
 	var recipe importedRecipe
-	if err := json.Unmarshal([]byte(text), &recipe); err != nil {
+	if err := json.NewDecoder(strings.NewReader(text)).Decode(&recipe); err != nil {
 		return importedRecipe{}, fmt.Errorf("parse claude JSON: %w (got: %q)", err, text)
 	}
 	return recipe, nil
