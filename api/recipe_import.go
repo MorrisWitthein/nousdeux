@@ -235,10 +235,15 @@ type claudeMsg struct {
 	Content []claudeContent `json:"content"`
 }
 
+type claudeOutputConfig struct {
+	Effort string `json:"effort"`
+}
+
 type claudeAPIReq struct {
-	Model     string      `json:"model"`
-	MaxTokens int         `json:"max_tokens"`
-	Messages  []claudeMsg `json:"messages"`
+	Model        string             `json:"model"`
+	MaxTokens    int                `json:"max_tokens"`
+	OutputConfig claudeOutputConfig `json:"output_config"`
+	Messages     []claudeMsg        `json:"messages"`
 }
 
 func buildTextMessage(text string) claudeMsg {
@@ -275,9 +280,10 @@ func buildImageMessage(imageBase64 string) claudeMsg {
 
 func callClaude(ctx context.Context, apiKey string, msg claudeMsg) (importedRecipe, error) {
 	payload := claudeAPIReq{
-		Model:     "claude-sonnet-5-5",
-		MaxTokens: 1024,
-		Messages:  []claudeMsg{msg},
+		Model:        "claude-sonnet-5-5",
+		MaxTokens:    16000,
+		OutputConfig: claudeOutputConfig{Effort: "low"},
+		Messages:     []claudeMsg{msg},
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -301,7 +307,8 @@ func callClaude(ctx context.Context, apiKey string, msg claudeMsg) (importedReci
 	defer res.Body.Close()
 
 	var resp struct {
-		Content []struct {
+		StopReason string `json:"stop_reason"`
+		Content    []struct {
 			Type string `json:"type"`
 			Text string `json:"text"`
 		} `json:"content"`
@@ -315,11 +322,20 @@ func callClaude(ctx context.Context, apiKey string, msg claudeMsg) (importedReci
 	if resp.Error != nil {
 		return importedRecipe{}, fmt.Errorf("claude API: %s", resp.Error.Message)
 	}
-	if len(resp.Content) == 0 || resp.Content[0].Text == "" {
-		return importedRecipe{}, fmt.Errorf("claude returned empty response")
+	// Sonnet 5.5 thinks by default, so the response starts with a thinking
+	// block — take the first text block instead of content[0].
+	var raw string
+	for _, c := range resp.Content {
+		if c.Type == "text" && c.Text != "" {
+			raw = c.Text
+			break
+		}
+	}
+	if raw == "" {
+		return importedRecipe{}, fmt.Errorf("claude returned empty response (stop_reason=%s)", resp.StopReason)
 	}
 
-	text := stripMarkdownFences(strings.TrimSpace(resp.Content[0].Text))
+	text := stripMarkdownFences(strings.TrimSpace(raw))
 	var recipe importedRecipe
 	if err := json.Unmarshal([]byte(text), &recipe); err != nil {
 		return importedRecipe{}, fmt.Errorf("parse claude JSON: %w (got: %q)", err, text)
